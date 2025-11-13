@@ -100,7 +100,6 @@
   "ble_services": {
     "primary_service": "0xFE50",
     "button_characteristic": "0xFE51",
-    "config_characteristic": "0xFE52",
     "device_information": true,
     "battery_service": true
   },

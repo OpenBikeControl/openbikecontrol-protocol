@@ -91,28 +91,6 @@ The characteristic value consists of button state pairs:
 [0x10, 0x80]
 ```
 
-#### 2. Device Configuration Characteristic (Optional)
-
-**UUID:** `0000FE52-0000-1000-8000-00805F9B34FB`
-
-**Properties:** Read, Write
-
-**Description:** Allows reading and configuring device settings.
-
-**Data Format:**
-
-```
-[Version] [Features] [Max_Buttons] [Reserved...]
-```
-
-- **Version** (1 byte): Protocol version (current: 0x01)
-- **Features** (1 byte): Bitmap of supported features
-  - Bit 0: Supports analog inputs
-  - Bit 1: Supports haptic feedback
-  - Bit 2-7: Reserved for future use
-- **Max_Buttons** (1 byte): Maximum number of buttons supported
-- **Reserved** (variable): Reserved for future protocol extensions
-
 ### Standard BLE Services
 
 SwiftControl devices MUST implement the following standard BLE services:
@@ -138,14 +116,12 @@ Required for battery-powered devices:
 
 **Advertisement Data:**
 
-- **Complete Local Name**: Should include "SwiftControl" for easy identification
 - **Service UUIDs**: Must advertise the primary service UUID `0xFE50`
 - **Flags**: General discoverable mode, BR/EDR not supported
 
 **Example Advertisement:**
 ```
 Flags: 0x06 (LE General Discoverable, BR/EDR not supported)
-Complete Local Name: "SwiftControl Remote"
 Complete List of 16-bit Service UUIDs: 0xFE50
 ```
 
@@ -246,7 +222,7 @@ Apps may implement multi-button combinations by detecting multiple simultaneous 
 
 ## mDNS Protocol Specification
 
-The mDNS implementation provides network-based connectivity, similar to the "Direct Connect" protocol used in the [Incyclist devices](https://github.com/incyclist/devices) project.
+The mDNS implementation provides network-based connectivity, similar to the "Direct Connect" protocol.
 
 ### Service Discovery
 
@@ -440,7 +416,6 @@ Certified devices receive:
 
 - [Bluetooth SIG - GATT Services](https://www.bluetooth.com/specifications/gatt/services/)
 - [Apple Core Bluetooth Programming Guide](https://developer.apple.com/library/archive/documentation/NetworkingInternetWeb/Conceptual/CoreBluetooth_concepts/)
-- [Incyclist Direct Connect Protocol](https://github.com/incyclist/devices)
 - [mDNS/Bonjour Specification (RFC 6762)](https://tools.ietf.org/html/rfc6762)
 
 ---
@@ -453,8 +428,6 @@ The SwiftControl Protocol specification is released under the [MIT License](LICE
 
 ## Contact & Contributions
 
-For questions, suggestions, or contributions:
-- GitHub Issues: [swiftcontrol-protocol/issues](https://github.com/jonasbark/swiftcontrol-protocol/issues)
-- Pull Requests: [swiftcontrol-protocol/pulls](https://github.com/jonasbark/swiftcontrol-protocol/pulls)
+For questions, suggestions, or contributions, please refer to the repository documentation.
 
 The protocol is designed to evolve with community feedback while maintaining backward compatibility.

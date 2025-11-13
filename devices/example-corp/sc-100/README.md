@@ -152,7 +152,6 @@ After pairing:
 
 - **Service UUID:** 0xFE50
 - **Button Characteristic:** 0xFE51 (Read, Notify)
-- **Config Characteristic:** 0xFE52 (Read, Write)
 - **Device Information Service:** 0x180A (Manufacturer, Model, Serial, Firmware)
 - **Battery Service:** 0x180F (Battery level 0-100%)
 
