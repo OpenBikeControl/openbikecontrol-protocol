@@ -1,0 +1,131 @@
+{
+  "manufacturer": "ExampleCorp",
+  "model": "SC-100",
+  "name": "SwiftControl Remote Pro",
+  "version": "1.0",
+  "certification_date": "2024-01-15",
+  "status": "example",
+  "device_info": {
+    "firmware_version": "1.2.3",
+    "hardware_version": "1.0",
+    "serial_prefix": "SC1"
+  },
+  "specs": {
+    "buttons": 8,
+    "analog_inputs": 2,
+    "battery_type": "CR2032",
+    "battery_life_hours": 500,
+    "water_resistance": "IPX4",
+    "weight_grams": 45,
+    "dimensions_mm": {
+      "width": 50,
+      "height": 80,
+      "depth": 20
+    }
+  },
+  "button_mapping": [
+    {
+      "physical_button": "Left Paddle",
+      "button_id": 1,
+      "standard_action": "Shift Up",
+      "type": "digital",
+      "description": "Increases virtual gear by one step"
+    },
+    {
+      "physical_button": "Right Paddle",
+      "button_id": 2,
+      "standard_action": "Shift Down",
+      "type": "digital",
+      "description": "Decreases virtual gear by one step"
+    },
+    {
+      "physical_button": "Joystick Up",
+      "button_id": 16,
+      "standard_action": "Navigate Up",
+      "type": "digital",
+      "description": "Navigate up in menus or steer left"
+    },
+    {
+      "physical_button": "Joystick Down",
+      "button_id": 17,
+      "standard_action": "Navigate Down",
+      "type": "digital",
+      "description": "Navigate down in menus or steer right"
+    },
+    {
+      "physical_button": "Joystick Left",
+      "button_id": 18,
+      "standard_action": "Navigate Left",
+      "type": "digital",
+      "description": "Navigate left in menus"
+    },
+    {
+      "physical_button": "Joystick Right",
+      "button_id": 19,
+      "standard_action": "Navigate Right",
+      "type": "digital",
+      "description": "Navigate right in menus"
+    },
+    {
+      "physical_button": "A Button (Center)",
+      "button_id": 20,
+      "standard_action": "Select",
+      "type": "digital",
+      "description": "Confirm selection or activate item"
+    },
+    {
+      "physical_button": "B Button (Back)",
+      "button_id": 21,
+      "standard_action": "Back",
+      "type": "digital",
+      "description": "Go back or cancel current action"
+    },
+    {
+      "physical_button": "Left Trigger",
+      "button_id": 48,
+      "standard_action": "ERG Down",
+      "type": "analog",
+      "range": "0-255",
+      "description": "Analog trigger to decrease ERG mode power (0=released, 255=fully pressed)"
+    },
+    {
+      "physical_button": "Right Trigger",
+      "button_id": 49,
+      "standard_action": "ERG Up",
+      "type": "analog",
+      "range": "0-255",
+      "description": "Analog trigger to increase ERG mode power (0=released, 255=fully pressed)"
+    }
+  ],
+  "ble_services": {
+    "primary_service": "0xFE50",
+    "button_characteristic": "0xFE51",
+    "config_characteristic": "0xFE52",
+    "device_information": true,
+    "battery_service": true
+  },
+  "connectivity": {
+    "ble": true,
+    "mdns": false,
+    "connection_range_meters": 15,
+    "latency_ms": 20
+  },
+  "support": {
+    "website": "https://example.com/products/sc100",
+    "firmware_updates": "OTA via mobile app",
+    "warranty_years": 2,
+    "support_email": "support@example.com",
+    "user_manual": "https://example.com/manuals/sc100.pdf"
+  },
+  "certifications": {
+    "ce": true,
+    "fcc": true,
+    "rohs": true,
+    "swiftcontrol": "example"
+  },
+  "tested_apps": [
+    "Zwift",
+    "MyWhoosh"
+  ],
+  "notes": "This is an example device definition for documentation purposes. It demonstrates the structure and format for certified devices."
+}
