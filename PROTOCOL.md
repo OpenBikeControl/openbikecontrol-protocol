@@ -232,11 +232,12 @@ The mDNS implementation provides network-based connectivity, similar to the "Dir
 
 **TXT Record Fields:**
 
+The TXT record fields mirror BLE advertisement data:
+
 - `version=1` - Protocol version
-- `id=<unique-id>` - Unique device identifier
+- `id=<unique-id>` - Unique device identifier (MAC address or serial)
 - `name=<device-name>` - Human-readable device name
-- `buttons=<count>` - Number of available buttons
-- `analog=<true/false>` - Supports analog inputs
+- `ble-service-uuids=<uuid-list>` - Comma-separated list of BLE service UUIDs (e.g., "FE50")
 - `manufacturer=<name>` - Device manufacturer
 - `model=<model>` - Device model
 
@@ -248,48 +249,14 @@ TXT:
   version=1
   id=aabbccddeeff
   name=SwiftControl Remote
-  buttons=8
-  analog=true
+  ble-service-uuids=FE50
   manufacturer=ExampleCorp
   model=SC-100
 ```
 
-### HTTP/WebSocket Protocol
+### WebSocket Protocol
 
-Once discovered, apps connect to the device using HTTP or WebSocket.
-
-#### HTTP Endpoint
-
-**Endpoint:** `GET /api/buttons`
-
-**Response Format (JSON):**
-
-```json
-{
-  "version": "1.0",
-  "device": {
-    "id": "aabbccddeeff",
-    "name": "SwiftControl Remote",
-    "manufacturer": "ExampleCorp",
-    "model": "SC-100",
-    "firmware": "1.2.3"
-  },
-  "buttons": [
-    {
-      "id": 1,
-      "name": "Shift Up",
-      "state": 0
-    },
-    {
-      "id": 2,
-      "name": "Shift Down",
-      "state": 0
-    }
-  ]
-}
-```
-
-#### WebSocket Connection
+Once discovered via mDNS/Bonjour, apps connect to the device using WebSocket for real-time communication.
 
 **Endpoint:** `ws://<device-ip>:<port>/api/ws`
 
@@ -317,25 +284,22 @@ Device status updates:
 }
 ```
 
-#### RESTful API (Optional)
-
-For simple implementations, devices may support REST endpoints:
-
-**GET /api/button/:id**
+Haptic feedback (app to device):
 ```json
 {
-  "id": 1,
-  "name": "Shift Up",
-  "state": 0
+  "type": "haptic_feedback",
+  "pattern": "vibrate",
+  "duration": 100,
+  "intensity": 128
 }
 ```
 
-**POST /api/feedback** (for haptic feedback, if supported)
+Haptic feedback response (device to app):
 ```json
 {
-  "type": "vibrate",
-  "duration": 100,
-  "intensity": 128
+  "type": "haptic_feedback_response",
+  "timestamp": 1699887600000,
+  "success": true
 }
 ```
 
@@ -354,7 +318,7 @@ For simple implementations, devices may support REST endpoints:
 2. **mDNS Implementation:**
    - Use Bonjour/Zeroconf libraries to discover `_swiftcontrol._tcp.local.` services
    - Connect via WebSocket for real-time updates
-   - Fall back to HTTP polling if WebSocket is unavailable
+   - Parse TXT records to get device information and BLE service UUIDs
 
 3. **Button Mapping:**
    - Provide user configuration for custom button mappings
