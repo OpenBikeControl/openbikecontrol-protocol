@@ -98,8 +98,8 @@
     }
   ],
   "ble_services": {
-    "primary_service": "0xFE50",
-    "button_characteristic": "0xFE51",
+    "primary_service": "d273f680-d548-419d-b9d1-fa0472345229",
+    "button_characteristic": "d273f681-d548-419d-b9d1-fa0472345229",
     "device_information": true,
     "battery_service": true
   },
@@ -122,9 +122,5 @@
     "rohs": true,
     "swiftcontrol": "example"
   },
-  "tested_apps": [
-    "Zwift",
-    "MyWhoosh"
-  ],
   "notes": "This is an example device definition for documentation purposes. It demonstrates the structure and format for certified devices."
 }

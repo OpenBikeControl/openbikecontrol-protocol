@@ -4,7 +4,7 @@ An open and open-source protocol for wireless input controllers to interact with
 
 ## Overview
 
-SwiftControl enables standardized communication between BLE/network controllers and trainer apps like MyWhoosh, Rouvy, Zwift, and others. The protocol supports:
+SwiftControl enables standardized communication between BLE/network controllers and trainer apps. The protocol supports:
 
 - **Virtual gear shifting** for smart trainer devices
 - **On-screen navigation** (menus, route selection, steering)
@@ -30,8 +30,8 @@ SwiftControl enables standardized communication between BLE/network controllers 
 ### For App Developers
 
 1. Review the [Protocol Specification](PROTOCOL.md)
-2. Implement BLE service discovery for UUID `0xFE50`
-3. Subscribe to button state notifications (characteristic `0xFE51`)
+2. Implement BLE service discovery for UUID `d273f680-d548-419d-b9d1-fa0472345229`
+3. Subscribe to button state notifications (characteristic `d273f681-d548-419d-b9d1-fa0472345229`)
 4. Map button IDs to your app's actions
 5. (Optional) Implement mDNS discovery for network-based devices
 
@@ -59,8 +59,8 @@ See [Button Mapping](PROTOCOL.md#button-mapping) for complete list.
 ## Protocol Architecture
 
 ### BLE Protocol
-- Service UUID: `0xFE50`
-- Button State Characteristic: `0xFE51` (Read, Notify)
+- Service UUID: `d273f680-d548-419d-b9d1-fa0472345229`
+- Button State Characteristic: `d273f681-d548-419d-b9d1-fa0472345229` (Read, Notify)
 - Data Format: `[Button_ID] [State]` pairs
 - Notifications sent only on state changes
 

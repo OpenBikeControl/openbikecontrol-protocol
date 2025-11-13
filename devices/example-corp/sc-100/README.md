@@ -15,7 +15,7 @@ The SC-100 SwiftControl Remote Pro is a compact wireless controller designed for
 - **Long Battery Life** - Up to 500 hours on single CR2032 battery
 - **Water Resistant** - IPX4 rated for sweat and light rain
 - **Low Latency** - <20ms response time
-- **Universal Compatibility** - Works with Zwift, MyWhoosh, and other SwiftControl apps
+- **Universal Compatibility** - Works with compatible trainer apps
 
 ## Physical Layout
 
@@ -150,18 +150,12 @@ After pairing:
 
 ## BLE Technical Details
 
-- **Service UUID:** 0xFE50
-- **Button Characteristic:** 0xFE51 (Read, Notify)
+- **Service UUID:** d273f680-d548-419d-b9d1-fa0472345229
+- **Button Characteristic:** d273f681-d548-419d-b9d1-fa0472345229 (Read, Notify)
 - **Device Information Service:** 0x180A (Manufacturer, Model, Serial, Firmware)
 - **Battery Service:** 0x180F (Battery level 0-100%)
 
 ## Compatibility
-
-### Tested Apps
-- ✅ Zwift (iOS, Android, Windows, macOS)
-- ✅ MyWhoosh (iOS, Android, Windows, macOS)
-- ✅ Rouvy (iOS, Android, Windows, macOS)
-- ✅ RGT Cycling (Windows, macOS)
 
 ### Platform Support
 - ✅ iOS 13.0+

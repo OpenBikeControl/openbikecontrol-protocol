@@ -2,7 +2,7 @@
 
 ## Overview
 
-SwiftControl is an open protocol for wireless input devices to control cycling trainer applications. It enables standardized communication between BLE controllers and training apps like MyWhoosh, Rouvy, Zwift, and others.
+SwiftControl is an open protocol for wireless input devices to control cycling trainer applications. It enables standardized communication between BLE controllers and training apps.
 
 ### Motivation
 
@@ -43,7 +43,7 @@ Both transports use the same logical data format, ensuring consistency across co
 
 ### Service UUID
 
-**Primary Service UUID:** `0000FE50-0000-1000-8000-00805F9B34FB`
+**Primary Service UUID:** `d273f680-d548-419d-b9d1-fa0472345229`
 
 This service UUID is used for SwiftControl device advertisement and discovery.
 
@@ -51,7 +51,7 @@ This service UUID is used for SwiftControl device advertisement and discovery.
 
 #### 1. Button State Characteristic
 
-**UUID:** `0000FE51-0000-1000-8000-00805F9B34FB`
+**UUID:** `d273f681-d548-419d-b9d1-fa0472345229`
 
 **Properties:** Read, Notify
 
@@ -116,13 +116,13 @@ Required for battery-powered devices:
 
 **Advertisement Data:**
 
-- **Service UUIDs**: Must advertise the primary service UUID `0xFE50`
+- **Service UUIDs**: Must advertise the primary service UUID `d273f680-d548-419d-b9d1-fa0472345229`
 - **Flags**: General discoverable mode, BR/EDR not supported
 
 **Example Advertisement:**
 ```
 Flags: 0x06 (LE General Discoverable, BR/EDR not supported)
-Complete List of 16-bit Service UUIDs: 0xFE50
+Complete List of 16-bit Service UUIDs: d273f680-d548-419d-b9d1-fa0472345229
 ```
 
 ### Connection Parameters
@@ -165,14 +165,13 @@ SwiftControl defines standard button IDs for common actions. Device manufacturer
 
 #### Social/Emotes (0x20-0x2F)
 
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x20` | Wave | Wave to other riders |
-| `0x21` | Thumbs Up | Give thumbs up |
-| `0x22` | Ride On | Zwift "Ride On" or equivalent |
-| `0x23` | Hammer Time | Activate power-up |
-| `0x24` | Bell | Ring bell |
-| `0x25` | Screenshot | Take screenshot |
+| Button ID | Action      | Description |
+|-----------|-------------|-------------|
+| `0x20`    | Wave        | Wave to other riders |
+| `0x21`    | Thumbs Up   | Give thumbs up |
+| `0x22`    | Hammer Time | Activate power-up |
+| `0x23`    | Bell        | Ring bell |
+| `0x24`    | Screenshot  | Take screenshot |
 
 #### Training Controls (0x30-0x3F)
 
@@ -310,8 +309,8 @@ Haptic feedback response (device to app):
 ### For App Developers
 
 1. **BLE Implementation:**
-   - Scan for devices advertising service UUID `0xFE50`
-   - Connect and discover the Button State characteristic (`0xFE51`)
+   - Scan for devices advertising service UUID `d273f680-d548-419d-b9d1-fa0472345229`
+   - Connect and discover the Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`)
    - Subscribe to notifications for real-time button updates
    - Map button IDs to app-specific actions
 
@@ -348,7 +347,6 @@ Haptic feedback response (device to app):
    - Report accurate battery levels
 
 4. **Testing:**
-   - Test with major trainer apps (Zwift, Rouvy, MyWhoosh)
    - Verify range and reliability
    - Ensure no interference with other BLE devices (trainers, heart rate monitors)
 

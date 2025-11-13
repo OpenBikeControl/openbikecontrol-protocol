@@ -38,8 +38,8 @@ Devices must meet the following technical standards:
 
 #### 1. Protocol Compliance
 
-- ✅ Implement SwiftControl BLE service UUID (`0xFE50`)
-- ✅ Implement Button State characteristic (`0xFE51`) with correct data format
+- ✅ Implement SwiftControl BLE service UUID (`d273f680-d548-419d-b9d1-fa0472345229`)
+- ✅ Implement Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`) with correct data format
 - ✅ Implement standard BLE Device Information Service (`0x180A`)
 - ✅ Implement Battery Service (`0x180F`) for battery-powered devices
 - ✅ Do NOT use manufacturer-specific advertisement data (Apple compatibility requirement)
@@ -60,16 +60,6 @@ Devices must meet the following technical standards:
 - ✅ Water resistance: IPX4 minimum (splash resistant)
 - ✅ Firmware: Support OTA updates (recommended) or documented update procedure
 - ✅ Documentation: User manual and setup guide in English
-
-#### 4. Compatibility Testing
-
-Devices must be tested with at least two of the following apps:
-- Zwift
-- MyWhoosh
-- Rouvy
-- RGT Cycling
-- TrainerRoad (if applicable)
-- Other participating SwiftControl apps
 
 ### Documentation Requirements
 
@@ -211,8 +201,8 @@ Submit a certification request by creating a GitHub Pull Request:
        }
      ],
      "ble_services": {
-       "primary_service": "0xFE50",
-       "button_characteristic": "0xFE51",
+       "primary_service": "d273f680-d548-419d-b9d1-fa0472345229",
+       "button_characteristic": "d273f681-d548-419d-b9d1-fa0472345229",
        "device_information": true,
        "battery_service": true
      },
