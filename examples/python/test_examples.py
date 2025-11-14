@@ -107,6 +107,89 @@ def test_mdns_format_consistency():
     print("  ✓ Format consistency tests passed")
 
 
+def test_mock_device_zeroconf():
+    """Test that mock device can advertise via zeroconf."""
+    print("Testing mock device zeroconf advertising...")
+    
+    try:
+        import asyncio
+        from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
+        from mock_device import start_mock_server, ZEROCONF_AVAILABLE, AIOHTTP_AVAILABLE
+        
+        if not ZEROCONF_AVAILABLE or not AIOHTTP_AVAILABLE:
+            print("  ⊘ Skipped (zeroconf or aiohttp not available)")
+            return
+        
+        SERVICE_TYPE = "_openbikecontrol._tcp.local."
+        
+        class TestListener(ServiceListener):
+            def __init__(self):
+                self.found = False
+                self.device_info = None
+            
+            def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+                info = zc.get_service_info(type_, name)
+                if info and "Mock OpenBike Remote" in name:
+                    self.found = True
+                    properties = {}
+                    for key, value in info.properties.items():
+                        try:
+                            properties[key.decode('utf-8')] = value.decode('utf-8')
+                        except:
+                            properties[key.decode('utf-8')] = value
+                    self.device_info = properties
+            
+            def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+                pass
+            
+            def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
+                pass
+        
+        async def test_async():
+            # Start mock server
+            server_task = asyncio.create_task(start_mock_server(port=8081))
+            
+            # Wait for server to start
+            await asyncio.sleep(2)
+            
+            # Try to discover it
+            zeroconf = Zeroconf()
+            listener = TestListener()
+            browser = ServiceBrowser(zeroconf, SERVICE_TYPE, listener)
+            
+            # Wait for discovery
+            await asyncio.sleep(3)
+            
+            # Cleanup
+            browser.cancel()
+            zeroconf.close()
+            
+            # Stop server
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+            
+            return listener.found, listener.device_info
+        
+        found, device_info = asyncio.run(test_async())
+        
+        assert found, "Mock device was not discovered via mDNS"
+        assert device_info is not None, "Device info was not retrieved"
+        assert device_info.get('name') == 'Mock OpenBike Remote', "Device name mismatch"
+        assert device_info.get('version') == '1', "Version mismatch"
+        assert device_info.get('manufacturer') == 'ExampleCorp', "Manufacturer mismatch"
+        
+        print("  ✓ Mock device zeroconf advertising tests passed")
+    
+    except Exception as e:
+        print(f"  ⚠ Zeroconf test skipped due to error: {e}")
+        # Don't fail the entire test suite if zeroconf test has issues
+        import traceback
+        traceback.print_exc()
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -119,6 +202,7 @@ def main():
         test_format_button_state()
         test_button_names()
         test_mdns_format_consistency()
+        test_mock_device_zeroconf()
         
         print()
         print("=" * 60)

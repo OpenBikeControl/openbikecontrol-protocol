@@ -26,6 +26,15 @@ except ImportError:
     AIOHTTP_AVAILABLE = False
     print("Note: Install aiohttp for WebSocket simulation: pip install aiohttp")
 
+try:
+    from zeroconf import ServiceInfo
+    from zeroconf.asyncio import AsyncZeroconf
+    import socket
+    ZEROCONF_AVAILABLE = True
+except ImportError:
+    ZEROCONF_AVAILABLE = False
+    print("Note: Install zeroconf for mDNS advertising: pip install zeroconf")
+
 
 class MockDevice:
     """Simulates an OpenBikeControl device."""
@@ -154,7 +163,7 @@ async def websocket_handler(request):
 
 
 async def start_mock_server(host='0.0.0.0', port=8080):
-    """Start mock mDNS/WebSocket server."""
+    """Start mock mDNS/WebSocket server with zeroconf advertising."""
     if not AIOHTTP_AVAILABLE:
         print("❌ aiohttp is required for the mock server")
         print("   Install with: pip install aiohttp")
@@ -171,16 +180,95 @@ async def start_mock_server(host='0.0.0.0', port=8080):
     
     device_info = app['device'].get_device_info()
     
-    print("=" * 60)
-    print("Mock OpenBikeControl Device - WebSocket Server")
-    print("=" * 60)
-    print()
-    print(f"Device: {device_info['name']}")
-    print(f"Model: {device_info['manufacturer']} {device_info['model']}")
-    print(f"ID: {device_info['id']}")
-    print()
-    print(f"WebSocket URL: ws://{host}:{port}/api/ws")
-    print()
+    # Set up zeroconf service advertising
+    aiozc = None
+    service_info = None
+    
+    if ZEROCONF_AVAILABLE:
+        try:
+            # Get local IP address for advertising
+            # If host is 0.0.0.0, get the actual IP address
+            hostname = socket.gethostname()
+            if host == '0.0.0.0':
+                # Get the hostname and resolve to IP
+                local_ip = socket.gethostbyname(hostname)
+            else:
+                local_ip = host
+            
+            # Create service info according to MDNS.md specification
+            service_type = "_openbikecontrol._tcp.local."
+            service_name = f"{device_info['name']}.{service_type}"
+            
+            # Prepare TXT record properties
+            properties = {
+                'version': device_info['version'],
+                'id': device_info['id'],
+                'name': device_info['name'],
+                'ble-service-uuids': device_info['ble-service-uuids'],
+                'manufacturer': device_info['manufacturer'],
+                'model': device_info['model']
+            }
+            
+            # Convert IP address to bytes
+            addresses = [socket.inet_aton(local_ip)]
+            
+            # Create and register service
+            service_info = ServiceInfo(
+                service_type,
+                service_name,
+                addresses=addresses,
+                port=port,
+                properties=properties,
+                server=f"{hostname}.local."
+            )
+            
+            aiozc = AsyncZeroconf()
+            await aiozc.async_register_service(service_info)
+            
+            print("=" * 60)
+            print("Mock OpenBikeControl Device - WebSocket Server")
+            print("=" * 60)
+            print()
+            print(f"Device: {device_info['name']}")
+            print(f"Model: {device_info['manufacturer']} {device_info['model']}")
+            print(f"ID: {device_info['id']}")
+            print()
+            print(f"WebSocket URL: ws://{local_ip}:{port}/api/ws")
+            print()
+            print("✓ mDNS service advertising enabled")
+            print(f"  Service: {service_name}")
+            print(f"  Type: {service_type}")
+            print(f"  Address: {local_ip}:{port}")
+            print()
+        except Exception as e:
+            print("=" * 60)
+            print("Mock OpenBikeControl Device - WebSocket Server")
+            print("=" * 60)
+            print()
+            print(f"Device: {device_info['name']}")
+            print(f"Model: {device_info['manufacturer']} {device_info['model']}")
+            print(f"ID: {device_info['id']}")
+            print()
+            print(f"WebSocket URL: ws://{host}:{port}/api/ws")
+            print()
+            print(f"⚠ Failed to advertise via mDNS: {e}")
+            print("  WebSocket server is still running for direct connections.")
+            print()
+    else:
+        print("=" * 60)
+        print("Mock OpenBikeControl Device - WebSocket Server")
+        print("=" * 60)
+        print()
+        print(f"Device: {device_info['name']}")
+        print(f"Model: {device_info['manufacturer']} {device_info['model']}")
+        print(f"ID: {device_info['id']}")
+        print()
+        print(f"WebSocket URL: ws://{host}:{port}/api/ws")
+        print()
+        print("Note: For mDNS discovery, install zeroconf: pip install zeroconf")
+        print("      The WebSocket endpoint is available for direct connection.")
+        print()
+    
     print("The device will simulate button presses when a client connects:")
     print("  1s: Shift Up (0x01)")
     print("  2s: Shift Down (0x02)")
@@ -189,10 +277,6 @@ async def start_mock_server(host='0.0.0.0', port=8080):
     print()
     print("Connect using the mDNS trainer app:")
     print("  python mdns_trainer_app.py")
-    print()
-    print("Note: For full mDNS discovery, you would need to advertise")
-    print("      the service using zeroconf. This example only provides")
-    print("      the WebSocket endpoint for direct connection testing.")
     print()
     print("Press Ctrl+C to stop")
     print()
@@ -204,6 +288,15 @@ async def start_mock_server(host='0.0.0.0', port=8080):
     except KeyboardInterrupt:
         print("\n\n⏹ Stopping server...")
     finally:
+        # Cleanup zeroconf service
+        if aiozc and service_info:
+            try:
+                await aiozc.async_unregister_service(service_info)
+                await aiozc.async_close()
+                print("✓ mDNS service unregistered")
+            except Exception as e:
+                print(f"⚠ Error unregistering mDNS service: {e}")
+        
         await runner.cleanup()
 
 
@@ -220,12 +313,13 @@ def print_usage():
     print()
     print("The mock device will:")
     print("  - Start a WebSocket server on port 8080")
+    print("  - Advertise via mDNS/zeroconf (if zeroconf is installed)")
     print("  - Accept connections from trainer apps")
     print("  - Simulate button presses automatically")
     print("  - Respond to haptic feedback commands")
     print()
     print("Requirements:")
-    print("  pip install aiohttp")
+    print("  pip install aiohttp zeroconf")
     print()
 
 

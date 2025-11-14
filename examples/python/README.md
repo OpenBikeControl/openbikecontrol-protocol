@@ -259,8 +259,8 @@ The tests verify:
 A mock device simulator is provided for testing without physical hardware:
 
 ```bash
-# Install additional dependency
-pip install aiohttp
+# Install additional dependencies
+pip install aiohttp zeroconf
 
 # Start the mock device
 python mock_device.py
@@ -268,6 +268,7 @@ python mock_device.py
 
 The mock device will:
 - Start a WebSocket server on port 8080
+- Advertise via mDNS/zeroconf (automatic device discovery)
 - Accept connections from the mDNS trainer app
 - Automatically simulate button presses (Shift Up, Shift Down, Select, Wave)
 - Respond to haptic feedback commands
@@ -279,13 +280,14 @@ To test with the mock device:
    python mock_device.py
    ```
 
-2. In another terminal, connect manually (the mDNS trainer app can connect directly if you know the IP):
+2. In another terminal, run the mDNS trainer app to discover and connect:
    ```bash
-   # You can test the WebSocket endpoint directly
-   # Or modify mdns_trainer_app.py to connect to localhost:8080
+   python mdns_trainer_app.py
    ```
+   
+   The trainer app will automatically discover the mock device via mDNS and connect to it.
 
-Note: The mock device provides the WebSocket endpoint but doesn't advertise via mDNS. For full mDNS discovery testing, you would need a complete implementation with zeroconf service advertisement.
+Note: If zeroconf is not installed, the mock device will still provide the WebSocket endpoint for direct connection testing, but automatic discovery won't be available.
 
 ## Architecture
 
