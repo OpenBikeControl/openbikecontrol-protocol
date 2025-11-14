@@ -11,24 +11,33 @@ This is useful for:
 - Demonstrating the BLE protocol behavior
 - Development and debugging
 
+Platform Support:
+- Windows 10+ (build 1709 or later)
+- macOS 10.15+
+- Linux (with BlueZ 5.43+)
+
 Note: This is a simplified simulator for demonstration purposes only.
 Real devices would have more complex state management and error handling.
 """
 
 import asyncio
 import struct
-import time
-from typing import Any
+import sys
+from typing import Optional
 
 try:
-    from bluez_peripheral.gatt.service import Service
-    from bluez_peripheral.gatt.characteristic import characteristic, CharacteristicFlags as CharFlags
-    from bluez_peripheral.advert import Advertisement
-    from bluez_peripheral.util import *
-    BLUEZ_AVAILABLE = True
+    from bless import (
+        BlessServer,
+        BlessGATTCharacteristic,
+        GATTCharacteristicProperties,
+        GATTAttributePermissions
+    )
+    BLESS_AVAILABLE = True
 except ImportError:
-    BLUEZ_AVAILABLE = False
-    print("Note: Install bluez-peripheral for BLE peripheral simulation: pip install bluez-peripheral")
+    BLESS_AVAILABLE = False
+    print("Note: Install bless for cross-platform BLE peripheral simulation")
+    print("      pip install bless 'bleak==0.19.5'")
+    print("      (Note: bless requires bleak 0.19.x, which conflicts with the client app)")
 
 
 # OpenBikeControl Service and Characteristic UUIDs (from BLE.md)
@@ -51,25 +60,39 @@ FIRMWARE_REV_CHAR_UUID = "00002a26-0000-1000-8000-00805f9b34fb"
 BATTERY_LEVEL_CHAR_UUID = "00002a19-0000-1000-8000-00805f9b34fb"
 
 
-class OpenBikeControlService(Service):
-    """OpenBikeControl BLE GATT Service implementation."""
+class MockBLEDevice:
+    """Simulates an OpenBikeControl BLE device using the bless library."""
     
-    def __init__(self):
-        super().__init__(SERVICE_UUID, True)
+    def __init__(self, name: str = "Mock OpenBike Remote"):
+        self.name = name
+        self.battery = 85
+        self.button_simulation_task: Optional[asyncio.Task] = None
+        self.is_running = False
+        
+        # Device information
+        self.manufacturer = "ExampleCorp"
+        self.model = "MC-100"
+        self.serial = "1234567890"
+        self.hardware_rev = "1.0"
+        self.firmware_rev = "1.0.0"
+        
+        # BLE server
+        self.server: Optional[BlessServer] = None
         self._button_state_value = bytes([0x00, 0x00])
     
-    @characteristic(BUTTON_STATE_CHAR_UUID, CharFlags.READ | CharFlags.NOTIFY)
-    def button_state(self, options):
-        """Button State characteristic (READ/NOTIFY)."""
-        return self._button_state_value
+    def get_device_info(self):
+        """Get device information."""
+        return {
+            "name": self.name,
+            "manufacturer": self.manufacturer,
+            "model": self.model,
+            "serial": self.serial,
+            "hardware_rev": self.hardware_rev,
+            "firmware_rev": self.firmware_rev,
+            "battery": self.battery
+        }
     
-    @characteristic(HAPTIC_FEEDBACK_CHAR_UUID, CharFlags.WRITE | CharFlags.WRITE_WITHOUT_RESPONSE)
-    def haptic_feedback(self, options):
-        """Haptic Feedback characteristic (WRITE)."""
-        pass
-    
-    @haptic_feedback.setter
-    def haptic_feedback(self, value, options):
+    def _haptic_write_callback(self, characteristic, value: bytes):
         """Handle haptic feedback writes."""
         if len(value) >= 3:
             pattern = value[0]
@@ -91,147 +114,124 @@ class OpenBikeControlService(Service):
             print(f"  ← Received haptic feedback: pattern={pattern_name}, "
                   f"duration={duration}×10ms, intensity={intensity}")
     
-    def update_button_state(self, button_id: int, state: int):
-        """Update button state and notify clients."""
-        self._button_state_value = struct.pack('<BB', button_id, state)
-        self.button_state.changed(self._button_state_value)
-
-
-class DeviceInformationService(Service):
-    """Device Information BLE GATT Service."""
-    
-    def __init__(self, manufacturer: str, model: str, serial: str, hw_rev: str, fw_rev: str):
-        super().__init__(DEVICE_INFO_SERVICE_UUID, True)
-        self._manufacturer = manufacturer.encode('utf-8')
-        self._model = model.encode('utf-8')
-        self._serial = serial.encode('utf-8')
-        self._hw_rev = hw_rev.encode('utf-8')
-        self._fw_rev = fw_rev.encode('utf-8')
-    
-    @characteristic(MANUFACTURER_NAME_CHAR_UUID, CharFlags.READ)
-    def manufacturer_name(self, options):
-        return self._manufacturer
-    
-    @characteristic(MODEL_NUMBER_CHAR_UUID, CharFlags.READ)
-    def model_number(self, options):
-        return self._model
-    
-    @characteristic(SERIAL_NUMBER_CHAR_UUID, CharFlags.READ)
-    def serial_number(self, options):
-        return self._serial
-    
-    @characteristic(HARDWARE_REV_CHAR_UUID, CharFlags.READ)
-    def hardware_revision(self, options):
-        return self._hw_rev
-    
-    @characteristic(FIRMWARE_REV_CHAR_UUID, CharFlags.READ)
-    def firmware_revision(self, options):
-        return self._fw_rev
-
-
-class BatteryService(Service):
-    """Battery BLE GATT Service."""
-    
-    def __init__(self, battery_level: int = 85):
-        super().__init__(BATTERY_SERVICE_UUID, True)
-        self._battery_level = battery_level
-    
-    @characteristic(BATTERY_LEVEL_CHAR_UUID, CharFlags.READ | CharFlags.NOTIFY)
-    def battery_level(self, options):
-        return struct.pack('<B', self._battery_level)
-
-
-class MockBLEDevice:
-    """Simulates an OpenBikeControl BLE device."""
-    
-    def __init__(self, name: str = "Mock OpenBike Remote"):
-        self.name = name
-        self.battery = 85
-        self.button_simulation_task = None
-        self.is_running = False
-        
-        # Device information
-        self.manufacturer = "ExampleCorp"
-        self.model = "MC-100"
-        self.serial = "1234567890"
-        self.hardware_rev = "1.0"
-        self.firmware_rev = "1.0.0"
-        
-        # Services
-        self.obc_service = None
-        self.device_info_service = None
-        self.battery_service = None
-        self.adapter = None
-        self.advertisement = None
-    
-    def get_device_info(self):
-        """Get device information."""
-        return {
-            "name": self.name,
-            "manufacturer": self.manufacturer,
-            "model": self.model,
-            "serial": self.serial,
-            "hardware_rev": self.hardware_rev,
-            "firmware_rev": self.firmware_rev,
-            "battery": self.battery
-        }
-    
     async def setup_ble_server(self):
         """Set up the BLE GATT server with all required services and characteristics."""
-        if not BLUEZ_AVAILABLE:
-            raise RuntimeError("bluez-peripheral library is required for BLE simulation")
+        if not BLESS_AVAILABLE:
+            raise RuntimeError("bless library is required for BLE simulation. "
+                             "Install with: pip install bless 'bleak==0.19.5'")
         
-        # Get the Bluetooth adapter
-        self.adapter = await Adapter.get_first()
+        print(f"✓ Creating BLE server: {self.name}")
         
-        # Set adapter alias (device name)
-        await self.adapter.set_alias(self.name)
+        # Create server
+        self.server = BlessServer(name=self.name)
         
-        print(f"✓ BLE adapter configured: {self.name}")
+        # Set write callback for haptic feedback
+        self.server.write_request_func = self._haptic_write_callback
         
-        # Create services
-        self.obc_service = OpenBikeControlService()
-        self.device_info_service = DeviceInformationService(
-            self.manufacturer, self.model, self.serial,
-            self.hardware_rev, self.firmware_rev
-        )
-        self.battery_service = BatteryService(self.battery)
-        
-        # Register services
-        await self.obc_service.register(self.adapter)
+        # Add OpenBikeControl Service
+        await self.server.add_new_service(SERVICE_UUID)
         print(f"  Registered OpenBikeControl service: {SERVICE_UUID}")
         
-        await self.device_info_service.register(self.adapter)
+        # Add Button State characteristic (READ/NOTIFY)
+        await self.server.add_new_characteristic(
+            SERVICE_UUID,
+            BUTTON_STATE_CHAR_UUID,
+            GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify,
+            bytes([0x00, 0x00]),
+            GATTAttributePermissions.readable
+        )
+        print(f"    - Button State (READ/NOTIFY): {BUTTON_STATE_CHAR_UUID}")
+        
+        # Add Haptic Feedback characteristic (WRITE)
+        await self.server.add_new_characteristic(
+            SERVICE_UUID,
+            HAPTIC_FEEDBACK_CHAR_UUID,
+            GATTCharacteristicProperties.write | GATTCharacteristicProperties.write_without_response,
+            bytes([0x00, 0x00, 0x00]),
+            GATTAttributePermissions.writeable
+        )
+        print(f"    - Haptic Feedback (WRITE): {HAPTIC_FEEDBACK_CHAR_UUID}")
+        
+        # Add Device Information Service
+        await self.server.add_new_service(DEVICE_INFO_SERVICE_UUID)
         print(f"  Registered Device Information service: {DEVICE_INFO_SERVICE_UUID}")
         
-        await self.battery_service.register(self.adapter)
-        print(f"  Registered Battery service: {BATTERY_SERVICE_UUID}")
-        
-        # Create and start advertisement
-        self.advertisement = Advertisement(
-            self.name,
-            [SERVICE_UUID],  # Advertise OpenBikeControl service UUID
-            0x0340,  # Appearance: Generic Remote Control
-            60  # Timeout in seconds (0 = no timeout)
+        # Add device info characteristics
+        await self.server.add_new_characteristic(
+            DEVICE_INFO_SERVICE_UUID,
+            MANUFACTURER_NAME_CHAR_UUID,
+            GATTCharacteristicProperties.read,
+            self.manufacturer.encode('utf-8'),
+            GATTAttributePermissions.readable
+        )
+        await self.server.add_new_characteristic(
+            DEVICE_INFO_SERVICE_UUID,
+            MODEL_NUMBER_CHAR_UUID,
+            GATTCharacteristicProperties.read,
+            self.model.encode('utf-8'),
+            GATTAttributePermissions.readable
+        )
+        await self.server.add_new_characteristic(
+            DEVICE_INFO_SERVICE_UUID,
+            SERIAL_NUMBER_CHAR_UUID,
+            GATTCharacteristicProperties.read,
+            self.serial.encode('utf-8'),
+            GATTAttributePermissions.readable
+        )
+        await self.server.add_new_characteristic(
+            DEVICE_INFO_SERVICE_UUID,
+            HARDWARE_REV_CHAR_UUID,
+            GATTCharacteristicProperties.read,
+            self.hardware_rev.encode('utf-8'),
+            GATTAttributePermissions.readable
+        )
+        await self.server.add_new_characteristic(
+            DEVICE_INFO_SERVICE_UUID,
+            FIRMWARE_REV_CHAR_UUID,
+            GATTCharacteristicProperties.read,
+            self.firmware_rev.encode('utf-8'),
+            GATTAttributePermissions.readable
         )
         
-        await self.advertisement.register(self.adapter)
+        # Add Battery Service
+        await self.server.add_new_service(BATTERY_SERVICE_UUID)
+        print(f"  Registered Battery service: {BATTERY_SERVICE_UUID}")
+        
+        # Add battery level characteristic
+        await self.server.add_new_characteristic(
+            BATTERY_SERVICE_UUID,
+            BATTERY_LEVEL_CHAR_UUID,
+            GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify,
+            struct.pack('<B', self.battery),
+            GATTAttributePermissions.readable
+        )
+        
+        # Start the server
+        await self.server.start()
         print(f"  Advertising with service UUID: {SERVICE_UUID}")
+    
+    async def update_button_state(self, button_id: int, state: int):
+        """Update button state and notify clients."""
+        if not self.server:
+            return
+        
+        self._button_state_value = struct.pack('<BB', button_id, state)
+        await self.server.update_value(SERVICE_UUID, BUTTON_STATE_CHAR_UUID, self._button_state_value)
     
     async def simulate_button_press(self, button_id: int):
         """Simulate a button press and release with BLE notifications."""
-        if not self.obc_service:
+        if not self.server:
             return
         
         # Button press
-        self.obc_service.update_button_state(button_id, 0x01)
+        await self.update_button_state(button_id, 0x01)
         print(f"  → Sent button press notification: 0x{button_id:02X}")
         
         # Wait a bit for press duration
         await asyncio.sleep(0.1)
         
         # Button release
-        self.obc_service.update_button_state(button_id, 0x00)
+        await self.update_button_state(button_id, 0x00)
         print(f"  → Sent button release notification: 0x{button_id:02X}")
     
     async def simulate_buttons_loop(self):
@@ -308,26 +308,21 @@ class MockBLEDevice:
             except asyncio.CancelledError:
                 pass
         
-        if self.advertisement:
-            await self.advertisement.unregister()
-        
-        if self.obc_service:
-            await self.obc_service.unregister()
-        
-        if self.device_info_service:
-            await self.device_info_service.unregister()
-        
-        if self.battery_service:
-            await self.battery_service.unregister()
+        if self.server:
+            await self.server.stop()
         
         print("✓ BLE device stopped")
 
 
 async def start_mock_ble_device():
     """Start the mock BLE device."""
-    if not BLUEZ_AVAILABLE:
-        print("❌ bluez-peripheral library is required for BLE peripheral simulation")
-        print("   Install with: pip install bluez-peripheral")
+    if not BLESS_AVAILABLE:
+        print("❌ bless library is required for cross-platform BLE peripheral simulation")
+        print("   Install with: pip install bless 'bleak==0.19.5'")
+        print()
+        print("   Note: The mock BLE device requires bleak 0.19.5 (older version)")
+        print("         This is different from the BLE client app which uses bleak>=0.21.0")
+        print("         Use separate virtual environments if you need to run both.")
         return
     
     device = MockBLEDevice()
@@ -363,21 +358,35 @@ def print_usage():
     print("  - Respond to haptic feedback commands")
     print()
     print("Requirements:")
-    print("  pip install bluez-peripheral bleak")
+    print("  pip install bless 'bleak==0.19.5'")
     print()
-    print("Note: BLE peripheral functionality requires:")
-    print("  - Linux: BlueZ 5.43+ and appropriate permissions")
-    print("    Run with: sudo python mock_device_ble.py")
-    print("  - macOS: Limited support, may not work")
-    print("  - Windows: Not supported (BlueZ required)")
+    print("Platform Support:")
+    print("  - Windows 10+ (build 1709 or later)")
+    print("  - macOS 10.15+ (Catalina or later)")
+    print("  - Linux (with BlueZ 5.43+)")
+    print()
+    print("Note: This mock device uses bless which requires bleak 0.19.5.")
+    print("      The BLE trainer app (client) uses bleak>=0.21.0.")
+    print("      Use separate virtual environments to run both:")
+    print()
+    print("      # Environment for mock device (peripheral)")
+    print("      python -m venv venv-peripheral")
+    print("      source venv-peripheral/bin/activate")
+    print("      pip install bless 'bleak==0.19.5'")
+    print("      python mock_device_ble.py")
+    print()
+    print("      # Environment for client app (in a different terminal)")
+    print("      python -m venv venv-client")
+    print("      source venv-client/bin/activate")
+    print("      pip install 'bleak>=0.21.0'")
+    print("      python ble_trainer_app.py")
     print()
 
 
 if __name__ == "__main__":
     print_usage()
     
-    if not BLUEZ_AVAILABLE:
-        import sys
+    if not BLESS_AVAILABLE:
         sys.exit(1)
     
     try:

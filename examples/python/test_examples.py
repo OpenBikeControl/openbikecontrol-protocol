@@ -195,10 +195,10 @@ def test_mock_device_ble():
     print("Testing BLE mock device...")
     
     try:
-        from mock_device_ble import MockBLEDevice, BLUEZ_AVAILABLE
+        from mock_device_ble import MockBLEDevice, BLESS_AVAILABLE
         
-        if not BLUEZ_AVAILABLE:
-            print("  ⊘ Skipped (bluez-peripheral not available)")
+        if not BLESS_AVAILABLE:
+            print("  ⊘ Skipped (bless not available)")
             return
         
         # Create device
