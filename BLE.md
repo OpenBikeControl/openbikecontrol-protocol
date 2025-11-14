@@ -187,7 +187,7 @@ Recommended BLE connection parameters for optimal performance:
 
 1. **Device Discovery:**
    - Scan for devices advertising service UUID `d273f680-d548-419d-b9d1-fa0472345229`
-   - Filter by device name or manufacturer if needed
+   - Filter by device name if needed
 
 2. **Connection:**
    - Connect and discover the OpenBikeControl service
