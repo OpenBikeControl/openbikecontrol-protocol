@@ -1,0 +1,8 @@
+# BLE support (cross-platform Bluetooth Low Energy library)
+bleak>=0.21.0
+
+# mDNS/Zeroconf support
+zeroconf>=0.131.0
+
+# WebSocket client for mDNS protocol
+websockets>=12.0
