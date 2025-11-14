@@ -39,8 +39,7 @@ Or install individually:
 pip install bleak>=0.21.0
 
 # For BLE peripheral (mock device server, cross-platform: Windows, macOS, Linux)
-# Note: Use separate virtual environment due to bleak version conflict
-pip install bless 'bleak==0.19.5'
+pip install git+https://github.com/x42en/bless.git@master
 
 # For mDNS support
 pip install zeroconf>=0.131.0 websockets>=12.0
@@ -300,15 +299,11 @@ Note: If zeroconf is not installed, the mock device will still provide the WebSo
 
 ### Using the Mock BLE Device
 
-A mock BLE device simulator is provided for testing the BLE trainer app without physical hardware. It now uses the **bless** library for cross-platform support:
+A mock BLE device simulator is provided for testing the BLE trainer app without physical hardware. It uses the **bless** library from https://github.com/x42en/bless for cross-platform support with the latest bleak version:
 
 ```bash
 # Install dependencies for mock BLE device (cross-platform)
-# Note: bless requires an older version of bleak (0.19.5)
-# Use a separate virtual environment from the client app
-python -m venv venv-peripheral
-source venv-peripheral/bin/activate  # On Windows: venv-peripheral\Scripts\activate
-pip install bless 'bleak==0.19.5'
+pip install git+https://github.com/x42en/bless.git@master
 
 # Start the mock BLE device
 python mock_device_ble.py
@@ -324,20 +319,14 @@ The mock BLE device will:
 
 To test with the mock BLE device:
 
-1. In one terminal, create an environment for the mock device and start it:
+1. In one terminal, install dependencies and start the mock device:
    ```bash
-   # Create virtual environment for peripheral
-   python -m venv venv-peripheral
-   source venv-peripheral/bin/activate  # On Windows: venv-peripheral\Scripts\activate
-   pip install bless 'bleak==0.19.5'
+   pip install git+https://github.com/x42en/bless.git@master
    python mock_device_ble.py
    ```
 
-2. In another terminal, run the BLE trainer app with a separate environment:
+2. In another terminal, run the BLE trainer app:
    ```bash
-   # Create virtual environment for client
-   python -m venv venv-client
-   source venv-client/bin/activate  # On Windows: venv-client\Scripts\activate
    pip install 'bleak>=0.21.0'
    python ble_trainer_app.py
    ```
@@ -349,7 +338,7 @@ To test with the mock BLE device:
 - **macOS**: Full support (macOS 10.15 Catalina or later)
 - **Linux**: Full support (with BlueZ 5.43+)
 
-**Version Note:** The mock BLE device (peripheral) requires `bleak==0.19.5` via the `bless` library, while the BLE trainer app (client) requires `bleak>=0.21.0`. Use separate virtual environments to avoid conflicts, as shown in the examples above.
+**Version Note:** The latest version of bless from https://github.com/x42en/bless is compatible with bleak>=0.21.0, so you can now run both the mock BLE device and the BLE trainer app in the same environment without version conflicts.
 
 ## Architecture
 

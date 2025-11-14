@@ -2,11 +2,8 @@
 bleak>=0.21.0
 
 # BLE peripheral support (for mock BLE device - cross-platform: Windows, macOS, Linux)
-# Note: bless requires bleak==0.19.5 which conflicts with the client. 
-# Use separate virtual environments for running the mock device vs the client app.
-# For mock device: pip install bless 'bleak==0.19.5'
-# For client app: pip install 'bleak>=0.21.0'
-bless>=0.2.5
+# Using bless from x42en/bless which is compatible with latest bleak
+bless @ git+https://github.com/x42en/bless.git@master
 
 # mDNS/Zeroconf support
 zeroconf>=0.131.0
