@@ -22,7 +22,9 @@ OpenBikeControl enables standardized communication between BLE/network controlle
 
 ## Documentation
 
-- **[Protocol Specification](PROTOCOL.md)** - Complete technical specification for BLE and mDNS protocols
+- **[Protocol Specification](PROTOCOL.md)** - Complete technical specification with button mappings
+- **[BLE Protocol](BLE.md)** - Bluetooth Low Energy implementation details
+- **[mDNS Protocol](MDNS.md)** - Network-based connectivity specification
 - **[Certification Program](CERTIFICATION.md)** - Device manufacturer certification process and benefits
 
 ## Quick Start
@@ -61,13 +63,16 @@ See [Button Mapping](PROTOCOL.md#button-mapping) for complete list.
 ### BLE Protocol
 - Service UUID: `d273f680-d548-419d-b9d1-fa0472345229`
 - Button State Characteristic: `d273f681-d548-419d-b9d1-fa0472345229` (Read, Notify)
+- Haptic Feedback Characteristic: `d273f682-d548-419d-b9d1-fa0472345229` (Write)
 - Data Format: `[Button_ID] [State]` pairs
 - Notifications sent only on state changes
+- See [BLE.md](BLE.md) for complete details
 
 ### mDNS Protocol
 - Service Type: `_openbikecontrol._tcp.local.`
-- HTTP/WebSocket endpoints for button state
+- HTTP/WebSocket endpoints for button state and haptic feedback
 - Similar to "Direct Connect" implementations
+- See [MDNS.md](MDNS.md) for complete details
 
 ## Certification
 
