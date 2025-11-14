@@ -9,7 +9,7 @@ These examples show how trainer applications can integrate OpenBikeControl suppo
 - **BLE Trainer App** (`ble_trainer_app.py`): Connect to devices via Bluetooth Low Energy
 - **mDNS Trainer App** (`mdns_trainer_app.py`): Connect to devices via network using mDNS/Zeroconf
 - **Mock Device** (`mock_device.py`): Simulate an OpenBikeControl mDNS device for testing (requires `aiohttp` and `zeroconf`)
-- **Mock BLE Device** (`mock_device_ble.py`): Simulate an OpenBikeControl BLE device for testing (requires `bluez-peripheral` on Linux)
+- **Mock BLE Device** (`mock_device_ble.py`): Simulate an OpenBikeControl BLE device for testing (cross-platform: Windows, macOS, Linux - requires `bless`)
 - **Tests** (`test_examples.py`): Basic unit tests for the example code
 
 Both trainer app examples provide:
@@ -38,8 +38,9 @@ Or install individually:
 # For BLE support (client)
 pip install bleak>=0.21.0
 
-# For BLE peripheral (mock device server, Linux only)
-pip install bluez-peripheral>=0.1.7
+# For BLE peripheral (mock device server, cross-platform: Windows, macOS, Linux)
+# Note: Use separate virtual environment due to bleak version conflict
+pip install bless 'bleak==0.19.5'
 
 # For mDNS support
 pip install zeroconf>=0.131.0 websockets>=12.0
@@ -299,14 +300,18 @@ Note: If zeroconf is not installed, the mock device will still provide the WebSo
 
 ### Using the Mock BLE Device
 
-A mock BLE device simulator is provided for testing the BLE trainer app without physical hardware:
+A mock BLE device simulator is provided for testing the BLE trainer app without physical hardware. It now uses the **bless** library for cross-platform support:
 
 ```bash
-# Install additional dependencies (Linux only)
-pip install bluez-peripheral
+# Install dependencies for mock BLE device (cross-platform)
+# Note: bless requires an older version of bleak (0.19.5)
+# Use a separate virtual environment from the client app
+python -m venv venv-peripheral
+source venv-peripheral/bin/activate  # On Windows: venv-peripheral\Scripts\activate
+pip install bless 'bleak==0.19.5'
 
-# Start the mock BLE device (requires sudo on Linux)
-sudo python mock_device_ble.py
+# Start the mock BLE device
+python mock_device_ble.py
 ```
 
 The mock BLE device will:
@@ -319,24 +324,32 @@ The mock BLE device will:
 
 To test with the mock BLE device:
 
-1. In one terminal, start the mock BLE device:
+1. In one terminal, create an environment for the mock device and start it:
    ```bash
-   sudo python mock_device_ble.py
+   # Create virtual environment for peripheral
+   python -m venv venv-peripheral
+   source venv-peripheral/bin/activate  # On Windows: venv-peripheral\Scripts\activate
+   pip install bless 'bleak==0.19.5'
+   python mock_device_ble.py
    ```
 
-2. In another terminal, run the BLE trainer app to discover and connect:
+2. In another terminal, run the BLE trainer app with a separate environment:
    ```bash
+   # Create virtual environment for client
+   python -m venv venv-client
+   source venv-client/bin/activate  # On Windows: venv-client\Scripts\activate
+   pip install 'bleak>=0.21.0'
    python ble_trainer_app.py
    ```
    
    The trainer app will scan for BLE devices and discover the mock device.
 
 **Platform Support:**
-- **Linux**: Full support with BlueZ 5.43+. Requires `sudo` or appropriate D-Bus permissions.
-- **macOS**: Limited support. BLE peripheral functionality may not work.
-- **Windows**: Not supported (requires BlueZ).
+- **Windows**: Full support (Windows 10 build 1709 or later)
+- **macOS**: Full support (macOS 10.15 Catalina or later)
+- **Linux**: Full support (with BlueZ 5.43+)
 
-Note: BLE peripheral simulation requires system-level Bluetooth access, which is why `sudo` is typically required on Linux.
+**Version Note:** The mock BLE device (peripheral) requires `bleak==0.19.5` via the `bless` library, while the BLE trainer app (client) requires `bleak>=0.21.0`. Use separate virtual environments to avoid conflicts, as shown in the examples above.
 
 ## Architecture
 

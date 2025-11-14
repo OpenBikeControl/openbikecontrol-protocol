@@ -1,8 +1,12 @@
-# BLE support (cross-platform Bluetooth Low Energy library)
+# BLE client support (cross-platform Bluetooth Low Energy library for connecting to devices)
 bleak>=0.21.0
 
-# BLE peripheral support (for mock BLE device on Linux)
-bluez-peripheral>=0.1.7
+# BLE peripheral support (for mock BLE device - cross-platform: Windows, macOS, Linux)
+# Note: bless requires bleak==0.19.5 which conflicts with the client. 
+# Use separate virtual environments for running the mock device vs the client app.
+# For mock device: pip install bless 'bleak==0.19.5'
+# For client app: pip install 'bleak>=0.21.0'
+bless>=0.2.5
 
 # mDNS/Zeroconf support
 zeroconf>=0.131.0
