@@ -36,8 +36,7 @@ try:
 except ImportError:
     BLESS_AVAILABLE = False
     print("Note: Install bless for cross-platform BLE peripheral simulation")
-    print("      pip install bless 'bleak==0.19.5'")
-    print("      (Note: bless requires bleak 0.19.x, which conflicts with the client app)")
+    print("      pip install git+https://github.com/x42en/bless.git@master")
 
 
 # OpenBikeControl Service and Characteristic UUIDs (from BLE.md)
@@ -118,7 +117,7 @@ class MockBLEDevice:
         """Set up the BLE GATT server with all required services and characteristics."""
         if not BLESS_AVAILABLE:
             raise RuntimeError("bless library is required for BLE simulation. "
-                             "Install with: pip install bless 'bleak==0.19.5'")
+                             "Install with: pip install git+https://github.com/x42en/bless.git@master")
         
         print(f"✓ Creating BLE server: {self.name}")
         
@@ -318,11 +317,9 @@ async def start_mock_ble_device():
     """Start the mock BLE device."""
     if not BLESS_AVAILABLE:
         print("❌ bless library is required for cross-platform BLE peripheral simulation")
-        print("   Install with: pip install bless 'bleak==0.19.5'")
+        print("   Install with: pip install git+https://github.com/x42en/bless.git@master")
         print()
-        print("   Note: The mock BLE device requires bleak 0.19.5 (older version)")
-        print("         This is different from the BLE client app which uses bleak>=0.21.0")
-        print("         Use separate virtual environments if you need to run both.")
+        print("   Note: The latest version of bless is compatible with bleak>=0.21.0")
         return
     
     device = MockBLEDevice()
@@ -358,28 +355,16 @@ def print_usage():
     print("  - Respond to haptic feedback commands")
     print()
     print("Requirements:")
-    print("  pip install bless 'bleak==0.19.5'")
+    print("  pip install git+https://github.com/x42en/bless.git@master")
     print()
     print("Platform Support:")
     print("  - Windows 10+ (build 1709 or later)")
     print("  - macOS 10.15+ (Catalina or later)")
     print("  - Linux (with BlueZ 5.43+)")
     print()
-    print("Note: This mock device uses bless which requires bleak 0.19.5.")
-    print("      The BLE trainer app (client) uses bleak>=0.21.0.")
-    print("      Use separate virtual environments to run both:")
-    print()
-    print("      # Environment for mock device (peripheral)")
-    print("      python -m venv venv-peripheral")
-    print("      source venv-peripheral/bin/activate")
-    print("      pip install bless 'bleak==0.19.5'")
-    print("      python mock_device_ble.py")
-    print()
-    print("      # Environment for client app (in a different terminal)")
-    print("      python -m venv venv-client")
-    print("      source venv-client/bin/activate")
-    print("      pip install 'bleak>=0.21.0'")
-    print("      python ble_trainer_app.py")
+    print("Note: The latest version of bless is compatible with bleak>=0.21.0,")
+    print("      so you can now run both the mock device and the BLE client app")
+    print("      in the same environment without version conflicts.")
     print()
 
 
