@@ -15,7 +15,7 @@ OpenBikeControl provides a unified, open protocol that:
 - **Easy to implement** - Simple data format with minimal overhead
 - **Open standard** - No licensing fees or proprietary restrictions
 - **Dual connectivity** - Supports both BLE and network-based connections
-- **Already partially adopted** - Compatible with existing "Direct Connect" implementations
+- **Already partially adopted** - Similar to existing "Direct Connect" implementations
 - **Apple-friendly** - Does not rely on manufacturer data fields that cannot be emulated on iOS
 
 ### Supported Actions

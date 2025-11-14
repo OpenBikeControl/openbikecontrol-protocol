@@ -18,7 +18,7 @@ OpenBikeControl enables standardized communication between BLE/network controlle
 - ✅ **Easy to Implement** - Simple data format for both apps and devices
 - ✅ **Dual Connectivity** - Works via BLE or network (mDNS/Direct Connect)
 - ✅ **Apple Compatible** - No reliance on manufacturer data fields
-- ✅ **Already Adopted** - Compatible with existing "Direct Connect" implementations
+- ✅ **Already Adopted** - Similar to existing "Direct Connect" implementations
 
 ## Documentation
 
@@ -67,7 +67,7 @@ See [Button Mapping](PROTOCOL.md#button-mapping) for complete list.
 ### mDNS Protocol
 - Service Type: `_openbikecontrol._tcp.local.`
 - HTTP/WebSocket endpoints for button state
-- Compatible with "Direct Connect" implementations
+- Similar to "Direct Connect" implementations
 
 ## Certification
 
