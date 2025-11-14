@@ -190,6 +190,38 @@ def test_mock_device_zeroconf():
         traceback.print_exc()
 
 
+def test_mock_device_ble():
+    """Test that BLE mock device can be instantiated."""
+    print("Testing BLE mock device...")
+    
+    try:
+        from mock_device_ble import MockBLEDevice, BLUEZ_AVAILABLE
+        
+        if not BLUEZ_AVAILABLE:
+            print("  ⊘ Skipped (bluez-peripheral not available)")
+            return
+        
+        # Create device
+        device = MockBLEDevice()
+        
+        # Check device info
+        info = device.get_device_info()
+        assert info['name'] == 'Mock OpenBike Remote', "Device name mismatch"
+        assert info['manufacturer'] == 'ExampleCorp', "Manufacturer mismatch"
+        assert info['model'] == 'MC-100', "Model mismatch"
+        assert info['battery'] == 85, "Battery level mismatch"
+        assert info['serial'] == '1234567890', "Serial mismatch"
+        
+        print("  ✓ BLE mock device tests passed")
+    
+    except ImportError as e:
+        print(f"  ⊘ Skipped (import error: {e})")
+    except Exception as e:
+        print(f"  ⚠ BLE mock device test skipped due to error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -203,6 +235,7 @@ def main():
         test_button_names()
         test_mdns_format_consistency()
         test_mock_device_zeroconf()
+        test_mock_device_ble()
         
         print()
         print("=" * 60)

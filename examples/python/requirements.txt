@@ -1,8 +1,14 @@
 # BLE support (cross-platform Bluetooth Low Energy library)
 bleak>=0.21.0
 
+# BLE peripheral support (for mock BLE device on Linux)
+bluez-peripheral>=0.1.7
+
 # mDNS/Zeroconf support
 zeroconf>=0.131.0
 
 # WebSocket client for mDNS protocol
 websockets>=12.0
+
+# WebSocket server for mDNS mock device
+aiohttp>=3.8.0

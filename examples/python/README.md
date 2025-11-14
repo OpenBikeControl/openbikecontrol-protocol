@@ -8,7 +8,8 @@ These examples show how trainer applications can integrate OpenBikeControl suppo
 
 - **BLE Trainer App** (`ble_trainer_app.py`): Connect to devices via Bluetooth Low Energy
 - **mDNS Trainer App** (`mdns_trainer_app.py`): Connect to devices via network using mDNS/Zeroconf
-- **Mock Device** (`mock_device.py`): Simulate an OpenBikeControl device for testing (requires `aiohttp`)
+- **Mock Device** (`mock_device.py`): Simulate an OpenBikeControl mDNS device for testing (requires `aiohttp` and `zeroconf`)
+- **Mock BLE Device** (`mock_device_ble.py`): Simulate an OpenBikeControl BLE device for testing (requires `bluez-peripheral` on Linux)
 - **Tests** (`test_examples.py`): Basic unit tests for the example code
 
 Both trainer app examples provide:
@@ -34,11 +35,17 @@ pip install -r requirements.txt
 Or install individually:
 
 ```bash
-# For BLE support
+# For BLE support (client)
 pip install bleak>=0.21.0
+
+# For BLE peripheral (mock device server, Linux only)
+pip install bluez-peripheral>=0.1.7
 
 # For mDNS support
 pip install zeroconf>=0.131.0 websockets>=12.0
+
+# For mDNS mock device server
+pip install aiohttp>=3.8.0
 ```
 
 ### Platform-Specific Requirements
@@ -253,6 +260,7 @@ The tests verify:
 - Button state formatting
 - Button name mappings
 - Consistency between BLE and mDNS implementations
+- Mock device functionality (mDNS and BLE)
 
 ### Using the Mock Device
 
@@ -288,6 +296,47 @@ To test with the mock device:
    The trainer app will automatically discover the mock device via mDNS and connect to it.
 
 Note: If zeroconf is not installed, the mock device will still provide the WebSocket endpoint for direct connection testing, but automatic discovery won't be available.
+
+### Using the Mock BLE Device
+
+A mock BLE device simulator is provided for testing the BLE trainer app without physical hardware:
+
+```bash
+# Install additional dependencies (Linux only)
+pip install bluez-peripheral
+
+# Start the mock BLE device (requires sudo on Linux)
+sudo python mock_device_ble.py
+```
+
+The mock BLE device will:
+- Advertise as a BLE peripheral with the OpenBikeControl service UUID
+- Implement OpenBikeControl service with Button State and Haptic Feedback characteristics
+- Implement standard Device Information and Battery services
+- Accept connections from the BLE trainer app
+- Automatically simulate button presses (Shift Up, Shift Down, Select, Wave every 3 seconds)
+- Respond to haptic feedback commands
+
+To test with the mock BLE device:
+
+1. In one terminal, start the mock BLE device:
+   ```bash
+   sudo python mock_device_ble.py
+   ```
+
+2. In another terminal, run the BLE trainer app to discover and connect:
+   ```bash
+   python ble_trainer_app.py
+   ```
+   
+   The trainer app will scan for BLE devices and discover the mock device.
+
+**Platform Support:**
+- **Linux**: Full support with BlueZ 5.43+. Requires `sudo` or appropriate D-Bus permissions.
+- **macOS**: Limited support. BLE peripheral functionality may not work.
+- **Windows**: Not supported (requires BlueZ).
+
+Note: BLE peripheral simulation requires system-level Bluetooth access, which is why `sudo` is typically required on Linux.
 
 ## Architecture
 
