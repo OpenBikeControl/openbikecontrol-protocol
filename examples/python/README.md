@@ -8,8 +8,10 @@ These examples show how trainer applications can integrate OpenBikeControl suppo
 
 - **BLE Trainer App** (`ble_trainer_app.py`): Connect to devices via Bluetooth Low Energy
 - **mDNS Trainer App** (`mdns_trainer_app.py`): Connect to devices via network using mDNS/Zeroconf
+- **Mock Device** (`mock_device.py`): Simulate an OpenBikeControl device for testing (requires `aiohttp`)
+- **Tests** (`test_examples.py`): Basic unit tests for the example code
 
-Both examples provide:
+Both trainer app examples provide:
 - Device discovery
 - Connection management
 - Button state monitoring
@@ -231,6 +233,59 @@ Both examples support sending haptic feedback to devices:
 - `error`: Error pattern
 
 The examples automatically send a short haptic pulse when a button is pressed, providing tactile confirmation to the user.
+
+## Testing
+
+### Running Unit Tests
+
+Basic unit tests are provided to verify core functionality:
+
+```bash
+# Install dependencies first
+pip install -r requirements.txt
+
+# Run tests
+python test_examples.py
+```
+
+The tests verify:
+- Button state parsing
+- Button state formatting
+- Button name mappings
+- Consistency between BLE and mDNS implementations
+
+### Using the Mock Device
+
+A mock device simulator is provided for testing without physical hardware:
+
+```bash
+# Install additional dependency
+pip install aiohttp
+
+# Start the mock device
+python mock_device.py
+```
+
+The mock device will:
+- Start a WebSocket server on port 8080
+- Accept connections from the mDNS trainer app
+- Automatically simulate button presses (Shift Up, Shift Down, Select, Wave)
+- Respond to haptic feedback commands
+
+To test with the mock device:
+
+1. In one terminal, start the mock device:
+   ```bash
+   python mock_device.py
+   ```
+
+2. In another terminal, connect manually (the mDNS trainer app can connect directly if you know the IP):
+   ```bash
+   # You can test the WebSocket endpoint directly
+   # Or modify mdns_trainer_app.py to connect to localhost:8080
+   ```
+
+Note: The mock device provides the WebSocket endpoint but doesn't advertise via mDNS. For full mDNS discovery testing, you would need a complete implementation with zeroconf service advertisement.
 
 ## Architecture
 
