@@ -61,24 +61,24 @@ BATTERY_LEVEL_CHAR_UUID = "00002a19-0000-1000-8000-00805f9b34fb"
 
 class MockBLEDevice:
     """Simulates an OpenBikeControl BLE device using the bless library."""
-    
-    def __init__(self, name: str = "Mock OpenBike Remote"):
+
+    def __init__(self, name: str = "OpenBike"):
         self.name = name
         self.battery = 85
         self.button_simulation_task: Optional[asyncio.Task] = None
         self.is_running = False
-        
+
         # Device information
         self.manufacturer = "ExampleCorp"
         self.model = "MC-100"
         self.serial = "1234567890"
         self.hardware_rev = "1.0"
         self.firmware_rev = "1.0.0"
-        
+
         # BLE server
         self.server: Optional[BlessServer] = None
         self._button_state_value = bytes([0x00, 0x00])
-    
+
     def get_device_info(self):
         """Get device information."""
         return {
@@ -90,14 +90,14 @@ class MockBLEDevice:
             "firmware_rev": self.firmware_rev,
             "battery": self.battery
         }
-    
+
     def _haptic_write_callback(self, characteristic, value: bytes):
         """Handle haptic feedback writes."""
         if len(value) >= 3:
             pattern = value[0]
             duration = value[1]
             intensity = value[2]
-            
+
             pattern_names = {
                 0x00: "none",
                 0x01: "short",
@@ -109,52 +109,52 @@ class MockBLEDevice:
                 0x07: "error"
             }
             pattern_name = pattern_names.get(pattern, f"0x{pattern:02X}")
-            
+
             print(f"  ← Received haptic feedback: pattern={pattern_name}, "
                   f"duration={duration}×10ms, intensity={intensity}")
-    
+
     async def setup_ble_server(self):
         """Set up the BLE GATT server with all required services and characteristics."""
         if not BLESS_AVAILABLE:
             raise RuntimeError("bless library is required for BLE simulation. "
                              "Install with: pip install git+https://github.com/x42en/bless.git@master")
-        
+
         print(f"✓ Creating BLE server: {self.name}")
-        
+
         # Create server
         self.server = BlessServer(name=self.name)
-        
+
         # Set write callback for haptic feedback
         self.server.write_request_func = self._haptic_write_callback
-        
+
         # Add OpenBikeControl Service
         await self.server.add_new_service(SERVICE_UUID)
         print(f"  Registered OpenBikeControl service: {SERVICE_UUID}")
-        
+
         # Add Button State characteristic (READ/NOTIFY)
         await self.server.add_new_characteristic(
             SERVICE_UUID,
             BUTTON_STATE_CHAR_UUID,
             GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify,
-            bytes([0x00, 0x00]),
+            None,
             GATTAttributePermissions.readable
         )
         print(f"    - Button State (READ/NOTIFY): {BUTTON_STATE_CHAR_UUID}")
-        
+
         # Add Haptic Feedback characteristic (WRITE)
         await self.server.add_new_characteristic(
             SERVICE_UUID,
             HAPTIC_FEEDBACK_CHAR_UUID,
             GATTCharacteristicProperties.write | GATTCharacteristicProperties.write_without_response,
-            bytes([0x00, 0x00, 0x00]),
+            None,
             GATTAttributePermissions.writeable
         )
         print(f"    - Haptic Feedback (WRITE): {HAPTIC_FEEDBACK_CHAR_UUID}")
-        
+
         # Add Device Information Service
         await self.server.add_new_service(DEVICE_INFO_SERVICE_UUID)
         print(f"  Registered Device Information service: {DEVICE_INFO_SERVICE_UUID}")
-        
+
         # Add device info characteristics
         await self.server.add_new_characteristic(
             DEVICE_INFO_SERVICE_UUID,
@@ -191,48 +191,49 @@ class MockBLEDevice:
             self.firmware_rev.encode('utf-8'),
             GATTAttributePermissions.readable
         )
-        
+
         # Add Battery Service
         await self.server.add_new_service(BATTERY_SERVICE_UUID)
         print(f"  Registered Battery service: {BATTERY_SERVICE_UUID}")
-        
+
         # Add battery level characteristic
         await self.server.add_new_characteristic(
             BATTERY_SERVICE_UUID,
             BATTERY_LEVEL_CHAR_UUID,
             GATTCharacteristicProperties.read | GATTCharacteristicProperties.notify,
-            struct.pack('<B', self.battery),
+            None,
             GATTAttributePermissions.readable
         )
-        
+
         # Start the server
-        await self.server.start()
+        await self.server.start(10, False)
         print(f"  Advertising with service UUID: {SERVICE_UUID}")
-    
+
     async def update_button_state(self, button_id: int, state: int):
         """Update button state and notify clients."""
         if not self.server:
             return
-        
+
         self._button_state_value = struct.pack('<BB', button_id, state)
-        await self.server.update_value(SERVICE_UUID, BUTTON_STATE_CHAR_UUID, self._button_state_value)
-    
+        self.server.get_characteristic(BUTTON_STATE_CHAR_UUID).value = self._button_state_value
+        self.server.update_value(SERVICE_UUID, BUTTON_STATE_CHAR_UUID)
+
     async def simulate_button_press(self, button_id: int):
         """Simulate a button press and release with BLE notifications."""
         if not self.server:
             return
-        
+
         # Button press
         await self.update_button_state(button_id, 0x01)
         print(f"  → Sent button press notification: 0x{button_id:02X}")
-        
+
         # Wait a bit for press duration
         await asyncio.sleep(0.1)
-        
+
         # Button release
         await self.update_button_state(button_id, 0x00)
         print(f"  → Sent button release notification: 0x{button_id:02X}")
-    
+
     async def simulate_buttons_loop(self):
         """Background task to simulate button presses periodically."""
         # Button sequence to simulate
@@ -242,30 +243,30 @@ class MockBLEDevice:
             (3.0, 0x14),   # Select after 3s
             (3.0, 0x20),   # Wave after 3s
         ]
-        
+
         print("\n👉 Starting button simulation...")
         print("   Buttons will be pressed every few seconds")
-        
+
         while self.is_running:
             for delay, button_id in button_sequence:
                 if not self.is_running:
                     break
-                
+
                 await asyncio.sleep(delay)
-                
+
                 if self.is_running:
                     await self.simulate_button_press(button_id)
-    
+
     async def start(self):
         """Start the BLE device simulation."""
         self.is_running = True
-        
+
         # Setup BLE server with services
         await self.setup_ble_server()
-        
+
         # Start button simulation
         self.button_simulation_task = asyncio.create_task(self.simulate_buttons_loop())
-        
+
         print("\n" + "=" * 60)
         print("Mock OpenBikeControl BLE Device - Running")
         print("=" * 60)
@@ -294,22 +295,22 @@ class MockBLEDevice:
         print()
         print("Press Ctrl+C to stop")
         print()
-    
+
     async def stop(self):
         """Stop the BLE device simulation."""
         print("\n\n⏹ Stopping BLE device...")
         self.is_running = False
-        
+
         if self.button_simulation_task:
             self.button_simulation_task.cancel()
             try:
                 await self.button_simulation_task
             except asyncio.CancelledError:
                 pass
-        
+
         if self.server:
             await self.server.stop()
-        
+
         print("✓ BLE device stopped")
 
 
@@ -321,16 +322,16 @@ async def start_mock_ble_device():
         print()
         print("   Note: The latest version of bless is compatible with bleak>=0.21.0")
         return
-    
+
     device = MockBLEDevice()
-    
+
     try:
         await device.start()
-        
+
         # Keep running
         while True:
             await asyncio.sleep(1)
-    
+
     except KeyboardInterrupt:
         await device.stop()
 
@@ -370,10 +371,10 @@ def print_usage():
 
 if __name__ == "__main__":
     print_usage()
-    
+
     if not BLESS_AVAILABLE:
         sys.exit(1)
-    
+
     try:
         asyncio.run(start_mock_ble_device())
     except KeyboardInterrupt:
