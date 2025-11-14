@@ -32,107 +32,23 @@ OpenBikeControl enables the following trainer app actions:
 
 OpenBikeControl uses two transport mechanisms:
 
-1. **BLE (Bluetooth Low Energy)** - For direct device-to-app connections
-2. **mDNS (Multicast DNS)** - For network-based connections ("Direct Connect")
+1. **[BLE (Bluetooth Low Energy)](BLE.md)** - For direct device-to-app connections
+2. **[mDNS (Multicast DNS)](MDNS.md)** - For network-based connections ("Direct Connect")
 
 Both transports use the same logical data format, ensuring consistency across connection types.
 
----
+### Quick Reference
 
-## BLE Protocol Specification
+**BLE Protocol:**
+- Service UUID: `d273f680-d548-419d-b9d1-fa0472345229`
+- Button State Characteristic (Read/Notify): `d273f681-d548-419d-b9d1-fa0472345229`
+- Haptic Feedback Characteristic (Write): `d273f682-d548-419d-b9d1-fa0472345229`
+- See [BLE.md](BLE.md) for complete specification
 
-### Service UUID
-
-**Primary Service UUID:** `d273f680-d548-419d-b9d1-fa0472345229`
-
-This service UUID is used for OpenBikeControl device advertisement and discovery.
-
-### Characteristics
-
-#### 1. Button State Characteristic
-
-**UUID:** `d273f681-d548-419d-b9d1-fa0472345229`
-
-**Properties:** Read, Notify
-
-**Description:** Reports the state of all buttons on the controller.
-
-**Data Format:**
-
-The characteristic value consists of button state pairs:
-
-```
-[Button_ID_1] [State_1] [Button_ID_2] [State_2] ... [Button_ID_N] [State_N]
-```
-
-- **Button_ID** (1 byte): Identifier for the button (see Button Mapping section)
-- **State** (1 byte): Current state of the button
-  - `0x00` = Released/Off
-  - `0x01` = Pressed/On
-  - `0x02-0xFF` = Analog value (for analog inputs like triggers or joysticks, where 0x02 = minimum, 0xFF = maximum)
-
-**Notification Behavior:**
-
-- Notifications MUST be sent only when a button state changes
-- Include all changed buttons in a single notification to minimize BLE traffic
-- If multiple buttons change simultaneously, combine them in one notification
-- Maximum recommended payload: 20 bytes (10 button state pairs)
-
-**Example Notifications:**
-
-```
-// Single button press (button 0x01 pressed)
-[0x01, 0x01]
-
-// Multiple buttons (button 0x01 pressed, button 0x02 released)
-[0x01, 0x01, 0x02, 0x00]
-
-// Analog input (button 0x10 at 50% = 0x80)
-[0x10, 0x80]
-```
-
-### Standard BLE Services
-
-OpenBikeControl devices MUST implement the following standard BLE services:
-
-#### Device Information Service (0x180A)
-
-Required characteristics:
-- **Manufacturer Name String** (0x2A29) - Device manufacturer
-- **Model Number String** (0x2A24) - Device model
-- **Serial Number String** (0x2A25) - Unique device serial
-- **Hardware Revision String** (0x2A27) - Hardware version
-- **Firmware Revision String** (0x2A26) - Firmware version
-- **Software Revision String** (0x2A28) - Optional software version
-
-#### Battery Service (0x180F)
-
-Required for battery-powered devices:
-- **Battery Level** (0x2A19) - Current battery percentage (0-100)
-
-### Advertisement Requirements
-
-**CRITICAL:** OpenBikeControl devices MUST NOT rely on manufacturer-specific data in BLE advertisements. This restriction ensures compatibility with Apple iOS devices, which do not allow apps to emulate manufacturer data.
-
-**Advertisement Data:**
-
-- **Service UUIDs**: Must advertise the primary service UUID `d273f680-d548-419d-b9d1-fa0472345229`
-- **Flags**: General discoverable mode, BR/EDR not supported
-
-**Example Advertisement:**
-```
-Flags: 0x06 (LE General Discoverable, BR/EDR not supported)
-Complete List of 16-bit Service UUIDs: d273f680-d548-419d-b9d1-fa0472345229
-```
-
-### Connection Parameters
-
-Recommended BLE connection parameters for optimal performance:
-
-- **Connection Interval**: 7.5-15ms (for low latency)
-- **Slave Latency**: 0 (for immediate response)
-- **Supervision Timeout**: 4 seconds
-- **MTU Size**: 23 bytes minimum, 247 bytes preferred
+**mDNS Protocol:**
+- Service Type: `_openbikecontrol._tcp.local.`
+- WebSocket endpoint: `ws://<device-ip>:<port>/api/ws`
+- See [MDNS.md](MDNS.md) for complete specification
 
 ---
 
@@ -219,91 +135,6 @@ Apps may implement multi-button combinations by detecting multiple simultaneous 
 
 ---
 
-## mDNS Protocol Specification
-
-The mDNS implementation provides network-based connectivity, similar to the "Direct Connect" protocol.
-
-### Service Discovery
-
-**Service Type:** `_openbikecontrol._tcp.local.`
-
-**Service Name Format:** `<Device Name>._openbikecontrol._tcp.local.`
-
-**TXT Record Fields:**
-
-The TXT record fields mirror BLE advertisement data:
-
-- `version=1` - Protocol version
-- `id=<unique-id>` - Unique device identifier (MAC address or serial)
-- `name=<device-name>` - Human-readable device name
-- `ble-service-uuids=<uuid-list>` - Comma-separated list of BLE service UUIDs (e.g., "FE50")
-- `manufacturer=<name>` - Device manufacturer
-- `model=<model>` - Device model
-
-**Example:**
-```
-Service: OpenBikeControl Remote._swiftcontrol._tcp.local.
-Port: 8080
-TXT:
-  version=1
-  id=aabbccddeeff
-  name=OpenBikeControl Remote
-  ble-service-uuids=FE50
-  manufacturer=ExampleCorp
-  model=SC-100
-```
-
-### WebSocket Protocol
-
-Once discovered via mDNS/Bonjour, apps connect to the device using WebSocket for real-time communication.
-
-**Endpoint:** `ws://<device-ip>:<port>/api/ws`
-
-**Message Format (JSON):**
-
-Button state change notifications:
-```json
-{
-  "type": "button_state",
-  "timestamp": 1699887600000,
-  "buttons": [
-    {"id": 1, "state": 1},
-    {"id": 2, "state": 0}
-  ]
-}
-```
-
-Device status updates:
-```json
-{
-  "type": "device_status",
-  "timestamp": 1699887600000,
-  "battery": 85,
-  "connected": true
-}
-```
-
-Haptic feedback (app to device):
-```json
-{
-  "type": "haptic_feedback",
-  "pattern": "vibrate",
-  "duration": 100,
-  "intensity": 128
-}
-```
-
-Haptic feedback response (device to app):
-```json
-{
-  "type": "haptic_feedback_response",
-  "timestamp": 1699887600000,
-  "success": true
-}
-```
-
----
-
 ## Implementation Guidelines
 
 ### For App Developers
@@ -311,13 +142,17 @@ Haptic feedback response (device to app):
 1. **BLE Implementation:**
    - Scan for devices advertising service UUID `d273f680-d548-419d-b9d1-fa0472345229`
    - Connect and discover the Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`)
+   - Discover the Haptic Feedback characteristic (`d273f682-d548-419d-b9d1-fa0472345229`)
    - Subscribe to notifications for real-time button updates
+   - Send haptic feedback commands for tactile feedback
    - Map button IDs to app-specific actions
+   - See [BLE.md](BLE.md) for detailed BLE implementation
 
 2. **mDNS Implementation:**
    - Use Bonjour/Zeroconf libraries to discover `_openbikecontrol._tcp.local.` services
    - Connect via WebSocket for real-time updates
    - Parse TXT records to get device information and BLE service UUIDs
+   - See [MDNS.md](MDNS.md) for detailed mDNS implementation
 
 3. **Button Mapping:**
    - Provide user configuration for custom button mappings
@@ -333,6 +168,7 @@ Haptic feedback response (device to app):
 1. **Hardware:**
    - Use reliable button switches for digital inputs
    - Consider hall-effect sensors for analog inputs
+   - Include vibration motor for haptic feedback (optional but recommended)
    - Include battery monitoring circuitry for battery level reporting
 
 2. **Firmware:**
@@ -340,6 +176,7 @@ Haptic feedback response (device to app):
    - Only send notifications on state changes
    - Batch multiple button changes in one notification
    - Support both BLE and mDNS for maximum compatibility
+   - Implement haptic feedback if hardware supports it
 
 3. **Power Management:**
    - Implement BLE sleep modes when inactive

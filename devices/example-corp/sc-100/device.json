@@ -13,6 +13,7 @@
   "specs": {
     "buttons": 8,
     "analog_inputs": 2,
+    "haptic_feedback": true,
     "battery_type": "CR2032",
     "battery_life_hours": 500,
     "water_resistance": "IPX4",
@@ -100,6 +101,7 @@
   "ble_services": {
     "primary_service": "d273f680-d548-419d-b9d1-fa0472345229",
     "button_characteristic": "d273f681-d548-419d-b9d1-fa0472345229",
+    "haptic_feedback_characteristic": "d273f682-d548-419d-b9d1-fa0472345229",
     "device_information": true,
     "battery_service": true
   },
