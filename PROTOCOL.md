@@ -1,8 +1,8 @@
-# SwiftControl Protocol Specification
+# OpenBikeControl Protocol Specification
 
 ## Overview
 
-SwiftControl is an open protocol for wireless input devices to control cycling trainer applications. It enables standardized communication between BLE controllers and training apps.
+OpenBikeControl is an open protocol for wireless input devices to control cycling trainer applications. It enables standardized communication between BLE controllers and training apps.
 
 ### Motivation
 
@@ -11,7 +11,7 @@ Many cycling trainer apps support various actions that traditionally require:
 - Keyboard input
 - Proprietary BLE controllers
 
-SwiftControl provides a unified, open protocol that:
+OpenBikeControl provides a unified, open protocol that:
 - **Easy to implement** - Simple data format with minimal overhead
 - **Open standard** - No licensing fees or proprietary restrictions
 - **Dual connectivity** - Supports both BLE and network-based connections
@@ -20,7 +20,7 @@ SwiftControl provides a unified, open protocol that:
 
 ### Supported Actions
 
-SwiftControl enables the following trainer app actions:
+OpenBikeControl enables the following trainer app actions:
 - **Virtual gear shifting** - Up/down shifting for smart trainer devices
 - **Navigation** - Menu navigation, route selection, steering controls
 - **UI controls** - Select, back, confirm buttons
@@ -30,7 +30,7 @@ SwiftControl enables the following trainer app actions:
 
 ## Protocol Architecture
 
-SwiftControl uses two transport mechanisms:
+OpenBikeControl uses two transport mechanisms:
 
 1. **BLE (Bluetooth Low Energy)** - For direct device-to-app connections
 2. **mDNS (Multicast DNS)** - For network-based connections ("Direct Connect")
@@ -45,7 +45,7 @@ Both transports use the same logical data format, ensuring consistency across co
 
 **Primary Service UUID:** `d273f680-d548-419d-b9d1-fa0472345229`
 
-This service UUID is used for SwiftControl device advertisement and discovery.
+This service UUID is used for OpenBikeControl device advertisement and discovery.
 
 ### Characteristics
 
@@ -93,7 +93,7 @@ The characteristic value consists of button state pairs:
 
 ### Standard BLE Services
 
-SwiftControl devices MUST implement the following standard BLE services:
+OpenBikeControl devices MUST implement the following standard BLE services:
 
 #### Device Information Service (0x180A)
 
@@ -112,7 +112,7 @@ Required for battery-powered devices:
 
 ### Advertisement Requirements
 
-**CRITICAL:** SwiftControl devices MUST NOT rely on manufacturer-specific data in BLE advertisements. This restriction ensures compatibility with Apple iOS devices, which do not allow apps to emulate manufacturer data.
+**CRITICAL:** OpenBikeControl devices MUST NOT rely on manufacturer-specific data in BLE advertisements. This restriction ensures compatibility with Apple iOS devices, which do not allow apps to emulate manufacturer data.
 
 **Advertisement Data:**
 
@@ -140,7 +140,7 @@ Recommended BLE connection parameters for optimal performance:
 
 ### Standard Button IDs
 
-SwiftControl defines standard button IDs for common actions. Device manufacturers should map their physical buttons to these standard IDs.
+OpenBikeControl defines standard button IDs for common actions. Device manufacturers should map their physical buttons to these standard IDs.
 
 #### Gear Shifting (0x01-0x0F)
 
@@ -225,9 +225,9 @@ The mDNS implementation provides network-based connectivity, similar to the "Dir
 
 ### Service Discovery
 
-**Service Type:** `_swiftcontrol._tcp.local.`
+**Service Type:** `_openbikecontrol._tcp.local.`
 
-**Service Name Format:** `<Device Name>._swiftcontrol._tcp.local.`
+**Service Name Format:** `<Device Name>._openbikecontrol._tcp.local.`
 
 **TXT Record Fields:**
 
@@ -242,12 +242,12 @@ The TXT record fields mirror BLE advertisement data:
 
 **Example:**
 ```
-Service: SwiftControl Remote._swiftcontrol._tcp.local.
+Service: OpenBikeControl Remote._swiftcontrol._tcp.local.
 Port: 8080
 TXT:
   version=1
   id=aabbccddeeff
-  name=SwiftControl Remote
+  name=OpenBikeControl Remote
   ble-service-uuids=FE50
   manufacturer=ExampleCorp
   model=SC-100
@@ -315,7 +315,7 @@ Haptic feedback response (device to app):
    - Map button IDs to app-specific actions
 
 2. **mDNS Implementation:**
-   - Use Bonjour/Zeroconf libraries to discover `_swiftcontrol._tcp.local.` services
+   - Use Bonjour/Zeroconf libraries to discover `_openbikecontrol._tcp.local.` services
    - Connect via WebSocket for real-time updates
    - Parse TXT records to get device information and BLE service UUIDs
 
@@ -325,7 +325,7 @@ Haptic feedback response (device to app):
    - Allow users to override mappings for their workflow
 
 4. **Multi-Device Support:**
-   - Support connecting multiple SwiftControl devices simultaneously
+   - Support connecting multiple OpenBikeControl devices simultaneously
    - Allow users to assign devices to specific action categories
 
 ### For Device Manufacturers
@@ -354,10 +354,10 @@ Haptic feedback response (device to app):
 
 ## Certification Program
 
-To ensure quality and compatibility, SwiftControl offers a voluntary certification program for device manufacturers. See [CERTIFICATION.md](CERTIFICATION.md) for details.
+To ensure quality and compatibility, OpenBikeControl offers a voluntary certification program for device manufacturers. See [CERTIFICATION.md](CERTIFICATION.md) for details.
 
 Certified devices receive:
-- **Official listing** in the SwiftControl device directory
+- **Official listing** in the OpenBikeControl device directory
 - **Compatibility badge** for marketing materials
 - **Technical support** for implementation
 - **Button mapping presets** included in participating apps
@@ -384,7 +384,7 @@ Certified devices receive:
 
 ## License
 
-The SwiftControl Protocol specification is released under the [MIT License](LICENSE), allowing free implementation in both commercial and open-source projects.
+The OpenBikeControl Protocol specification is released under the [MIT License](LICENSE), allowing free implementation in both commercial and open-source projects.
 
 ---
 

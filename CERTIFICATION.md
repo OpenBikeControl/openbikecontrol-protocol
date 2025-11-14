@@ -1,20 +1,20 @@
-# SwiftControl Device Certification
+# OpenBikeControl Device Certification
 
 ## Overview
 
-The SwiftControl Certification Program ensures that BLE controllers meet quality standards and work seamlessly with participating cycling trainer applications. Certification is voluntary but highly recommended for manufacturers who want their devices officially recognized and supported.
+The OpenBikeControl Certification Program ensures that BLE controllers meet quality standards and work seamlessly with participating cycling trainer applications. Certification is voluntary but highly recommended for manufacturers who want their devices officially recognized and supported.
 
 ## Benefits of Certification
 
 ### For Manufacturers
 
-- **Official Device Listing** - Your device listed in the SwiftControl certified devices directory
-- **Compatibility Badge** - Use the "SwiftControl Certified" badge in marketing materials
+- **Official Device Listing** - Your device listed in the OpenBikeControl certified devices directory
+- **Compatibility Badge** - Use the "OpenBikeControl Certified" badge in marketing materials
 - **Button Mapping Repository** - Device-specific button mappings included in the official repository
 - **Technical Support** - Access to implementation guides and technical assistance
 - **App Integration** - Participating apps include your device's button mappings by default
 - **Community Trust** - Certification signals quality and standards compliance to users
-- **Marketing Visibility** - Featured on the SwiftControl website and partner communications
+- **Marketing Visibility** - Featured on the OpenBikeControl website and partner communications
 
 ### For App Developers
 
@@ -38,7 +38,7 @@ Devices must meet the following technical standards:
 
 #### 1. Protocol Compliance
 
-- ✅ Implement SwiftControl BLE service UUID (`d273f680-d548-419d-b9d1-fa0472345229`)
+- ✅ Implement OpenBikeControl BLE service UUID (`d273f680-d548-419d-b9d1-fa0472345229`)
 - ✅ Implement Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`) with correct data format
 - ✅ Implement standard BLE Device Information Service (`0x180A`)
 - ✅ Implement Battery Service (`0x180F`) for battery-powered devices
@@ -73,7 +73,7 @@ Manufacturers must provide:
    - Operating temperature range
 
 2. **Button Mapping Definition**
-   - Complete mapping of physical buttons to SwiftControl button IDs
+   - Complete mapping of physical buttons to OpenBikeControl button IDs
    - Description of analog inputs (if applicable)
    - Default button assignments
 
@@ -127,7 +127,7 @@ Submit a certification request by creating a GitHub Pull Request:
    {
      "manufacturer": "ExampleCorp",
      "model": "SC-100",
-     "name": "SwiftControl Remote Pro",
+     "name": "OpenBikeControl Remote Pro",
      "version": "1.0",
      "certification_date": "2024-01-15",
      "device_info": {
@@ -251,7 +251,7 @@ Submit a certification request by creating a GitHub Pull Request:
 
 ### Step 3: Review Process
 
-The SwiftControl team will review your submission:
+The OpenBikeControl team will review your submission:
 
 1. **Documentation Review** (1-2 business days)
    - Verify all required documentation is complete
@@ -281,13 +281,13 @@ The SwiftControl team will review your submission:
 Once approved:
 
 1. **Certification Badge**
-   - Receive official "SwiftControl Certified" badge
+   - Receive official "OpenBikeControl Certified" badge
    - Usage guidelines provided
    - Badge valid for device hardware version
 
 2. **Device Listing**
    - Device added to official certified devices list
-   - Published on SwiftControl website
+   - Published on OpenBikeControl website
    - Included in app developer documentation
 
 3. **Repository Merge**
@@ -301,7 +301,7 @@ Once approved:
 
 - Minor firmware updates: No re-certification required
 - Major protocol changes: May require re-certification
-- Notify SwiftControl team of significant updates
+- Notify OpenBikeControl team of significant updates
 
 ### Recertification
 
@@ -315,7 +315,7 @@ Recertification follows expedited process for previously certified manufacturers
 
 ## Certification Costs
 
-The SwiftControl Certification Program is currently **free** for all manufacturers. The program is maintained by the community and sponsored contributors.
+The OpenBikeControl Certification Program is currently **free** for all manufacturers. The program is maintained by the community and sponsored contributors.
 
 ### Future Considerations
 
@@ -355,9 +355,8 @@ Ready to certify your device?
 
 ### Questions?
 
-- Open a [GitHub Issue](https://github.com/jonasbark/swiftcontrol-protocol/issues) with the `certification` label
-- Email: certification@swiftcontrol.org (if available)
-- Community Discord: [Join here](https://discord.gg/swiftcontrol) (if available)
+- Open a [GitHub Issue](https://github.com/jonasbark/openbikecontrol-protocol/issues) with the `certification` label
+- Email: certification@swiftcontrol.app
 
 ## Example Certified Devices
 
@@ -374,7 +373,7 @@ Once devices are certified, they will be listed here with:
 
 ### Certified Badge
 
-![SwiftControl Certified](https://img.shields.io/badge/SwiftControl-Certified-brightgreen)
+![OpenBikeControl Certified](https://img.shields.io/badge/OpenBikeControl-Certified-brightgreen)
 
 Manufacturers may use the certification badge on:
 - Product packaging
@@ -387,7 +386,7 @@ Manufacturers may use the certification badge on:
 - Only use current/valid certification badge
 - Do not modify badge design
 - Include badge version number (hardware version)
-- Link badge to SwiftControl website when used digitally
+- Link badge to OpenBikeControl website when used digitally
 
 ### Badge Restrictions
 
@@ -414,4 +413,4 @@ All contributions welcome via GitHub Issues and Pull Requests.
 
 ## License
 
-The SwiftControl Certification Program documentation is released under the [MIT License](LICENSE).
+The OpenBikeControl Certification Program documentation is released under the [MIT License](LICENSE).

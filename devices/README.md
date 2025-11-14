@@ -1,6 +1,6 @@
-# SwiftControl Certified Devices
+# OpenBikeControl Certified Devices
 
-This directory contains device definitions for SwiftControl certified controllers. Each device includes button mappings, specifications, and documentation to enable seamless integration with trainer apps.
+This directory contains device definitions for OpenBikeControl certified controllers. Each device includes button mappings, specifications, and documentation to enable seamless integration with trainer apps.
 
 ## Directory Structure
 
@@ -82,7 +82,7 @@ To add your device to this directory:
 
 *No devices currently certified - this is a new protocol!*
 
-Be the first to certify your device and support the SwiftControl ecosystem.
+Be the first to certify your device and support the OpenBikeControl ecosystem.
 
 ### Example Devices
 
@@ -117,6 +117,6 @@ Help improve the certified devices directory:
 
 ## Questions?
 
-- Open a [GitHub Issue](https://github.com/jonasbark/swiftcontrol-protocol/issues)
+- Open a [GitHub Issue](https://github.com/jonasbark/openbikecontrol-protocol/issues)
 - Review [Certification Documentation](../CERTIFICATION.md)
-- Contact: certification@swiftcontrol.org
+- Contact: certification@swiftcontrol.app

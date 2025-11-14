@@ -1,12 +1,12 @@
-# ExampleCorp SC-100 SwiftControl Remote Pro
+# ExampleCorp SC-100 OpenBikeControl Remote Pro
 
-![Device Status](https://img.shields.io/badge/SwiftControl-Example-blue) ![Certification](https://img.shields.io/badge/Status-Example%20Device-orange)
+![Device Status](https://img.shields.io/badge/OpenBikeControl-Example-blue) ![Certification](https://img.shields.io/badge/Status-Example%20Device-orange)
 
 > **Note:** This is an example device definition for documentation purposes.
 
 ## Overview
 
-The SC-100 SwiftControl Remote Pro is a compact wireless controller designed for cycling trainer applications. It features dual shift paddles, a 4-way joystick, action buttons, and analog triggers for precise control.
+The SC-100 OpenBikeControl Remote Pro is a compact wireless controller designed for cycling trainer applications. It features dual shift paddles, a 4-way joystick, action buttons, and analog triggers for precise control.
 
 ## Features
 
@@ -53,7 +53,7 @@ The SC-100 SwiftControl Remote Pro is a compact wireless controller designed for
 1. **Power On** - Press and hold the A button for 3 seconds
 2. **Enter Pairing Mode** - LED will blink blue rapidly
 3. **Open Your Trainer App** - Navigate to device settings
-4. **Scan for Devices** - Look for "SwiftControl SC-100"
+4. **Scan for Devices** - Look for "OpenBikeControl SC-100"
 5. **Select and Pair** - Device will connect automatically
 6. **Confirmation** - LED turns solid blue when connected
 
@@ -115,7 +115,7 @@ After pairing:
 ### Buttons Not Responding
 
 1. Check LED - ensure device is connected
-2. Verify app has SwiftControl support enabled
+2. Verify app has OpenBikeControl support enabled
 3. Check button mappings in app settings
 4. Test buttons in app's controller test mode
 5. Try re-pairing the device
@@ -167,7 +167,7 @@ After pairing:
 
 The SC-100 supports OTA (Over-The-Air) firmware updates via the companion mobile app:
 
-1. Download "SwiftControl Config" app (iOS/Android)
+1. Download "OpenBikeControl Config" app (iOS/Android)
 2. Connect to your SC-100
 3. App will notify if updates are available
 4. Follow on-screen instructions
@@ -188,7 +188,7 @@ The SC-100 supports OTA (Over-The-Air) firmware updates via the companion mobile
 
 ## Package Contents
 
-- 1× SwiftControl SC-100 Remote
+- 1× OpenBikeControl SC-100 Remote
 - 1× CR2032 Battery (pre-installed)
 - 1× Quick Start Guide
 - 1× Mounting accessories
