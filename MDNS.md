@@ -19,7 +19,7 @@ The TXT record fields mirror BLE advertisement data:
 - `version=1` - Protocol version
 - `id=<unique-id>` - Unique device identifier (MAC address or serial)
 - `name=<device-name>` - Human-readable device name
-- `ble-service-uuids=<uuid-list>` - Comma-separated list of BLE service UUIDs (e.g., "FE50")
+- `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities
 - `manufacturer=<name>` - Device manufacturer
 - `model=<model>` - Device model
 
@@ -31,7 +31,7 @@ TXT:
   version=1
   id=aabbccddeeff
   name=OpenBikeControl Remote
-  ble-service-uuids=d273f680-d548-419d-b9d1-fa0472345229
+  service-uuids=d273f680-d548-419d-b9d1-fa0472345229
   manufacturer=ExampleCorp
   model=SC-100
 ```

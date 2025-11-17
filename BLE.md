@@ -209,8 +209,8 @@ Recommended BLE connection parameters for optimal performance:
 
 1. **Hardware:**
    - Use reliable button switches for digital inputs
-   - Consider hall-effect sensors for analog inputs
-   - Include vibration motor for haptic feedback (optional but recommended)
+   - Optional: Consider hall-effect sensors for analog inputs
+   - Optional: Include vibration motor for haptic feedback
    - Include battery monitoring circuitry for battery level reporting
 
 2. **Firmware:**

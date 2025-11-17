@@ -69,25 +69,15 @@ Manufacturers must provide:
    - Hardware specifications
    - Button layout and physical description
    - Battery specifications (if applicable)
-   - Dimensions and weight
-   - Operating temperature range
 
 2. **Button Mapping Definition**
    - Complete mapping of physical buttons to OpenBikeControl button IDs
    - Description of analog inputs (if applicable)
    - Default button assignments
 
-3. **User Documentation**
-   - Setup instructions
-   - Pairing guide
-   - Battery replacement procedure (if applicable)
-   - Troubleshooting guide
-   - Warranty information
-
-4. **Developer Documentation**
-   - BLE characteristics documentation
-   - Sample connection code (optional but recommended)
-   - Known limitations or quirks
+3. **Developer Documentation**
+   - BLE characteristics documentation, if additions are made to the OpenBikeControl protocol 
+   - Sample connection code, if additions are made to the OpenBikeControl protocol
 
 ## Certification Process
 
@@ -262,14 +252,12 @@ The OpenBikeControl team will review your submission:
    - Connect to device via BLE
    - Verify service and characteristic UUIDs
    - Test button state notifications
-   - Measure response latency
    - Test with 2+ compatible apps
 
 3. **Compatibility Testing** (3-5 business days)
    - Test pairing with iOS and Android devices
    - Verify button mappings work as documented
    - Test battery reporting
-   - Verify range and stability
 
 4. **Feedback and Iteration**
    - Issues or suggestions communicated via PR comments
@@ -315,19 +303,7 @@ Recertification follows expedited process for previously certified manufacturers
 
 ## Certification Costs
 
-The OpenBikeControl Certification Program is currently **free** for all manufacturers. The program is maintained by the community and sponsored contributors.
-
-### Future Considerations
-
-As the program scales, nominal fees may be introduced to cover:
-- Testing equipment and infrastructure
-- Technical review team compensation
-- Website hosting and maintenance
-
-Any future fees will be:
-- Announced with 6+ months notice
-- Kept minimal to encourage broad adoption
-- Waived for open-source hardware projects
+Please contact certification@swiftcontrol.app and we will find a fair price - or none at all!
 
 ## Certification Withdrawal
 

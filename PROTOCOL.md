@@ -2,7 +2,7 @@
 
 ## Overview
 
-OpenBikeControl is an open protocol for wireless input devices to control cycling trainer applications. It enables standardized communication between BLE controllers and training apps.
+OpenBikeControl is an open protocol for wireless input devices to control cycling trainer applications. It enables standardized communication between BLE controllers, apps, and the training app itself.
 
 ### Motivation
 
@@ -32,7 +32,7 @@ OpenBikeControl enables the following trainer app actions:
 
 OpenBikeControl uses two transport mechanisms:
 
-1. **[BLE (Bluetooth Low Energy)](BLE.md)** - For direct device-to-app connections
+1. **[BLE (Bluetooth Low Energy)](BLE.md)** - For direct device-to-app connections, or as a fallback for apps if mDNS is not possible
 2. **[mDNS (Multicast DNS)](MDNS.md)** - For network-based connections ("Direct Connect")
 
 Both transports use the same logical data format, ensuring consistency across connection types.
@@ -151,7 +151,7 @@ Apps may implement multi-button combinations by detecting multiple simultaneous 
 2. **mDNS Implementation:**
    - Use Bonjour/Zeroconf libraries to discover `_openbikecontrol._tcp.local.` services
    - Connect via WebSocket for real-time updates
-   - Parse TXT records to get device information and BLE service UUIDs
+   - Parse TXT records to get device information and service UUIDs
    - See [MDNS.md](MDNS.md) for detailed mDNS implementation
 
 3. **Button Mapping:**
