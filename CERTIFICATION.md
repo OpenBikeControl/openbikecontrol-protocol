@@ -38,28 +38,28 @@ Devices must meet the following technical standards:
 
 #### 1. Protocol Compliance
 
-- ✅ Implement OpenBikeControl BLE service UUID (`d273f680-d548-419d-b9d1-fa0472345229`)
-- ✅ Implement Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`) with correct data format
-- ✅ Implement standard BLE Device Information Service (`0x180A`)
-- ✅ Implement Battery Service (`0x180F`) for battery-powered devices
-- ✅ Do NOT use manufacturer-specific advertisement data (Apple compatibility requirement)
-- ✅ Send notifications only on button state changes (not continuous polling)
+-  Implement OpenBikeControl BLE service UUID (`d273f680-d548-419d-b9d1-fa0472345229`)
+-  Implement Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`) with correct data format
+-  Implement standard BLE Device Information Service (`0x180A`)
+-  Implement Battery Service (`0x180F`) for battery-powered devices
+-  Do NOT use manufacturer-specific advertisement data (Apple compatibility requirement)
+-  Send notifications only on button state changes (not continuous polling)
 
 #### 2. Performance Standards
 
-- ✅ Button response latency < 50ms (press to notification)
-- ✅ BLE connection range ≥ 10 meters in open space
-- ✅ Battery life ≥ 40 hours typical use (if battery-powered)
-- ✅ Reliable debouncing (no spurious button presses)
-- ✅ Support connection intervals down to 7.5ms
+-  Button response latency < 50ms (press to notification)
+-  BLE connection range ≥ 10 meters in open space
+-  Battery life ≥ 40 hours typical use (if battery-powered)
+-  Reliable debouncing (no spurious button presses)
+-  Support connection intervals down to 7.5ms
 
 #### 3. Quality Standards
 
-- ✅ Hardware: Durable construction suitable for cycling environment
-- ✅ Buttons: Minimum 100,000 press lifecycle
-- ✅ Water resistance: IPX4 minimum (splash resistant)
-- ✅ Firmware: Support OTA updates (recommended) or documented update procedure
-- ✅ Documentation: User manual and setup guide in English
+-  Hardware: Durable construction suitable for cycling environment
+-  Buttons: Minimum 100,000 press lifecycle
+-  Water resistance: IPX4 minimum (splash resistant)
+-  Firmware: Support OTA updates (recommended) or documented update procedure
+-  Documentation: User manual and setup guide in English
 
 ### Documentation Requirements
 
@@ -323,11 +323,11 @@ Withdrawal process:
 
 Ready to certify your device?
 
-1. ✅ Review the [Protocol Specification](PROTOCOL.md)
-2. ✅ Build and test your device implementation
-3. ✅ Prepare your documentation
-4. ✅ Submit your certification PR
-5. ✅ Work with the team through the review process
+1. Review the [Protocol Specification](PROTOCOL.md)
+2. Build and test your device implementation
+3. Prepare your documentation
+4. Submit your certification PR
+5. Work with the team through the review process
 
 ### Questions?
 
