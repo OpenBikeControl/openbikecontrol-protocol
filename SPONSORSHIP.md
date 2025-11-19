@@ -10,12 +10,10 @@ Your support helps ensure that OpenBikeControl remains open, transparent, and ma
 
 ## Sponsoring as an Individual
 
-Individual sponsorships are voluntary and do not establish a purchase, a pre-order, or a consumer contract. As a gesture of appreciation, I may provide discretionary acknowledgments. These are optional, not guaranteed, and have no monetary value assigned to them.
+Individual sponsorships are voluntary contributions. They do not constitute a purchase, pre-order, or consumer contract under EU law. The following wording is intentionally formal to clarify this.
 
-For contributions above approximately 10 EUR / USD, and strictly as a courtesy, I may provide:
+As a friendly gesture, I may offer occasional acknowledgments to individual supporters. These are entirely discretionary, depend on availability, and are not provided in exchange for the sponsorship.
 
-- If you don't already have it: A promotional code for SwiftControl, subject to availability and not offered as part of a sale or transaction. Please contact us for this!
+If OpenBikeControl hardware becomes available in the future, I may provide sponsors with an optional discount code. Hardware development is still exploratory, and there is no confirmed timeline or guarantee that a product will be released.
 
-- A potential future discount code for OpenBikeControl hardware, but only if such hardware is eventually released. Hardware development is exploratory, without any confirmed release timeline or commitment that a product will be produced or sold.
-
-Any acknowledgments are voluntary on our part, depend on availability, and do not create rights, expectations, or obligations. Sponsorships do not include the supply of digital content, physical goods, or services under EU consumer-contract rules.
+These acknowledgments do not create any rights or obligations. Sponsorships do not include the supply of digital content, physical goods, or services within the meaning of EU consumer-protection legislation.
