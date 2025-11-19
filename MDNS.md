@@ -4,6 +4,11 @@
 
 The mDNS (Multicast DNS) implementation provides network-based connectivity for OpenBikeControl devices, similar to the "Direct Connect" protocol. This allows devices to communicate with apps over WiFi/Ethernet networks.
 
+## Example Implementation
+Sometimes it's easier to understand the protocol by looking at a concrete example:
+- [Example Implementation for trainer app](examples/python/mdns_trainer_app.py)
+- [Example Implementation for button controller](examples/python/mock_device.py)
+
 ---
 
 ## Service Discovery
