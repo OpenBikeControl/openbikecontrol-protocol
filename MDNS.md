@@ -6,8 +6,8 @@ The mDNS (Multicast DNS) implementation provides network-based connectivity for 
 
 ## Example Implementation
 Sometimes it's easier to understand the protocol by looking at a concrete example:
-- [Example Implementation for trainer app](examples/python/mdns_trainer_app.py)
-- [Example Implementation for button controller](examples/python/mock_device.py)
+- [Example Implementation for trainer app](https://github.com/OpenBikeControl/openbikecontrol-protocol/tree/main/examples/python/mdns_trainer_app.py)
+- [Example Implementation for button controller](https://github.com/OpenBikeControl/openbikecontrol-protocol/tree/main/examples/python/mock_device.py)
 
 ---
 
