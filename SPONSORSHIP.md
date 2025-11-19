@@ -1,12 +1,12 @@
-We welcome sponsorships that support the development and maintenance of the OpenBikeControl protocol and the exploration of potential future hardware. Sponsorships are voluntary contributions and are not payments for goods or services.
+We welcome sponsorships that support the development and maintenance of the OpenBikeControl protocol and the exploration of potential future hardware! Sponsorships are voluntary contributions and are not payments for goods or services.
 
 # Sponsor Options
 
-You can sponsor the project via [GitHub Sponsors](https://github.com/sponsors/openbikecontrol). If you need a different arrangement, feel free to contact us.
+You can sponsor the project via [GitHub Sponsors](https://github.com/sponsors/openbikecontrol). If you need a different arrangement, feel free to contact us :) 
 
 ## Sponsoring as an Organization
 
-Your support helps ensure that OpenBikeControl remains open, transparent, and maintained. Sponsorships are contributions without commercial obligations on either side.
+Your support helps ensure that OpenBikeControl remains open, transparent, and maintained - and contributes directly to the hardware development! Sponsorships are contributions without commercial obligations on either side.
 
 ## Sponsoring as an Individual
 
