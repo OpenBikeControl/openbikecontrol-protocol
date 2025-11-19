@@ -8,8 +8,8 @@ The Bluetooth Low Energy (BLE) implementation provides direct device-to-app conn
 
 ## Example Implementation
 Sometimes it's easier to understand the protocol by looking at a concrete example:
-- [Example Implementation for trainer app](examples/python/ble_trainer_app.py)
-- [Example Implementation for button controller](examples/python/mock_device_ble.py)
+- [Example Implementation for trainer app](https://github.com/OpenBikeControl/openbikecontrol-protocol/tree/main/examples/python/ble_trainer_app.py)
+- [Example Implementation for button controller](https://github.com/OpenBikeControl/openbikecontrol-protocol/tree/main/examples/python/python/mock_device_ble.py)
 
 ## Service UUID
 
