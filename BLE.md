@@ -183,6 +183,9 @@ The characteristic value uses a compact binary format for efficient transmission
 - Devices SHOULD handle the absence of this message gracefully (assume all buttons supported)
 - If a new message is received, it replaces the previous app information
 - Devices should acknowledge commands if "Write" property is used, but may use "Write Without Response" for simplicity
+- The written value will be emptied on every disconnect
+
+**Note:** This characteristic is **optional** for apps to implement, but the information is important for devices to provide the best user experience (e.g., highlighting supported buttons, customizing layouts for specific apps).
 
 **Use Cases:**
 

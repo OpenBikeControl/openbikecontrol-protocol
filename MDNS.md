@@ -185,6 +185,9 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 - Apps SHOULD send this message immediately after establishing the WebSocket connection
 - Apps MAY send updated information if capabilities change during the session
 - Devices SHOULD handle the absence of this message gracefully (assume all buttons supported)
+- The app information is cleared when the WebSocket connection is closed
+
+**Note:** This message is **optional** for apps to implement, but the information is important for devices to provide the best user experience (e.g., highlighting supported buttons, customizing layouts for specific apps).
 
 **Example with common button set:**
 ```json
