@@ -260,29 +260,32 @@ def test_app_info_json_format():
     print("  ✓ App info JSON format tests passed")
 
 
+def _encode_app_info_ble(app_id: str, app_version: str, supported_buttons: list) -> bytes:
+    """
+    Helper function to encode app info to BLE format.
+    Used by multiple test functions.
+    """
+    app_id_bytes = app_id.encode('utf-8')[:32]
+    app_version_bytes = app_version.encode('utf-8')[:32]
+    
+    data = bytearray()
+    data.append(0x01)  # Version
+    data.append(len(app_id_bytes))
+    data.extend(app_id_bytes)
+    data.append(len(app_version_bytes))
+    data.extend(app_version_bytes)
+    data.append(len(supported_buttons))
+    data.extend(supported_buttons)
+    
+    return bytes(data)
+
+
 def test_app_info_ble_encoding():
     """Test app info BLE binary encoding."""
     print("Testing app info BLE encoding...")
     
-    # Test encoding function
-    def encode_app_info(app_id: str, app_version: str, supported_buttons: list) -> bytes:
-        """Encode app info to BLE format."""
-        app_id_bytes = app_id.encode('utf-8')[:32]
-        app_version_bytes = app_version.encode('utf-8')[:32]
-        
-        data = bytearray()
-        data.append(0x01)  # Version
-        data.append(len(app_id_bytes))
-        data.extend(app_id_bytes)
-        data.append(len(app_version_bytes))
-        data.extend(app_version_bytes)
-        data.append(len(supported_buttons))
-        data.extend(supported_buttons)
-        
-        return bytes(data)
-    
     # Test basic encoding
-    result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14])
+    result = _encode_app_info_ble("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14])
     
     # Verify structure
     assert result[0] == 0x01, "Version byte incorrect"
@@ -295,12 +298,12 @@ def test_app_info_ble_encoding():
     assert result[16] == 0x02, "Second button ID incorrect"
     
     # Test empty button list
-    result2 = encode_app_info("test", "1.0", [])
+    result2 = _encode_app_info_ble("test", "1.0", [])
     assert result2[-1] == 0, "Empty button list encoding failed"
     
     # Test long app ID (should truncate)
     long_id = "a" * 50
-    result3 = encode_app_info(long_id, "1.0", [])
+    result3 = _encode_app_info_ble(long_id, "1.0", [])
     assert result3[1] == 32, "Long app ID should be truncated to 32 bytes"
     
     print("  ✓ App info BLE encoding tests passed")
@@ -309,21 +312,6 @@ def test_app_info_ble_encoding():
 def test_app_info_ble_decoding():
     """Test app info BLE binary decoding."""
     print("Testing app info BLE decoding...")
-    
-    # Helper encoding function
-    def encode_app_info(app_id: str, app_version: str, supported_buttons: list) -> bytes:
-        """Encode app info to BLE format."""
-        app_id_bytes = app_id.encode('utf-8')[:32]
-        app_version_bytes = app_version.encode('utf-8')[:32]
-        data = bytearray()
-        data.append(0x01)
-        data.append(len(app_id_bytes))
-        data.extend(app_id_bytes)
-        data.append(len(app_version_bytes))
-        data.extend(app_version_bytes)
-        data.append(len(supported_buttons))
-        data.extend(supported_buttons)
-        return bytes(data)
     
     # Test decoding function (from mock_device_ble.py) with bounds checking
     def decode_app_info(value: bytes) -> dict:
@@ -389,7 +377,7 @@ def test_app_info_ble_decoding():
     
     # Test round-trip encoding/decoding
     original = {"app_id": "myapp", "app_version": "2.1.3", "supported_buttons": [0x01, 0x20, 0x30]}
-    encoded = encode_app_info(original["app_id"], original["app_version"], original["supported_buttons"])
+    encoded = _encode_app_info_ble(original["app_id"], original["app_version"], original["supported_buttons"])
     decoded = decode_app_info(encoded)
     
     assert decoded["app_id"] == original["app_id"], "Round-trip app_id failed"
