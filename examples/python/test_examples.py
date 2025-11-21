@@ -222,6 +222,169 @@ def test_mock_device_ble():
         traceback.print_exc()
 
 
+def test_app_info_json_format():
+    """Test app info JSON message format for mDNS/WebSocket."""
+    print("Testing app info JSON format...")
+    
+    import json
+    
+    # Test valid app info message
+    message = {
+        "type": "app_info",
+        "app_id": "zwift",
+        "app_version": "1.52.0",
+        "supported_buttons": [0x01, 0x02, 0x10, 0x14]
+    }
+    
+    # Should be valid JSON
+    json_str = json.dumps(message)
+    parsed = json.loads(json_str)
+    
+    assert parsed["type"] == "app_info", "Type field mismatch"
+    assert parsed["app_id"] == "zwift", "App ID mismatch"
+    assert parsed["app_version"] == "1.52.0", "App version mismatch"
+    assert len(parsed["supported_buttons"]) == 4, "Button count mismatch"
+    assert parsed["supported_buttons"][0] == 0x01, "Button ID mismatch"
+    
+    # Test empty button list
+    message2 = {
+        "type": "app_info",
+        "app_id": "test-app",
+        "app_version": "1.0.0",
+        "supported_buttons": []
+    }
+    json_str2 = json.dumps(message2)
+    parsed2 = json.loads(json_str2)
+    assert len(parsed2["supported_buttons"]) == 0, "Empty button list failed"
+    
+    print("  ✓ App info JSON format tests passed")
+
+
+def test_app_info_ble_encoding():
+    """Test app info BLE binary encoding."""
+    print("Testing app info BLE encoding...")
+    
+    # Test encoding function
+    def encode_app_info(app_id: str, app_version: str, supported_buttons: list) -> bytes:
+        """Encode app info to BLE format."""
+        app_id_bytes = app_id.encode('utf-8')[:32]
+        app_version_bytes = app_version.encode('utf-8')[:32]
+        
+        data = bytearray()
+        data.append(0x01)  # Version
+        data.append(len(app_id_bytes))
+        data.extend(app_id_bytes)
+        data.append(len(app_version_bytes))
+        data.extend(app_version_bytes)
+        data.append(len(supported_buttons))
+        data.extend(supported_buttons)
+        
+        return bytes(data)
+    
+    # Test basic encoding
+    result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14])
+    
+    # Verify structure
+    assert result[0] == 0x01, "Version byte incorrect"
+    assert result[1] == 5, "App ID length incorrect"
+    assert result[2:7] == b'zwift', "App ID incorrect"
+    assert result[7] == 6, "App version length incorrect"
+    assert result[8:14] == b'1.52.0', "App version incorrect"
+    assert result[14] == 4, "Button count incorrect"
+    assert result[15] == 0x01, "First button ID incorrect"
+    assert result[16] == 0x02, "Second button ID incorrect"
+    
+    # Test empty button list
+    result2 = encode_app_info("test", "1.0", [])
+    assert result2[-1] == 0, "Empty button list encoding failed"
+    
+    # Test long app ID (should truncate)
+    long_id = "a" * 50
+    result3 = encode_app_info(long_id, "1.0", [])
+    assert result3[1] == 32, "Long app ID should be truncated to 32 bytes"
+    
+    print("  ✓ App info BLE encoding tests passed")
+
+
+def test_app_info_ble_decoding():
+    """Test app info BLE binary decoding."""
+    print("Testing app info BLE decoding...")
+    
+    # Test decoding function (from mock_device_ble.py)
+    def decode_app_info(value: bytes) -> dict:
+        """Decode app info from BLE format."""
+        if len(value) < 3:
+            raise ValueError("Data too short")
+        
+        idx = 0
+        version = value[idx]
+        idx += 1
+        
+        if version != 0x01:
+            raise ValueError(f"Unsupported version: {version}")
+        
+        # Parse App ID
+        app_id_len = value[idx]
+        idx += 1
+        app_id = value[idx:idx+app_id_len].decode('utf-8')
+        idx += app_id_len
+        
+        # Parse App Version
+        app_version_len = value[idx]
+        idx += 1
+        app_version = value[idx:idx+app_version_len].decode('utf-8')
+        idx += app_version_len
+        
+        # Parse Button IDs
+        button_count = value[idx]
+        idx += 1
+        button_ids = list(value[idx:idx+button_count])
+        
+        return {
+            "app_id": app_id,
+            "app_version": app_version,
+            "supported_buttons": button_ids
+        }
+    
+    # Test basic decoding
+    data = bytes([0x01, 0x05]) + b'zwift' + bytes([0x06]) + b'1.52.0' + bytes([0x04, 0x01, 0x02, 0x10, 0x14])
+    result = decode_app_info(data)
+    
+    assert result["app_id"] == "zwift", "App ID decode failed"
+    assert result["app_version"] == "1.52.0", "App version decode failed"
+    assert len(result["supported_buttons"]) == 4, "Button count decode failed"
+    assert result["supported_buttons"][0] == 0x01, "Button ID decode failed"
+    
+    # Test empty button list
+    data2 = bytes([0x01, 0x04]) + b'test' + bytes([0x03]) + b'1.0' + bytes([0x00])
+    result2 = decode_app_info(data2)
+    assert len(result2["supported_buttons"]) == 0, "Empty button list decode failed"
+    
+    # Test round-trip encoding/decoding
+    def encode_app_info(app_id: str, app_version: str, supported_buttons: list) -> bytes:
+        app_id_bytes = app_id.encode('utf-8')[:32]
+        app_version_bytes = app_version.encode('utf-8')[:32]
+        data = bytearray()
+        data.append(0x01)
+        data.append(len(app_id_bytes))
+        data.extend(app_id_bytes)
+        data.append(len(app_version_bytes))
+        data.extend(app_version_bytes)
+        data.append(len(supported_buttons))
+        data.extend(supported_buttons)
+        return bytes(data)
+    
+    original = {"app_id": "myapp", "app_version": "2.1.3", "supported_buttons": [0x01, 0x20, 0x30]}
+    encoded = encode_app_info(original["app_id"], original["app_version"], original["supported_buttons"])
+    decoded = decode_app_info(encoded)
+    
+    assert decoded["app_id"] == original["app_id"], "Round-trip app_id failed"
+    assert decoded["app_version"] == original["app_version"], "Round-trip app_version failed"
+    assert decoded["supported_buttons"] == original["supported_buttons"], "Round-trip buttons failed"
+    
+    print("  ✓ App info BLE decoding tests passed")
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -234,6 +397,9 @@ def main():
         test_format_button_state()
         test_button_names()
         test_mdns_format_consistency()
+        test_app_info_json_format()
+        test_app_info_ble_encoding()
+        test_app_info_ble_decoding()
         test_mock_device_zeroconf()
         test_mock_device_ble()
         
