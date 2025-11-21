@@ -310,7 +310,22 @@ def test_app_info_ble_decoding():
     """Test app info BLE binary decoding."""
     print("Testing app info BLE decoding...")
     
-    # Test decoding function (from mock_device_ble.py)
+    # Helper encoding function
+    def encode_app_info(app_id: str, app_version: str, supported_buttons: list) -> bytes:
+        """Encode app info to BLE format."""
+        app_id_bytes = app_id.encode('utf-8')[:32]
+        app_version_bytes = app_version.encode('utf-8')[:32]
+        data = bytearray()
+        data.append(0x01)
+        data.append(len(app_id_bytes))
+        data.extend(app_id_bytes)
+        data.append(len(app_version_bytes))
+        data.extend(app_version_bytes)
+        data.append(len(supported_buttons))
+        data.extend(supported_buttons)
+        return bytes(data)
+    
+    # Test decoding function (from mock_device_ble.py) with bounds checking
     def decode_app_info(value: bytes) -> dict:
         """Decode app info from BLE format."""
         if len(value) < 3:
@@ -323,21 +338,33 @@ def test_app_info_ble_decoding():
         if version != 0x01:
             raise ValueError(f"Unsupported version: {version}")
         
-        # Parse App ID
+        # Parse App ID with bounds checking
+        if idx >= len(value):
+            raise ValueError("Missing app ID length")
         app_id_len = value[idx]
         idx += 1
+        if idx + app_id_len > len(value):
+            raise ValueError("App ID length exceeds buffer")
         app_id = value[idx:idx+app_id_len].decode('utf-8')
         idx += app_id_len
         
-        # Parse App Version
+        # Parse App Version with bounds checking
+        if idx >= len(value):
+            raise ValueError("Missing app version length")
         app_version_len = value[idx]
         idx += 1
+        if idx + app_version_len > len(value):
+            raise ValueError("App version length exceeds buffer")
         app_version = value[idx:idx+app_version_len].decode('utf-8')
         idx += app_version_len
         
-        # Parse Button IDs
+        # Parse Button IDs with bounds checking
+        if idx >= len(value):
+            raise ValueError("Missing button count")
         button_count = value[idx]
         idx += 1
+        if idx + button_count > len(value):
+            raise ValueError("Button count exceeds buffer")
         button_ids = list(value[idx:idx+button_count])
         
         return {
@@ -361,19 +388,6 @@ def test_app_info_ble_decoding():
     assert len(result2["supported_buttons"]) == 0, "Empty button list decode failed"
     
     # Test round-trip encoding/decoding
-    def encode_app_info(app_id: str, app_version: str, supported_buttons: list) -> bytes:
-        app_id_bytes = app_id.encode('utf-8')[:32]
-        app_version_bytes = app_version.encode('utf-8')[:32]
-        data = bytearray()
-        data.append(0x01)
-        data.append(len(app_id_bytes))
-        data.extend(app_id_bytes)
-        data.append(len(app_version_bytes))
-        data.extend(app_version_bytes)
-        data.append(len(supported_buttons))
-        data.extend(supported_buttons)
-        return bytes(data)
-    
     original = {"app_id": "myapp", "app_version": "2.1.3", "supported_buttons": [0x01, 0x20, 0x30]}
     encoded = encode_app_info(original["app_id"], original["app_version"], original["supported_buttons"])
     decoded = decode_app_info(encoded)
@@ -381,6 +395,21 @@ def test_app_info_ble_decoding():
     assert decoded["app_id"] == original["app_id"], "Round-trip app_id failed"
     assert decoded["app_version"] == original["app_version"], "Round-trip app_version failed"
     assert decoded["supported_buttons"] == original["supported_buttons"], "Round-trip buttons failed"
+    
+    # Test malformed data (too short)
+    try:
+        decode_app_info(bytes([0x01]))
+        assert False, "Should have raised ValueError for truncated data"
+    except ValueError:
+        pass  # Expected
+    
+    # Test malformed data (app_id_len exceeds buffer)
+    try:
+        malformed = bytes([0x01, 0xFF, 0x01, 0x02])  # Claims 255 bytes but only has 2
+        decode_app_info(malformed)
+        assert False, "Should have raised ValueError for out-of-bounds app ID"
+    except ValueError:
+        pass  # Expected
     
     print("  ✓ App info BLE decoding tests passed")
 

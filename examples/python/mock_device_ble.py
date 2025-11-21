@@ -129,21 +129,39 @@ class MockBLEDevice:
                 print(f"  ⚠ Received unsupported app info version: 0x{version:02X}")
                 return
             
-            # Parse App ID
+            # Parse App ID with bounds checking
+            if idx >= len(value):
+                print(f"  ⚠ Received invalid app info: missing app ID length")
+                return
             app_id_len = value[idx]
             idx += 1
+            if idx + app_id_len > len(value):
+                print(f"  ⚠ Received invalid app info: app ID length exceeds buffer")
+                return
             app_id = value[idx:idx+app_id_len].decode('utf-8')
             idx += app_id_len
             
-            # Parse App Version
+            # Parse App Version with bounds checking
+            if idx >= len(value):
+                print(f"  ⚠ Received invalid app info: missing app version length")
+                return
             app_version_len = value[idx]
             idx += 1
+            if idx + app_version_len > len(value):
+                print(f"  ⚠ Received invalid app info: app version length exceeds buffer")
+                return
             app_version = value[idx:idx+app_version_len].decode('utf-8')
             idx += app_version_len
             
-            # Parse Button IDs
+            # Parse Button IDs with bounds checking
+            if idx >= len(value):
+                print(f"  ⚠ Received invalid app info: missing button count")
+                return
             button_count = value[idx]
             idx += 1
+            if idx + button_count > len(value):
+                print(f"  ⚠ Received invalid app info: button count exceeds buffer")
+                return
             button_ids = list(value[idx:idx+button_count])
             
             print(f"  ← Received app info:")
