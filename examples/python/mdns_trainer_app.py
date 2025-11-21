@@ -190,6 +190,42 @@ async def send_haptic_feedback(websocket, pattern: str = "short",
         print(f"  ⚠ Failed to send haptic feedback: {e}")
 
 
+async def send_app_info(websocket, app_id: str = "example-trainer-app", 
+                       app_version: str = "1.0.0", 
+                       supported_buttons: list = None):
+    """
+    Send app information to the device.
+    
+    Args:
+        websocket: WebSocket connection
+        app_id: App identifier string
+        app_version: App version string
+        supported_buttons: List of supported button IDs (empty list = all buttons)
+    """
+    if supported_buttons is None:
+        # Default: support common buttons for trainer apps
+        supported_buttons = [
+            0x01, 0x02,  # Shift Up/Down
+            0x10, 0x11, 0x12, 0x13, 0x14, 0x15,  # Navigation
+            0x20, 0x21,  # Wave, Thumbs Up
+            0x30, 0x31, 0x32, 0x33, 0x34,  # Training Controls
+        ]
+    
+    message = {
+        "type": "app_info",
+        "app_id": app_id,
+        "app_version": app_version,
+        "supported_buttons": supported_buttons
+    }
+    
+    try:
+        await websocket.send(json.dumps(message))
+        print(f"  → Sent app info: {app_id} v{app_version} (supports {len(supported_buttons)} button types)")
+    except Exception as e:
+        print(f"  ⚠ Failed to send app info: {e}")
+
+
+
 async def handle_message(websocket, message: dict):
     """
     Handle incoming WebSocket message.
@@ -253,6 +289,11 @@ async def connect_and_monitor(device: DeviceInfo):
     try:
         async with websockets.connect(url) as websocket:
             print(f"✓ Connected to {device.name}\n")
+            
+            # Send app information immediately after connecting
+            await send_app_info(websocket)
+            print()
+            
             print("👂 Listening for messages...")
             print("Press Ctrl+C to stop\n")
             

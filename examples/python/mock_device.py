@@ -145,6 +145,23 @@ async def websocket_handler(request):
                         "success": True
                     }
                     await ws.send_str(json.dumps(response))
+                
+                elif msg_type == "app_info":
+                    # Log app information
+                    app_id = data.get("app_id", "unknown")
+                    app_version = data.get("app_version", "unknown")
+                    supported_buttons = data.get("supported_buttons", [])
+                    
+                    print(f"  ← Received app info:")
+                    print(f"     App ID: {app_id}")
+                    print(f"     Version: {app_version}")
+                    print(f"     Supported buttons: {len(supported_buttons)} types")
+                    if supported_buttons:
+                        button_ids = ", ".join(f"0x{btn:02X}" for btn in supported_buttons[:10])
+                        if len(supported_buttons) > 10:
+                            button_ids += f", ... ({len(supported_buttons) - 10} more)"
+                        print(f"     Button IDs: {button_ids}")
+                
                 else:
                     print(f"  ← Received unknown message type: {msg_type}")
             

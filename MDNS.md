@@ -153,6 +153,54 @@ Sent by the device after processing a haptic feedback command.
 
 ---
 
+### App Information (App to Device)
+
+Sent by the app to inform the device about the app's identity and capabilities. This allows devices to provide better user feedback, customize button mappings, or enable app-specific features.
+
+```json
+{
+  "type": "app_info",
+  "app_id": "zwift",
+  "app_version": "1.52.0",
+  "supported_buttons": [1, 2, 16, 17, 18, 19, 20, 21, 32, 33]
+}
+```
+
+**Fields:**
+- `type`: Always `"app_info"`
+- `app_id`: String identifier for the app (e.g., "zwift", "trainerroad", "rouvy")
+  - Should be lowercase, alphanumeric with optional hyphens/underscores
+  - Examples: `"zwift"`, `"trainerroad"`, `"rouvy"`, `"my-custom-app"`
+- `app_version`: String representing the app version (e.g., "1.52.0", "2.0.1-beta")
+  - Recommended to follow semantic versioning format
+- `supported_buttons`: Array of button IDs (integers) that the app can handle
+  - Button IDs correspond to the [Button Mapping](PROTOCOL.md#button-mapping) specification
+  - Devices can use this information to:
+    - Provide visual feedback on which buttons are active
+    - Disable or hide unsupported buttons in device UI
+    - Customize button layouts for specific apps
+  - An empty array `[]` indicates the app supports all button types
+
+**Usage:**
+- Apps SHOULD send this message immediately after establishing the WebSocket connection
+- Apps MAY send updated information if capabilities change during the session
+- Devices SHOULD handle the absence of this message gracefully (assume all buttons supported)
+- The app information is cleared when the WebSocket connection is closed
+
+**Note:** This message is **optional** for apps to implement, but the information is important for devices to provide the best user experience (e.g., highlighting supported buttons, customizing layouts for specific apps).
+
+**Example with common button set:**
+```json
+{
+  "type": "app_info",
+  "app_id": "zwift",
+  "app_version": "1.52.0",
+  "supported_buttons": [1, 2, 16, 17, 18, 19, 20, 21, 32, 33, 34, 35, 64, 65, 66]
+}
+```
+
+---
+
 ## Implementation Guidelines
 
 ### For App Developers

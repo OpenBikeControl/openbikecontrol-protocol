@@ -27,6 +27,7 @@ from bleak.backends.scanner import AdvertisementData
 SERVICE_UUID = "d273f680-d548-419d-b9d1-fa0472345229"
 BUTTON_STATE_CHAR_UUID = "d273f681-d548-419d-b9d1-fa0472345229"
 HAPTIC_FEEDBACK_CHAR_UUID = "d273f682-d548-419d-b9d1-fa0472345229"
+APP_INFO_CHAR_UUID = "d273f683-d548-419d-b9d1-fa0472345229"
 
 # Button ID to name mapping (based on PROTOCOL.md)
 BUTTON_NAMES = {
@@ -149,6 +150,50 @@ async def send_haptic_feedback(client: BleakClient, pattern: str = "short",
         print(f"  ⚠ Failed to send haptic feedback: {e}")
 
 
+async def send_app_info(client: BleakClient, app_id: str = "example-trainer-app",
+                       app_version: str = "1.0.0",
+                       supported_buttons: list = None):
+    """
+    Send app information to the device.
+    
+    Args:
+        client: BleakClient instance
+        app_id: App identifier string
+        app_version: App version string
+        supported_buttons: List of supported button IDs (empty list = all buttons)
+    """
+    if supported_buttons is None:
+        # Default: support common buttons for trainer apps
+        supported_buttons = [
+            0x01, 0x02,  # Shift Up/Down
+            0x10, 0x11, 0x12, 0x13, 0x14, 0x15,  # Navigation
+            0x20, 0x21,  # Wave, Thumbs Up
+            0x30, 0x31, 0x32, 0x33, 0x34,  # Training Controls
+        ]
+    
+    # Build binary data according to BLE.md specification
+    # Format: [Version] [App_ID_Length] [App_ID...] [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...]
+    
+    app_id_bytes = app_id.encode('utf-8')[:32]  # Max 32 chars
+    app_version_bytes = app_version.encode('utf-8')[:32]  # Max 32 chars
+    
+    data = bytearray()
+    data.append(0x01)  # Version
+    data.append(len(app_id_bytes))  # App ID length
+    data.extend(app_id_bytes)  # App ID
+    data.append(len(app_version_bytes))  # App Version length
+    data.extend(app_version_bytes)  # App Version
+    data.append(len(supported_buttons))  # Button count
+    data.extend(supported_buttons)  # Button IDs
+    
+    try:
+        await client.write_gatt_char(APP_INFO_CHAR_UUID, bytes(data), response=False)
+        print(f"  → Sent app info: {app_id} v{app_version} (supports {len(supported_buttons)} button types)")
+    except Exception as e:
+        print(f"  ⚠ Failed to send app info: {e}")
+
+
+
 def button_state_callback(client: BleakClient):
     """
     Create a callback function for button state notifications.
@@ -230,6 +275,10 @@ async def connect_and_monitor(device: BLEDevice):
         except Exception as e:
             print(f"  Could not read device info: {e}")
         
+        print()
+        
+        # Send app information immediately after connecting
+        await send_app_info(client)
         print()
         
         # Subscribe to button state notifications

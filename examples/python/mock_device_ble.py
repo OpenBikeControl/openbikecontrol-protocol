@@ -43,6 +43,7 @@ except ImportError:
 SERVICE_UUID = "d273f680-d548-419d-b9d1-fa0472345229"
 BUTTON_STATE_CHAR_UUID = "d273f681-d548-419d-b9d1-fa0472345229"
 HAPTIC_FEEDBACK_CHAR_UUID = "d273f682-d548-419d-b9d1-fa0472345229"
+APP_INFO_CHAR_UUID = "d273f683-d548-419d-b9d1-fa0472345229"
 
 # Standard BLE Service UUIDs
 DEVICE_INFO_SERVICE_UUID = "0000180a-0000-1000-8000-00805f9b34fb"
@@ -113,6 +114,80 @@ class MockBLEDevice:
             print(f"  ← Received haptic feedback: pattern={pattern_name}, "
                   f"duration={duration}×10ms, intensity={intensity}")
 
+    def _app_info_write_callback(self, characteristic, value: bytes):
+        """Handle app info writes."""
+        try:
+            if len(value) < 3:
+                print(f"  ⚠ Received invalid app info (too short): {len(value)} bytes")
+                return
+            
+            idx = 0
+            version = value[idx]
+            idx += 1
+            
+            if version != 0x01:
+                print(f"  ⚠ Received unsupported app info version: 0x{version:02X}")
+                return
+            
+            # Parse App ID with bounds checking
+            if idx >= len(value):
+                print(f"  ⚠ Received invalid app info: missing app ID length")
+                return
+            app_id_len = value[idx]
+            idx += 1
+            if idx + app_id_len > len(value):
+                print(f"  ⚠ Received invalid app info: app ID length exceeds buffer")
+                return
+            app_id = value[idx:idx+app_id_len].decode('utf-8')
+            idx += app_id_len
+            
+            # Parse App Version with bounds checking
+            if idx >= len(value):
+                print(f"  ⚠ Received invalid app info: missing app version length")
+                return
+            app_version_len = value[idx]
+            idx += 1
+            if idx + app_version_len > len(value):
+                print(f"  ⚠ Received invalid app info: app version length exceeds buffer")
+                return
+            app_version = value[idx:idx+app_version_len].decode('utf-8')
+            idx += app_version_len
+            
+            # Parse Button IDs with bounds checking
+            if idx >= len(value):
+                print(f"  ⚠ Received invalid app info: missing button count")
+                return
+            button_count = value[idx]
+            idx += 1
+            if idx + button_count > len(value):
+                print(f"  ⚠ Received invalid app info: button count exceeds buffer")
+                return
+            button_ids = list(value[idx:idx+button_count])
+            
+            print(f"  ← Received app info:")
+            print(f"     App ID: {app_id}")
+            print(f"     Version: {app_version}")
+            print(f"     Supported buttons: {button_count} types")
+            if button_ids:
+                button_id_str = ", ".join(f"0x{btn:02X}" for btn in button_ids[:10])
+                if len(button_ids) > 10:
+                    button_id_str += f", ... ({len(button_ids) - 10} more)"
+                print(f"     Button IDs: {button_id_str}")
+        except Exception as e:
+            print(f"  ⚠ Error parsing app info: {e}")
+
+    def _write_callback_router(self, characteristic, value: bytes):
+        """Route write requests to appropriate handlers."""
+        char_uuid = str(characteristic.uuid).lower()
+        
+        if HAPTIC_FEEDBACK_CHAR_UUID.lower() in char_uuid:
+            self._haptic_write_callback(characteristic, value)
+        elif APP_INFO_CHAR_UUID.lower() in char_uuid:
+            self._app_info_write_callback(characteristic, value)
+        else:
+            print(f"  ← Received write to unknown characteristic: {characteristic.uuid}")
+
+
     async def setup_ble_server(self):
         """Set up the BLE GATT server with all required services and characteristics."""
         if not BLESS_AVAILABLE:
@@ -124,8 +199,8 @@ class MockBLEDevice:
         # Create server
         self.server = BlessServer(name=self.name)
 
-        # Set write callback for haptic feedback
-        self.server.write_request_func = self._haptic_write_callback
+        # Set write callback router for all writable characteristics
+        self.server.write_request_func = self._write_callback_router
 
         # Add OpenBikeControl Service
         await self.server.add_new_service(SERVICE_UUID)
@@ -150,6 +225,16 @@ class MockBLEDevice:
             GATTAttributePermissions.writeable
         )
         print(f"    - Haptic Feedback (WRITE): {HAPTIC_FEEDBACK_CHAR_UUID}")
+
+        # Add App Information characteristic (WRITE)
+        await self.server.add_new_characteristic(
+            SERVICE_UUID,
+            APP_INFO_CHAR_UUID,
+            GATTCharacteristicProperties.write | GATTCharacteristicProperties.write_without_response,
+            None,
+            GATTAttributePermissions.writeable
+        )
+        print(f"    - App Information (WRITE): {APP_INFO_CHAR_UUID}")
 
         # Add Device Information Service
         await self.server.add_new_service(DEVICE_INFO_SERVICE_UUID)
