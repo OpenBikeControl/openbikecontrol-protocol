@@ -43,6 +43,7 @@ Both transports use the same logical data format, ensuring consistency across co
 - Service UUID: `d273f680-d548-419d-b9d1-fa0472345229`
 - Button State Characteristic (Read/Notify): `d273f681-d548-419d-b9d1-fa0472345229`
 - Haptic Feedback Characteristic (Write): `d273f682-d548-419d-b9d1-fa0472345229`
+- App Information Characteristic (Write): `d273f683-d548-419d-b9d1-fa0472345229`
 - See [BLE.md](BLE.md) for complete specification
 
 **mDNS Protocol:**

@@ -137,6 +137,70 @@ The characteristic value consists of three bytes defining the haptic feedback pa
 
 ---
 
+### 3. App Information Characteristic (WRITE)
+
+**UUID:** `d273f683-d548-419d-b9d1-fa0472345229`
+
+**Properties:** Write, Write Without Response
+
+**Description:** Receives information from the app about its identity and capabilities. This allows devices to provide better user feedback, customize button mappings, or enable app-specific features.
+
+**Data Format:**
+
+The characteristic value uses a compact binary format for efficient transmission:
+
+```
+[Version] [App_ID_Length] [App_ID...] [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...]
+```
+
+- **Version** (1 byte): Format version, currently `0x01`
+- **App_ID_Length** (1 byte): Length of the App ID string (0-32 characters)
+- **App_ID** (variable): UTF-8 encoded app identifier string
+  - Should be lowercase, alphanumeric with optional hyphens/underscores
+  - Examples: `"zwift"`, `"trainerroad"`, `"rouvy"`, `"my-custom-app"`
+- **App_Version_Length** (1 byte): Length of the App Version string (0-32 characters)
+- **App_Version** (variable): UTF-8 encoded app version string
+  - Recommended to follow semantic versioning format
+  - Examples: `"1.52.0"`, `"2.0.1-beta"`
+- **Button_Count** (1 byte): Number of supported button IDs (0-255)
+  - `0` indicates the app supports all button types
+- **Button_IDs** (variable): Array of button ID bytes
+  - Each byte represents a supported button ID from [Button Mapping](PROTOCOL.md#button-mapping)
+  - Devices can use this to provide visual feedback or customize layouts
+
+**Example Data:**
+
+```
+// App: "zwift", Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14]
+[0x01, 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14]
+```
+
+**Write Behavior:**
+
+- Apps SHOULD send this information immediately after connecting to the device
+- Apps MAY send updated information if capabilities change during the session
+- Commands are processed immediately upon receipt
+- Devices SHOULD handle the absence of this message gracefully (assume all buttons supported)
+- If a new message is received, it replaces the previous app information
+- Devices should acknowledge commands if "Write" property is used, but may use "Write Without Response" for simplicity
+
+**Use Cases:**
+
+- Device displays app name/version on screen or LEDs
+- Device highlights or enables only supported buttons
+- Device customizes button layouts for popular apps
+- Device logs connection history for diagnostics
+- Device provides app-specific haptic patterns or feedback
+
+**Maximum Payload Size:**
+
+The maximum size of this characteristic depends on MTU, but should aim to fit within standard MTU (23 bytes data):
+- Version (1) + Max App ID (1+32) + Max Version (1+32) + Button Count (1) = 68 bytes minimum
+- Recommended to keep App ID + Version under 40 characters combined for compatibility
+- For longer values, increase MTU negotiation or truncate gracefully
+
+---
+
 ## Standard BLE Services
 
 OpenBikeControl devices MUST implement the following standard BLE services:
