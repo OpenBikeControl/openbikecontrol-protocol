@@ -2,7 +2,7 @@ We welcome sponsorships that support the development and maintenance of the Open
 
 # Sponsor Options
 
-You can sponsor the project via [GitHub Sponsors](https://github.com/sponsors/openbikecontrol). If you need a different arrangement, feel free to contact us :) 
+You can sponsor the project via [GitHub Sponsors](https://github.com/sponsors/jonasbark) or via [Stripe](https://donate.stripe.com/9B6aEX0muajY8bZ1Kl6J200). If you need a different arrangement, feel free to contact us :) 
 
 ## Sponsoring as an Organization
 
