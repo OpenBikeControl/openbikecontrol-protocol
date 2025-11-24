@@ -162,7 +162,7 @@ async def send_app_info(writer: asyncio.StreamWriter, app_id: str = "example-tra
 
 async def handle_button_state_message(data: bytes, writer: asyncio.StreamWriter):
     """Handle incoming button state message."""
-    buttons = parse_button_state(data)
+    buttons = parse_button_state(data, is_tcp=True)
     
     timestamp_ms = int(datetime.now().timestamp() * 1000)
     print(f"\n📍 Button State Update [{format_timestamp(timestamp_ms)}]:")

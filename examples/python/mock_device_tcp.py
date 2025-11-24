@@ -133,7 +133,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 
                 full_message = msg_type_data + haptic_data
                 try:
-                    haptic_info = parse_haptic_feedback(full_message)
+                    haptic_info = parse_haptic_feedback(full_message, is_tcp=True)
                     pattern = haptic_info["pattern"]
                     print(f"  ← Received haptic feedback: {pattern}")
                 except Exception as e:
@@ -157,7 +157,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 full_message = msg_type_data + header + remaining
                 
                 try:
-                    app_info = parse_app_info(full_message)
+                    app_info = parse_app_info(full_message, is_tcp=True)
                     app_id = app_info["app_id"]
                     app_version = app_info["app_version"]
                     supported_buttons = app_info["supported_buttons"]
