@@ -1,45 +1,73 @@
 #!/usr/bin/env python3
 """
-OpenBikeControl TCP Trainer App Example
+OpenBikeControl mDNS Trainer App Example
 
-This example demonstrates how to connect to an OpenBikeControl device via TCP
-and receive button state updates. It shows:
+This example demonstrates how to connect to an OpenBikeControl mDNS device
+and receive button state updates via WebSocket. It shows:
 - Service discovery using Zeroconf (mDNS/Bonjour)
-- TCP connection to device
+- WebSocket connection to device
 - Receiving and parsing button state messages
 - Sending haptic feedback commands
 - Handling device status updates
 
 Requirements:
-    pip install zeroconf
+    pip install zeroconf websockets
 
 Usage:
-    python tcp_trainer_app.py
+    python mdns_trainer_app.py
 """
 
 import asyncio
+import json
 import sys
-import struct
 from datetime import datetime
 from typing import Optional
 from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
-
-# Import shared protocol parsing functions
-from protocol_parser import (
-    parse_button_state,
-    parse_device_status,
-    format_button_state,
-    encode_haptic_feedback,
-    encode_app_info,
-    MSG_TYPE_BUTTON_STATE,
-    MSG_TYPE_DEVICE_STATUS,
-    MSG_TYPE_HAPTIC_FEEDBACK,
-    MSG_TYPE_APP_INFO,
-    BUTTON_NAMES
-)
+import websockets
 
 # OpenBikeControl mDNS service type
 SERVICE_TYPE = "_openbikecontrol._tcp.local."
+
+# Button ID to name mapping (based on PROTOCOL.md)
+BUTTON_NAMES = {
+    # Gear Shifting (0x01-0x0F)
+    0x01: "Shift Up",
+    0x02: "Shift Down",
+    0x03: "Gear Set",
+    # Navigation (0x10-0x1F)
+    0x10: "Up/Steer Left",
+    0x11: "Down/Steer Right",
+    0x12: "Left/Look Left",
+    0x13: "Right/Look Right",
+    0x14: "Select/Confirm",
+    0x15: "Back/Cancel",
+    0x16: "Menu",
+    0x17: "Home",
+    # Social/Emotes (0x20-0x2F)
+    0x20: "Wave",
+    0x21: "Thumbs Up",
+    0x22: "Hammer Time",
+    0x23: "Bell",
+    0x24: "Screenshot",
+    # Training Controls (0x30-0x3F)
+    0x30: "ERG Up",
+    0x31: "ERG Down",
+    0x32: "Skip Interval",
+    0x33: "Pause",
+    0x34: "Resume",
+    0x35: "Lap",
+    # View Controls (0x40-0x4F)
+    0x40: "Camera Angle",
+    0x41: "Camera 1",
+    0x42: "Camera 2",
+    0x43: "Camera 3",
+    0x44: "HUD Toggle",
+    0x45: "Map Toggle",
+    # Power-ups (0x50-0x5F)
+    0x50: "Power-up 1",
+    0x51: "Power-up 2",
+    0x52: "Power-up 3",
+}
 
 
 class DeviceInfo:
@@ -53,6 +81,10 @@ class DeviceInfo:
     
     def __str__(self):
         return f"{self.name} at {self.addresses[0]}:{self.port}"
+    
+    def get_websocket_url(self) -> str:
+        """Get WebSocket URL for this device."""
+        return f"ws://{self.addresses[0]}:{self.port}/api/ws"
 
 
 class OpenBikeControlListener(ServiceListener):
@@ -102,41 +134,70 @@ class OpenBikeControlListener(ServiceListener):
         pass
 
 
+def format_button_state(button_id: int, state: int) -> str:
+    """
+    Format button state for display.
+    
+    Args:
+        button_id: Button identifier
+        state: Button state (0=released, 1=pressed, 2-255=analog)
+        
+    Returns:
+        Formatted string
+    """
+    button_name = BUTTON_NAMES.get(button_id, f"Button 0x{button_id:02X}")
+    
+    if state == 0:
+        state_str = "RELEASED"
+    elif state == 1:
+        state_str = "PRESSED"
+    else:
+        # Analog value (2-255)
+        percentage = int((state - 2) / (255 - 2) * 100)
+        state_str = f"ANALOG {percentage}%"
+    
+    return f"{button_name}: {state_str}"
+
+
 def format_timestamp(timestamp_ms: int) -> str:
     """Format timestamp for display."""
     dt = datetime.fromtimestamp(timestamp_ms / 1000.0)
     return dt.strftime("%H:%M:%S.%f")[:-3]
 
 
-async def send_haptic_feedback(writer: asyncio.StreamWriter, pattern: str = "short", 
+async def send_haptic_feedback(websocket, pattern: str = "short", 
                                duration: int = 0, intensity: int = 0):
     """
     Send haptic feedback command to the device.
     
     Args:
-        writer: StreamWriter for TCP connection
+        websocket: WebSocket connection
         pattern: Haptic pattern name
-        duration: Duration in 10ms units (0 = use default)
+        duration: Duration in milliseconds (0 = use default)
         intensity: Intensity 0-255 (0 = use default)
     """
-    message = encode_haptic_feedback(pattern, duration, intensity, include_msg_type=True)
+    message = {
+        "type": "haptic_feedback",
+        "pattern": pattern,
+        "duration": duration,
+        "intensity": intensity
+    }
     
     try:
-        writer.write(message)
-        await writer.drain()
+        await websocket.send(json.dumps(message))
         print(f"  → Sent haptic feedback: {pattern}")
     except Exception as e:
         print(f"  ⚠ Failed to send haptic feedback: {e}")
 
 
-async def send_app_info(writer: asyncio.StreamWriter, app_id: str = "example-trainer-app", 
+async def send_app_info(websocket, app_id: str = "example-trainer-app", 
                        app_version: str = "1.0.0", 
                        supported_buttons: list = None):
     """
     Send app information to the device.
     
     Args:
-        writer: StreamWriter for TCP connection
+        websocket: WebSocket connection
         app_id: App identifier string
         app_version: App version string
         supported_buttons: List of supported button IDs (empty list = all buttons)
@@ -150,132 +211,111 @@ async def send_app_info(writer: asyncio.StreamWriter, app_id: str = "example-tra
             0x30, 0x31, 0x32, 0x33, 0x34,  # Training Controls
         ]
     
-    message = encode_app_info(app_id, app_version, supported_buttons, include_msg_type=True)
+    message = {
+        "type": "app_info",
+        "app_id": app_id,
+        "app_version": app_version,
+        "supported_buttons": supported_buttons
+    }
     
     try:
-        writer.write(message)
-        await writer.drain()
+        await websocket.send(json.dumps(message))
         print(f"  → Sent app info: {app_id} v{app_version} (supports {len(supported_buttons)} button types)")
     except Exception as e:
         print(f"  ⚠ Failed to send app info: {e}")
 
 
-async def handle_button_state_message(data: bytes, writer: asyncio.StreamWriter):
-    """Handle incoming button state message."""
-    buttons = parse_button_state(data)
-    
-    timestamp_ms = int(datetime.now().timestamp() * 1000)
-    print(f"\n📍 Button State Update [{format_timestamp(timestamp_ms)}]:")
-    for button_id, state in buttons:
-        print(f"  {format_button_state(button_id, state)}")
-        
-        # Send haptic feedback on button press
-        if state == 1:  # Button pressed
-            await send_haptic_feedback(writer, "short")
 
-
-async def handle_device_status_message(data: bytes):
-    """Handle incoming device status message."""
-    status = parse_device_status(data)
-    
-    timestamp_ms = int(datetime.now().timestamp() * 1000)
-    print(f"\n🔋 Device Status Update [{format_timestamp(timestamp_ms)}]:")
-    if status["battery"] is not None:
-        print(f"  Battery: {status['battery']}%")
-    print(f"  Connected: {'Yes' if status['connected'] else 'No'}")
-
-
-async def read_tcp_messages(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+async def handle_message(websocket, message: dict):
     """
-    Read and handle TCP messages from the device.
+    Handle incoming WebSocket message.
     
     Args:
-        reader: StreamReader for TCP connection
-        writer: StreamWriter for TCP connection
+        websocket: WebSocket connection
+        message: Parsed JSON message
     """
-    try:
-        while True:
-            # Read message type byte
-            msg_type_data = await reader.read(1)
-            if not msg_type_data:
-                break  # Connection closed
-            
-            msg_type = msg_type_data[0]
-            
-            if msg_type == MSG_TYPE_BUTTON_STATE:
-                # Button state message - variable length
-                # Read pairs of (button_id, state) until we get a new message type
-                # For simplicity, we'll read in small chunks and parse
-                chunk = await reader.read(128)  # Read up to 128 bytes
-                if not chunk:
-                    break
-                
-                # Reconstruct full message with message type
-                full_message = msg_type_data + chunk
-                await handle_button_state_message(full_message, writer)
-            
-            elif msg_type == MSG_TYPE_DEVICE_STATUS:
-                # Device status message - fixed 2 more bytes
-                status_data = await reader.read(2)
-                if len(status_data) < 2:
-                    break
-                
-                full_message = msg_type_data + status_data
-                await handle_device_status_message(full_message)
-            
-            else:
-                print(f"\n⚠ Unknown message type: 0x{msg_type:02X}")
-                # Skip unknown message - try to continue
-                await reader.read(64)  # Read and discard some bytes
+    msg_type = message.get("type")
     
-    except asyncio.CancelledError:
-        raise
-    except Exception as e:
-        print(f"\n❌ Error reading messages: {e}")
+    if msg_type == "button_state":
+        # Button state change
+        timestamp = message.get("timestamp", 0)
+        buttons = message.get("buttons", [])
+        
+        print(f"\n📍 Button State Update [{format_timestamp(timestamp)}]:")
+        for button in buttons:
+            button_id = button.get("id")
+            state = button.get("state")
+            if button_id is not None and state is not None:
+                print(f"  {format_button_state(button_id, state)}")
+                
+                # Send haptic feedback on button press
+                if state == 1:  # Button pressed
+                    await send_haptic_feedback(websocket, "short")
+    
+    elif msg_type == "device_status":
+        # Device status update
+        timestamp = message.get("timestamp", 0)
+        battery = message.get("battery")
+        connected = message.get("connected", True)
+        
+        print(f"\n🔋 Device Status Update [{format_timestamp(timestamp)}]:")
+        if battery is not None:
+            print(f"  Battery: {battery}%")
+        print(f"  Connected: {'Yes' if connected else 'No'}")
+    
+    elif msg_type == "haptic_feedback_response":
+        # Haptic feedback response
+        timestamp = message.get("timestamp", 0)
+        success = message.get("success", False)
+        status = "✓" if success else "✗"
+        print(f"  {status} Haptic feedback {'acknowledged' if success else 'failed'} [{format_timestamp(timestamp)}]")
+    
+    else:
+        print(f"\n⚠ Unknown message type: {msg_type}")
+        print(f"  Message: {message}")
 
 
 async def connect_and_monitor(device: DeviceInfo):
     """
-    Connect to device via TCP and monitor button states.
+    Connect to device via WebSocket and monitor button states.
     
     Args:
         device: DeviceInfo object with connection details
     """
-    host = device.addresses[0]
-    port = device.port
-    
+    url = device.get_websocket_url()
     print(f"🔗 Connecting to {device.name}...")
-    print(f"   TCP: {host}:{port}\n")
+    print(f"   WebSocket URL: {url}\n")
     
     try:
-        reader, writer = await asyncio.open_connection(host, port)
-        print(f"✓ Connected to {device.name}\n")
-        
-        # Send app information immediately after connecting
-        await send_app_info(writer)
-        print()
-        
-        print("👂 Listening for messages...")
-        print("Press Ctrl+C to stop\n")
-        
-        # Read and handle messages
-        await read_tcp_messages(reader, writer)
-        
-    except ConnectionRefusedError:
-        print(f"❌ Connection refused - is the device running?")
-        return 1
-    except OSError as e:
-        print(f"❌ Connection error: {e}")
+        async with websockets.connect(url) as websocket:
+            print(f"✓ Connected to {device.name}\n")
+            
+            # Send app information immediately after connecting
+            await send_app_info(websocket)
+            print()
+            
+            print("👂 Listening for messages...")
+            print("Press Ctrl+C to stop\n")
+            
+            # Receive and handle messages
+            async for message in websocket:
+                try:
+                    data = json.loads(message)
+                    await handle_message(websocket, data)
+                except json.JSONDecodeError as e:
+                    print(f"⚠ Failed to parse message: {e}")
+                    print(f"  Raw message: {message}")
+                except Exception as e:
+                    print(f"⚠ Error handling message: {e}")
+    
+    except websockets.exceptions.WebSocketException as e:
+        print(f"❌ WebSocket error: {e}")
         return 1
     except KeyboardInterrupt:
         print("\n\n⏹ Stopping...")
     except Exception as e:
         print(f"❌ Error: {e}")
         return 1
-    finally:
-        if 'writer' in locals():
-            writer.close()
-            await writer.wait_closed()
     
     print("✓ Disconnected successfully")
     return 0
@@ -311,7 +351,7 @@ async def discover_devices(timeout: float = 5.0) -> list:
 async def main():
     """Main application entry point."""
     print("=" * 60)
-    print("OpenBikeControl TCP Trainer App Example")
+    print("OpenBikeControl mDNS Trainer App Example")
     print("=" * 60)
     print()
     
