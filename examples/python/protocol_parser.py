@@ -67,7 +67,7 @@ MSG_TYPE_HAPTIC_FEEDBACK = 0x03
 MSG_TYPE_APP_INFO = 0x04
 
 
-def parse_button_state(data: bytes) -> list:
+def parse_button_state(data: bytes, is_tcp: bool = None) -> list:
     """
     Parse button state data from binary format.
     
@@ -76,16 +76,33 @@ def parse_button_state(data: bytes) -> list:
     
     Args:
         data: Raw bytes from BLE notification or TCP message
+        is_tcp: If True, treat as TCP format with message type prefix.
+                If False, treat as BLE format without message type.
+                If None (default), auto-detect based on first byte.
         
     Returns:
         List of tuples (button_id, state)
     """
     buttons = []
     
-    # Check if this is a TCP message with message type prefix
+    if len(data) == 0:
+        return buttons
+    
+    # Determine format
     start_idx = 0
-    if len(data) > 0 and data[0] == MSG_TYPE_BUTTON_STATE:
-        start_idx = 1  # Skip message type byte for TCP
+    if is_tcp is None:
+        # Auto-detect: if first byte is MSG_TYPE_BUTTON_STATE and there are more bytes
+        # and total length is odd (msg_type + pairs of bytes), treat as TCP
+        if data[0] == MSG_TYPE_BUTTON_STATE and len(data) > 1 and len(data) % 2 == 1:
+            start_idx = 1
+    elif is_tcp:
+        # Explicitly TCP format - expect message type as first byte
+        if data[0] == MSG_TYPE_BUTTON_STATE:
+            start_idx = 1
+        else:
+            # Invalid TCP format
+            return buttons
+    # else: is_tcp is False, so start_idx stays 0 (BLE format)
     
     # Parse button state pairs
     for i in range(start_idx, len(data), 2):
@@ -214,7 +231,7 @@ def encode_haptic_feedback(pattern: str = "short", duration: int = 0,
     return bytes(data)
 
 
-def parse_haptic_feedback(data: bytes) -> dict:
+def parse_haptic_feedback(data: bytes, is_tcp: bool = None) -> dict:
     """
     Parse haptic feedback command from binary format.
     
@@ -223,17 +240,30 @@ def parse_haptic_feedback(data: bytes) -> dict:
     
     Args:
         data: Raw bytes
+        is_tcp: If True, treat as TCP format with message type prefix.
+                If False, treat as BLE format without message type.
+                If None (default), auto-detect based on first byte and length.
         
     Returns:
         Dictionary with pattern, duration, and intensity
     """
-    # Check if this is a TCP message with message type prefix
+    # Determine format
     start_idx = 0
-    if len(data) > 0 and data[0] == MSG_TYPE_HAPTIC_FEEDBACK:
-        start_idx = 1  # Skip message type byte for TCP
+    if is_tcp is None:
+        # Auto-detect: if first byte is MSG_TYPE_HAPTIC_FEEDBACK and length is 4, treat as TCP
+        if len(data) == 4 and data[0] == MSG_TYPE_HAPTIC_FEEDBACK:
+            start_idx = 1
+        elif len(data) < 3:
+            raise ValueError("Haptic feedback message too short")
+    elif is_tcp:
+        # Explicitly TCP format
         if len(data) < 4:
             raise ValueError("Haptic feedback message too short")
+        if data[0] != MSG_TYPE_HAPTIC_FEEDBACK:
+            raise ValueError(f"Invalid message type: {data[0]}")
+        start_idx = 1
     else:
+        # BLE format
         if len(data) < 3:
             raise ValueError("Haptic feedback message too short")
     
@@ -292,7 +322,7 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
     return bytes(data)
 
 
-def parse_app_info(data: bytes) -> dict:
+def parse_app_info(data: bytes, is_tcp: bool = None) -> dict:
     """
     Parse app information from binary format.
     
@@ -301,14 +331,25 @@ def parse_app_info(data: bytes) -> dict:
     
     Args:
         data: Raw bytes
+        is_tcp: If True, treat as TCP format with message type prefix.
+                If False, treat as BLE format without message type.
+                If None (default), auto-detect based on first byte.
         
     Returns:
         Dictionary with app_id, app_version, and supported_buttons
     """
-    # Check if this is a TCP message with message type prefix
+    # Determine format
     idx = 0
-    if len(data) > 0 and data[0] == MSG_TYPE_APP_INFO:
-        idx = 1  # Skip message type byte for TCP
+    if is_tcp is None:
+        # Auto-detect: if first byte is MSG_TYPE_APP_INFO, treat as TCP
+        if len(data) > 0 and data[0] == MSG_TYPE_APP_INFO:
+            idx = 1
+    elif is_tcp:
+        # Explicitly TCP format
+        if len(data) < 1 or data[0] != MSG_TYPE_APP_INFO:
+            raise ValueError("Invalid message type")
+        idx = 1
+    # else: is_tcp is False, so idx stays 0 (BLE format)
     
     if len(data) < idx + 3:
         raise ValueError("App info message too short")
