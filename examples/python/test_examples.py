@@ -307,7 +307,8 @@ def test_mock_device_ble():
         
         # Check device info
         info = device.get_device_info()
-        assert info['name'] == 'OpenBike', "Device name mismatch"
+        # MockBLEDevice uses "OpenBike" as the default name in the constructor
+        assert info['name'] == 'OpenBike', f"Device name mismatch: {info['name']}"
         assert info['manufacturer'] == 'ExampleCorp', "Manufacturer mismatch"
         assert info['model'] == 'MC-100', "Model mismatch"
         assert info['battery'] == 85, "Battery level mismatch"
