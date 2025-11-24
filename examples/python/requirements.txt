@@ -5,11 +5,5 @@ bleak>=0.21.0
 # Using bless from x42en/bless which is compatible with latest bleak
 bless @ git+https://github.com/x42en/bless.git@master
 
-# mDNS/Zeroconf support
+# mDNS/Zeroconf support (for TCP device discovery)
 zeroconf>=0.131.0
-
-# WebSocket client for mDNS protocol
-websockets>=12.0
-
-# WebSocket server for mDNS mock device
-aiohttp>=3.8.0

@@ -48,7 +48,8 @@ Both transports use the same logical data format, ensuring consistency across co
 
 **mDNS Protocol:**
 - Service Type: `_openbikecontrol._tcp.local.`
-- WebSocket endpoint: `ws://<device-ip>:<port>/api/ws`
+- TCP endpoint: `<device-ip>:<port>`
+- Binary data format (same as BLE)
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---
@@ -151,8 +152,9 @@ Apps may implement multi-button combinations by detecting multiple simultaneous 
 
 2. **mDNS Implementation:**
    - Use Bonjour/Zeroconf libraries to discover `_openbikecontrol._tcp.local.` services
-   - Connect via WebSocket for real-time updates
+   - Connect via TCP for real-time updates
    - Parse TXT records to get device information and service UUIDs
+   - Use same binary format as BLE for button states and commands
    - See [MDNS.md](MDNS.md) for detailed mDNS implementation
 
 3. **Button Mapping:**
@@ -177,6 +179,7 @@ Apps may implement multi-button combinations by detecting multiple simultaneous 
    - Only send notifications on state changes
    - Batch multiple button changes in one notification
    - Support both BLE and mDNS for maximum compatibility
+   - Use same binary data format for both BLE and TCP
    - Implement haptic feedback if hardware supports it
 
 3. **Power Management:**

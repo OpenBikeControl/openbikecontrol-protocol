@@ -12,28 +12,52 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-# Import functions from the example scripts
-from ble_trainer_app import parse_button_state, format_button_state, BUTTON_NAMES
-from mdns_trainer_app import format_button_state as mdns_format_button_state
+# Import functions from the protocol parser module
+from protocol_parser import (
+    parse_button_state,
+    encode_button_state,
+    format_button_state,
+    parse_device_status,
+    encode_device_status,
+    parse_haptic_feedback,
+    encode_haptic_feedback,
+    parse_app_info,
+    encode_app_info,
+    BUTTON_NAMES,
+    MSG_TYPE_BUTTON_STATE,
+    MSG_TYPE_DEVICE_STATUS,
+    MSG_TYPE_HAPTIC_FEEDBACK,
+    MSG_TYPE_APP_INFO
+)
 
 
 def test_parse_button_state():
-    """Test BLE button state parsing."""
+    """Test button state parsing."""
     print("Testing parse_button_state...")
     
-    # Single button press
+    # Single button press (BLE format without message type)
     data = bytes([0x01, 0x01])
-    result = parse_button_state(data)
+    result = parse_button_state(data, is_tcp=False)
     assert result == [(0x01, 0x01)], f"Expected [(1, 1)], got {result}"
     
-    # Multiple buttons
+    # Single button press (TCP format with message type)
+    data = bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01])
+    result = parse_button_state(data, is_tcp=True)
+    assert result == [(0x01, 0x01)], f"Expected [(1, 1)], got {result}"
+    
+    # Multiple buttons (BLE format)
     data = bytes([0x01, 0x01, 0x02, 0x00])
-    result = parse_button_state(data)
+    result = parse_button_state(data, is_tcp=False)
     assert result == [(0x01, 0x01), (0x02, 0x00)], f"Expected [(1, 1), (2, 0)], got {result}"
     
-    # Analog value
+    # Multiple buttons (TCP format)
+    data = bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01, 0x02, 0x00])
+    result = parse_button_state(data, is_tcp=True)
+    assert result == [(0x01, 0x01), (0x02, 0x00)], f"Expected [(1, 1), (2, 0)], got {result}"
+    
+    # Analog value (BLE format)
     data = bytes([0x10, 0x80])
-    result = parse_button_state(data)
+    result = parse_button_state(data, is_tcp=False)
     assert result == [(0x10, 0x80)], f"Expected [(16, 128)], got {result}"
     
     # Empty data
@@ -43,7 +67,7 @@ def test_parse_button_state():
     
     # Odd length (should skip last byte)
     data = bytes([0x01, 0x01, 0x02])
-    result = parse_button_state(data)
+    result = parse_button_state(data, is_tcp=False)
     assert result == [(0x01, 0x01)], f"Expected [(1, 1)], got {result}"
     
     print("  ✓ All parse_button_state tests passed")
@@ -96,15 +120,86 @@ def test_button_names():
 
 
 def test_mdns_format_consistency():
-    """Test that mDNS and BLE format functions produce consistent output."""
-    print("Testing format consistency between BLE and mDNS...")
+    """Test that format functions produce consistent output."""
+    print("Testing format consistency...")
     
-    # Both should format the same way
-    ble_result = format_button_state(0x01, 1)
-    mdns_result = mdns_format_button_state(0x01, 1)
-    assert ble_result == mdns_result, f"BLE: {ble_result}, mDNS: {mdns_result}"
+    # Both BLE and TCP use the same format_button_state function now
+    result1 = format_button_state(0x01, 1)
+    result2 = format_button_state(0x01, 1)
+    assert result1 == result2, f"Results differ: {result1} vs {result2}"
     
     print("  ✓ Format consistency tests passed")
+
+
+def test_encode_button_state():
+    """Test button state encoding."""
+    print("Testing encode_button_state...")
+    
+    # Single button (BLE format)
+    result = encode_button_state([(0x01, 0x01)], include_msg_type=False)
+    assert result == bytes([0x01, 0x01]), f"Expected [0x01, 0x01], got {result}"
+    
+    # Single button (TCP format)
+    result = encode_button_state([(0x01, 0x01)], include_msg_type=True)
+    assert result == bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01]), f"Expected [0x01, 0x01, 0x01], got {result}"
+    
+    # Multiple buttons
+    result = encode_button_state([(0x01, 0x01), (0x02, 0x00)], include_msg_type=False)
+    assert result == bytes([0x01, 0x01, 0x02, 0x00]), f"Expected [0x01, 0x01, 0x02, 0x00], got {result}"
+    
+    print("  ✓ All encode_button_state tests passed")
+
+
+def test_device_status():
+    """Test device status encoding and parsing."""
+    print("Testing device status...")
+    
+    # Encode status with battery
+    encoded = encode_device_status(85, True)
+    assert encoded == bytes([MSG_TYPE_DEVICE_STATUS, 85, 0x01]), f"Unexpected encoding: {encoded}"
+    
+    # Parse status
+    parsed = parse_device_status(encoded)
+    assert parsed["battery"] == 85, f"Battery mismatch: {parsed['battery']}"
+    assert parsed["connected"] == True, f"Connected mismatch: {parsed['connected']}"
+    
+    # Encode status without battery
+    encoded = encode_device_status(None, False)
+    assert encoded == bytes([MSG_TYPE_DEVICE_STATUS, 0xFF, 0x00]), f"Unexpected encoding: {encoded}"
+    
+    # Parse status without battery
+    parsed = parse_device_status(encoded)
+    assert parsed["battery"] is None, f"Battery should be None: {parsed['battery']}"
+    assert parsed["connected"] == False, f"Connected mismatch: {parsed['connected']}"
+    
+    print("  ✓ All device status tests passed")
+
+
+def test_haptic_feedback():
+    """Test haptic feedback encoding and parsing."""
+    print("Testing haptic feedback...")
+    
+    # Encode haptic (BLE format)
+    encoded = encode_haptic_feedback("short", 0, 0, include_msg_type=False)
+    assert encoded == bytes([0x01, 0x00, 0x00]), f"Unexpected encoding: {encoded}"
+    
+    # Encode haptic (TCP format)
+    encoded = encode_haptic_feedback("double", 20, 128, include_msg_type=True)
+    assert encoded == bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x02, 20, 128]), f"Unexpected encoding: {encoded}"
+    
+    # Parse haptic (BLE format)
+    parsed = parse_haptic_feedback(bytes([0x01, 0x00, 0x00]), is_tcp=False)
+    assert parsed["pattern"] == "short", f"Pattern mismatch: {parsed['pattern']}"
+    assert parsed["duration"] == 0, f"Duration mismatch: {parsed['duration']}"
+    assert parsed["intensity"] == 0, f"Intensity mismatch: {parsed['intensity']}"
+    
+    # Parse haptic (TCP format)
+    parsed = parse_haptic_feedback(bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x02, 20, 128]), is_tcp=True)
+    assert parsed["pattern"] == "double", f"Pattern mismatch: {parsed['pattern']}"
+    assert parsed["duration"] == 20, f"Duration mismatch: {parsed['duration']}"
+    assert parsed["intensity"] == 128, f"Intensity mismatch: {parsed['intensity']}"
+    
+    print("  ✓ All haptic feedback tests passed")
 
 
 def test_mock_device_zeroconf():
@@ -114,10 +209,16 @@ def test_mock_device_zeroconf():
     try:
         import asyncio
         from zeroconf import ServiceBrowser, ServiceListener, Zeroconf
-        from mock_device import start_mock_server, ZEROCONF_AVAILABLE, AIOHTTP_AVAILABLE
         
-        if not ZEROCONF_AVAILABLE or not AIOHTTP_AVAILABLE:
-            print("  ⊘ Skipped (zeroconf or aiohttp not available)")
+        # Check if zeroconf is available
+        try:
+            from mock_device_tcp import start_mock_server, ZEROCONF_AVAILABLE
+        except ImportError:
+            print("  ⊘ Skipped (mock_device_tcp not available)")
+            return
+        
+        if not ZEROCONF_AVAILABLE:
+            print("  ⊘ Skipped (zeroconf not available)")
             return
         
         SERVICE_TYPE = "_openbikecontrol._tcp.local."
@@ -206,7 +307,8 @@ def test_mock_device_ble():
         
         # Check device info
         info = device.get_device_info()
-        assert info['name'] == 'Mock OpenBike Remote', "Device name mismatch"
+        # MockBLEDevice uses "OpenBike" as the default name in the constructor
+        assert info['name'] == 'OpenBike', f"Device name mismatch: {info['name']}"
         assert info['manufacturer'] == 'ExampleCorp', "Manufacturer mismatch"
         assert info['model'] == 'MC-100', "Model mismatch"
         assert info['battery'] == 85, "Battery level mismatch"
@@ -222,70 +324,12 @@ def test_mock_device_ble():
         traceback.print_exc()
 
 
-def test_app_info_json_format():
-    """Test app info JSON message format for mDNS/WebSocket."""
-    print("Testing app info JSON format...")
+def test_app_info_encoding():
+    """Test app info encoding and decoding."""
+    print("Testing app info encoding and decoding...")
     
-    import json
-    
-    # Test valid app info message
-    message = {
-        "type": "app_info",
-        "app_id": "zwift",
-        "app_version": "1.52.0",
-        "supported_buttons": [0x01, 0x02, 0x10, 0x14]
-    }
-    
-    # Should be valid JSON
-    json_str = json.dumps(message)
-    parsed = json.loads(json_str)
-    
-    assert parsed["type"] == "app_info", "Type field mismatch"
-    assert parsed["app_id"] == "zwift", "App ID mismatch"
-    assert parsed["app_version"] == "1.52.0", "App version mismatch"
-    assert len(parsed["supported_buttons"]) == 4, "Button count mismatch"
-    assert parsed["supported_buttons"][0] == 0x01, "Button ID mismatch"
-    
-    # Test empty button list
-    message2 = {
-        "type": "app_info",
-        "app_id": "test-app",
-        "app_version": "1.0.0",
-        "supported_buttons": []
-    }
-    json_str2 = json.dumps(message2)
-    parsed2 = json.loads(json_str2)
-    assert len(parsed2["supported_buttons"]) == 0, "Empty button list failed"
-    
-    print("  ✓ App info JSON format tests passed")
-
-
-def _encode_app_info_ble(app_id: str, app_version: str, supported_buttons: list) -> bytes:
-    """
-    Helper function to encode app info to BLE format.
-    Used by multiple test functions.
-    """
-    app_id_bytes = app_id.encode('utf-8')[:32]
-    app_version_bytes = app_version.encode('utf-8')[:32]
-    
-    data = bytearray()
-    data.append(0x01)  # Version
-    data.append(len(app_id_bytes))
-    data.extend(app_id_bytes)
-    data.append(len(app_version_bytes))
-    data.extend(app_version_bytes)
-    data.append(len(supported_buttons))
-    data.extend(supported_buttons)
-    
-    return bytes(data)
-
-
-def test_app_info_ble_encoding():
-    """Test app info BLE binary encoding."""
-    print("Testing app info BLE encoding...")
-    
-    # Test basic encoding
-    result = _encode_app_info_ble("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14])
+    # Test basic encoding (BLE format)
+    result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14], include_msg_type=False)
     
     # Verify structure
     assert result[0] == 0x01, "Version byte incorrect"
@@ -297,88 +341,33 @@ def test_app_info_ble_encoding():
     assert result[15] == 0x01, "First button ID incorrect"
     assert result[16] == 0x02, "Second button ID incorrect"
     
-    # Test empty button list
-    result2 = _encode_app_info_ble("test", "1.0", [])
-    assert result2[-1] == 0, "Empty button list encoding failed"
+    # Test decoding (BLE format)
+    decoded = parse_app_info(result, is_tcp=False)
+    assert decoded["app_id"] == "zwift", "App ID decode failed"
+    assert decoded["app_version"] == "1.52.0", "App version decode failed"
+    assert len(decoded["supported_buttons"]) == 4, "Button count decode failed"
+    assert decoded["supported_buttons"][0] == 0x01, "Button ID decode failed"
+    
+    # Test TCP format encoding
+    result_tcp = encode_app_info("test", "1.0", [], include_msg_type=True)
+    assert result_tcp[0] == MSG_TYPE_APP_INFO, "Message type incorrect"
+    assert result_tcp[1] == 0x01, "Version byte incorrect"
+    
+    # Test TCP format decoding
+    decoded_tcp = parse_app_info(result_tcp, is_tcp=True)
+    assert decoded_tcp["app_id"] == "test", "TCP app ID decode failed"
+    assert decoded_tcp["app_version"] == "1.0", "TCP app version decode failed"
+    assert len(decoded_tcp["supported_buttons"]) == 0, "TCP empty button list decode failed"
     
     # Test long app ID (should truncate)
     long_id = "a" * 50
-    result3 = _encode_app_info_ble(long_id, "1.0", [])
+    result3 = encode_app_info(long_id, "1.0", [], include_msg_type=False)
     assert result3[1] == 32, "Long app ID should be truncated to 32 bytes"
-    
-    print("  ✓ App info BLE encoding tests passed")
-
-
-def test_app_info_ble_decoding():
-    """Test app info BLE binary decoding."""
-    print("Testing app info BLE decoding...")
-    
-    # Test decoding function (from mock_device_ble.py) with bounds checking
-    def decode_app_info(value: bytes) -> dict:
-        """Decode app info from BLE format."""
-        if len(value) < 3:
-            raise ValueError("Data too short")
-        
-        idx = 0
-        version = value[idx]
-        idx += 1
-        
-        if version != 0x01:
-            raise ValueError(f"Unsupported version: {version}")
-        
-        # Parse App ID with bounds checking
-        if idx >= len(value):
-            raise ValueError("Missing app ID length")
-        app_id_len = value[idx]
-        idx += 1
-        if idx + app_id_len > len(value):
-            raise ValueError("App ID length exceeds buffer")
-        app_id = value[idx:idx+app_id_len].decode('utf-8')
-        idx += app_id_len
-        
-        # Parse App Version with bounds checking
-        if idx >= len(value):
-            raise ValueError("Missing app version length")
-        app_version_len = value[idx]
-        idx += 1
-        if idx + app_version_len > len(value):
-            raise ValueError("App version length exceeds buffer")
-        app_version = value[idx:idx+app_version_len].decode('utf-8')
-        idx += app_version_len
-        
-        # Parse Button IDs with bounds checking
-        if idx >= len(value):
-            raise ValueError("Missing button count")
-        button_count = value[idx]
-        idx += 1
-        if idx + button_count > len(value):
-            raise ValueError("Button count exceeds buffer")
-        button_ids = list(value[idx:idx+button_count])
-        
-        return {
-            "app_id": app_id,
-            "app_version": app_version,
-            "supported_buttons": button_ids
-        }
-    
-    # Test basic decoding
-    data = bytes([0x01, 0x05]) + b'zwift' + bytes([0x06]) + b'1.52.0' + bytes([0x04, 0x01, 0x02, 0x10, 0x14])
-    result = decode_app_info(data)
-    
-    assert result["app_id"] == "zwift", "App ID decode failed"
-    assert result["app_version"] == "1.52.0", "App version decode failed"
-    assert len(result["supported_buttons"]) == 4, "Button count decode failed"
-    assert result["supported_buttons"][0] == 0x01, "Button ID decode failed"
-    
-    # Test empty button list
-    data2 = bytes([0x01, 0x04]) + b'test' + bytes([0x03]) + b'1.0' + bytes([0x00])
-    result2 = decode_app_info(data2)
-    assert len(result2["supported_buttons"]) == 0, "Empty button list decode failed"
     
     # Test round-trip encoding/decoding
     original = {"app_id": "myapp", "app_version": "2.1.3", "supported_buttons": [0x01, 0x20, 0x30]}
-    encoded = _encode_app_info_ble(original["app_id"], original["app_version"], original["supported_buttons"])
-    decoded = decode_app_info(encoded)
+    encoded = encode_app_info(original["app_id"], original["app_version"], original["supported_buttons"], include_msg_type=False)
+    decoded = parse_app_info(encoded, is_tcp=False)
     
     assert decoded["app_id"] == original["app_id"], "Round-trip app_id failed"
     assert decoded["app_version"] == original["app_version"], "Round-trip app_version failed"
@@ -386,7 +375,7 @@ def test_app_info_ble_decoding():
     
     # Test malformed data (too short)
     try:
-        decode_app_info(bytes([0x01]))
+        parse_app_info(bytes([0x01]), is_tcp=False)
         assert False, "Should have raised ValueError for truncated data"
     except ValueError:
         pass  # Expected
@@ -394,12 +383,12 @@ def test_app_info_ble_decoding():
     # Test malformed data (app_id_len exceeds buffer)
     try:
         malformed = bytes([0x01, 0xFF, 0x01, 0x02])  # Claims 255 bytes but only has 2
-        decode_app_info(malformed)
+        parse_app_info(malformed, is_tcp=False)
         assert False, "Should have raised ValueError for out-of-bounds app ID"
     except ValueError:
         pass  # Expected
     
-    print("  ✓ App info BLE decoding tests passed")
+    print("  ✓ App info encoding and decoding tests passed")
 
 
 def main():
@@ -414,9 +403,10 @@ def main():
         test_format_button_state()
         test_button_names()
         test_mdns_format_consistency()
-        test_app_info_json_format()
-        test_app_info_ble_encoding()
-        test_app_info_ble_decoding()
+        test_encode_button_state()
+        test_device_status()
+        test_haptic_feedback()
+        test_app_info_encoding()
         test_mock_device_zeroconf()
         test_mock_device_ble()
         

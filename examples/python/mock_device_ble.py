@@ -38,6 +38,13 @@ except ImportError:
     print("Note: Install bless for cross-platform BLE peripheral simulation")
     print("      pip install git+https://github.com/x42en/bless.git@master")
 
+# Import shared protocol parsing functions
+from protocol_parser import (
+    encode_button_state,
+    parse_haptic_feedback,
+    parse_app_info
+)
+
 
 # OpenBikeControl Service and Characteristic UUIDs (from BLE.md)
 SERVICE_UUID = "d273f680-d548-419d-b9d1-fa0472345229"
@@ -94,80 +101,29 @@ class MockBLEDevice:
 
     def _haptic_write_callback(self, characteristic, value: bytes):
         """Handle haptic feedback writes."""
-        if len(value) >= 3:
-            pattern = value[0]
-            duration = value[1]
-            intensity = value[2]
-
-            pattern_names = {
-                0x00: "none",
-                0x01: "short",
-                0x02: "double",
-                0x03: "triple",
-                0x04: "long",
-                0x05: "success",
-                0x06: "warning",
-                0x07: "error"
-            }
-            pattern_name = pattern_names.get(pattern, f"0x{pattern:02X}")
-
-            print(f"  ← Received haptic feedback: pattern={pattern_name}, "
+        try:
+            haptic_info = parse_haptic_feedback(value, is_tcp=False)
+            pattern = haptic_info["pattern"]
+            duration = haptic_info["duration"]
+            intensity = haptic_info["intensity"]
+            
+            print(f"  ← Received haptic feedback: pattern={pattern}, "
                   f"duration={duration}×10ms, intensity={intensity}")
+        except Exception as e:
+            print(f"  ⚠ Failed to parse haptic feedback: {e}")
 
     def _app_info_write_callback(self, characteristic, value: bytes):
         """Handle app info writes."""
         try:
-            if len(value) < 3:
-                print(f"  ⚠ Received invalid app info (too short): {len(value)} bytes")
-                return
-            
-            idx = 0
-            version = value[idx]
-            idx += 1
-            
-            if version != 0x01:
-                print(f"  ⚠ Received unsupported app info version: 0x{version:02X}")
-                return
-            
-            # Parse App ID with bounds checking
-            if idx >= len(value):
-                print(f"  ⚠ Received invalid app info: missing app ID length")
-                return
-            app_id_len = value[idx]
-            idx += 1
-            if idx + app_id_len > len(value):
-                print(f"  ⚠ Received invalid app info: app ID length exceeds buffer")
-                return
-            app_id = value[idx:idx+app_id_len].decode('utf-8')
-            idx += app_id_len
-            
-            # Parse App Version with bounds checking
-            if idx >= len(value):
-                print(f"  ⚠ Received invalid app info: missing app version length")
-                return
-            app_version_len = value[idx]
-            idx += 1
-            if idx + app_version_len > len(value):
-                print(f"  ⚠ Received invalid app info: app version length exceeds buffer")
-                return
-            app_version = value[idx:idx+app_version_len].decode('utf-8')
-            idx += app_version_len
-            
-            # Parse Button IDs with bounds checking
-            if idx >= len(value):
-                print(f"  ⚠ Received invalid app info: missing button count")
-                return
-            button_count = value[idx]
-            idx += 1
-            if idx + button_count > len(value):
-                print(f"  ⚠ Received invalid app info: button count exceeds buffer")
-                return
-            button_ids = list(value[idx:idx+button_count])
+            app_info = parse_app_info(value, is_tcp=False)
+            app_id = app_info["app_id"]
+            app_version = app_info["app_version"]
+            button_ids = app_info["supported_buttons"]
             
             print(f"  ← Received app info:")
             print(f"     App ID: {app_id}")
             print(f"     Version: {app_version}")
-            print(f"     Supported buttons: {button_count} types")
+            print(f"     Supported buttons: {len(button_ids)} types")
             if button_ids:
                 button_id_str = ", ".join(f"0x{btn:02X}" for btn in button_ids[:10])
                 if len(button_ids) > 10:
@@ -299,7 +255,7 @@ class MockBLEDevice:
         if not self.server:
             return
 
-        self._button_state_value = struct.pack('<BB', button_id, state)
+        self._button_state_value = encode_button_state([(button_id, state)], include_msg_type=False)
         self.server.get_characteristic(BUTTON_STATE_CHAR_UUID).value = self._button_state_value
         self.server.update_value(SERVICE_UUID, BUTTON_STATE_CHAR_UUID)
 

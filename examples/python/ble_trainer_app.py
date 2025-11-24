@@ -23,110 +23,20 @@ from bleak import BleakScanner, BleakClient
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 
+# Import shared protocol parsing functions
+from protocol_parser import (
+    parse_button_state,
+    format_button_state,
+    encode_haptic_feedback,
+    encode_app_info,
+    BUTTON_NAMES
+)
+
 # OpenBikeControl Service and Characteristic UUIDs
 SERVICE_UUID = "d273f680-d548-419d-b9d1-fa0472345229"
 BUTTON_STATE_CHAR_UUID = "d273f681-d548-419d-b9d1-fa0472345229"
 HAPTIC_FEEDBACK_CHAR_UUID = "d273f682-d548-419d-b9d1-fa0472345229"
 APP_INFO_CHAR_UUID = "d273f683-d548-419d-b9d1-fa0472345229"
-
-# Button ID to name mapping (based on PROTOCOL.md)
-BUTTON_NAMES = {
-    # Gear Shifting (0x01-0x0F)
-    0x01: "Shift Up",
-    0x02: "Shift Down",
-    0x03: "Gear Set",
-    # Navigation (0x10-0x1F)
-    0x10: "Up/Steer Left",
-    0x11: "Down/Steer Right",
-    0x12: "Left/Look Left",
-    0x13: "Right/Look Right",
-    0x14: "Select/Confirm",
-    0x15: "Back/Cancel",
-    0x16: "Menu",
-    0x17: "Home",
-    # Social/Emotes (0x20-0x2F)
-    0x20: "Wave",
-    0x21: "Thumbs Up",
-    0x22: "Hammer Time",
-    0x23: "Bell",
-    0x24: "Screenshot",
-    # Training Controls (0x30-0x3F)
-    0x30: "ERG Up",
-    0x31: "ERG Down",
-    0x32: "Skip Interval",
-    0x33: "Pause",
-    0x34: "Resume",
-    0x35: "Lap",
-    # View Controls (0x40-0x4F)
-    0x40: "Camera Angle",
-    0x41: "Camera 1",
-    0x42: "Camera 2",
-    0x43: "Camera 3",
-    0x44: "HUD Toggle",
-    0x45: "Map Toggle",
-    # Power-ups (0x50-0x5F)
-    0x50: "Power-up 1",
-    0x51: "Power-up 2",
-    0x52: "Power-up 3",
-}
-
-# Haptic feedback patterns
-HAPTIC_PATTERNS = {
-    "none": 0x00,
-    "short": 0x01,
-    "double": 0x02,
-    "triple": 0x03,
-    "long": 0x04,
-    "success": 0x05,
-    "warning": 0x06,
-    "error": 0x07,
-}
-
-
-def parse_button_state(data: bytes) -> list:
-    """
-    Parse button state data from BLE notification.
-    
-    Data format: [Button_ID_1, State_1, Button_ID_2, State_2, ...]
-    
-    Args:
-        data: Raw bytes from BLE notification
-        
-    Returns:
-        List of tuples (button_id, state)
-    """
-    buttons = []
-    for i in range(0, len(data), 2):
-        if i + 1 < len(data):
-            button_id = data[i]
-            state = data[i + 1]
-            buttons.append((button_id, state))
-    return buttons
-
-
-def format_button_state(button_id: int, state: int) -> str:
-    """
-    Format button state for display.
-    
-    Args:
-        button_id: Button identifier
-        state: Button state (0=released, 1=pressed, 2-255=analog)
-        
-    Returns:
-        Formatted string
-    """
-    button_name = BUTTON_NAMES.get(button_id, f"Button 0x{button_id:02X}")
-    
-    if state == 0:
-        state_str = "RELEASED"
-    elif state == 1:
-        state_str = "PRESSED"
-    else:
-        # Analog value (2-255)
-        percentage = int((state - 2) / (255 - 2) * 100)
-        state_str = f"ANALOG {percentage}%"
-    
-    return f"{button_name}: {state_str}"
 
 
 async def send_haptic_feedback(client: BleakClient, pattern: str = "short", 
@@ -136,12 +46,11 @@ async def send_haptic_feedback(client: BleakClient, pattern: str = "short",
     
     Args:
         client: BleakClient instance
-        pattern: Haptic pattern name (see HAPTIC_PATTERNS)
+        pattern: Haptic pattern name
         duration: Duration in 10ms units (0 = use default)
         intensity: Intensity 0-255 (0 = use default)
     """
-    pattern_byte = HAPTIC_PATTERNS.get(pattern, HAPTIC_PATTERNS["short"])
-    data = bytes([pattern_byte, duration, intensity])
+    data = encode_haptic_feedback(pattern, duration, intensity, include_msg_type=False)
     
     try:
         await client.write_gatt_char(HAPTIC_FEEDBACK_CHAR_UUID, data, response=False)
@@ -171,23 +80,10 @@ async def send_app_info(client: BleakClient, app_id: str = "example-trainer-app"
             0x30, 0x31, 0x32, 0x33, 0x34,  # Training Controls
         ]
     
-    # Build binary data according to BLE.md specification
-    # Format: [Version] [App_ID_Length] [App_ID...] [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...]
-    
-    app_id_bytes = app_id.encode('utf-8')[:32]  # Max 32 chars
-    app_version_bytes = app_version.encode('utf-8')[:32]  # Max 32 chars
-    
-    data = bytearray()
-    data.append(0x01)  # Version
-    data.append(len(app_id_bytes))  # App ID length
-    data.extend(app_id_bytes)  # App ID
-    data.append(len(app_version_bytes))  # App Version length
-    data.extend(app_version_bytes)  # App Version
-    data.append(len(supported_buttons))  # Button count
-    data.extend(supported_buttons)  # Button IDs
+    data = encode_app_info(app_id, app_version, supported_buttons, include_msg_type=False)
     
     try:
-        await client.write_gatt_char(APP_INFO_CHAR_UUID, bytes(data), response=False)
+        await client.write_gatt_char(APP_INFO_CHAR_UUID, data, response=False)
         print(f"  → Sent app info: {app_id} v{app_version} (supports {len(supported_buttons)} button types)")
     except Exception as e:
         print(f"  ⚠ Failed to send app info: {e}")
