@@ -1,15 +1,18 @@
 # OpenBikeControl Python Trainer App Examples
 
-This directory contains Python example implementations demonstrating how to connect to OpenBikeControl devices and receive button state data using both BLE and mDNS protocols.
+This directory contains Python example implementations demonstrating how to connect to OpenBikeControl devices and receive button state data using both BLE and TCP protocols.
 
 ## Overview
 
 These examples show how trainer applications can integrate OpenBikeControl support to receive input from wireless controllers. The examples demonstrate:
 
 - **BLE Trainer App** (`ble_trainer_app.py`): Connect to devices via Bluetooth Low Energy
-- **mDNS Trainer App** (`mdns_trainer_app.py`): Connect to devices via network using mDNS/Zeroconf
-- **Mock Device** (`mock_device.py`): Simulate an OpenBikeControl mDNS device for testing (requires `aiohttp` and `zeroconf`)
+- **TCP Trainer App** (`tcp_trainer_app.py`): Connect to devices via network using mDNS/Zeroconf and TCP sockets
+- **mDNS Trainer App** (`mdns_trainer_app.py`): Alias for TCP Trainer App for backward compatibility
+- **Mock Device** (`mock_device.py`): Simulate an OpenBikeControl TCP device for testing (requires `zeroconf`)
+- **Mock TCP Device** (`mock_device_tcp.py`): Same as Mock Device
 - **Mock BLE Device** (`mock_device_ble.py`): Simulate an OpenBikeControl BLE device for testing (cross-platform: Windows, macOS, Linux - requires `bless`)
+- **Protocol Parser** (`protocol_parser.py`): Shared module for encoding/decoding protocol messages
 - **Tests** (`test_examples.py`): Basic unit tests for the example code
 
 Both trainer app examples provide:
@@ -18,6 +21,8 @@ Both trainer app examples provide:
 - Button state monitoring
 - Haptic feedback support
 - Clear console output showing received data
+
+**Note:** The TCP protocol uses the same binary data format as BLE for consistency and efficiency.
 
 ## Requirements
 
@@ -41,11 +46,8 @@ pip install bleak>=0.21.0
 # For BLE peripheral (mock device server, cross-platform: Windows, macOS, Linux)
 pip install git+https://github.com/x42en/bless.git@master
 
-# For mDNS support
-pip install zeroconf>=0.131.0 websockets>=12.0
-
-# For mDNS mock device server
-pip install aiohttp>=3.8.0
+# For TCP/mDNS support
+pip install zeroconf>=0.131.0
 ```
 
 ### Platform-Specific Requirements
@@ -126,19 +128,21 @@ Press Ctrl+C to stop
   Shift Up: RELEASED
 ```
 
-### mDNS Trainer App
+### TCP Trainer App
 
-Connect to an OpenBikeControl device via network:
+Connect to an OpenBikeControl device via TCP network connection:
 
 ```bash
+python tcp_trainer_app.py
+# or
 python mdns_trainer_app.py
 ```
 
 The app will:
 1. Discover OpenBikeControl devices on the network (5 seconds)
 2. Display found devices with details
-3. Connect via WebSocket
-4. Listen for button state and status messages
+3. Connect via TCP socket
+4. Listen for button state and status messages (binary format)
 5. Display updates in real-time
 6. Send haptic feedback on button presses
 7. Run until Ctrl+C is pressed
@@ -146,7 +150,7 @@ The app will:
 **Example Output:**
 ```
 ============================================================
-OpenBikeControl mDNS Trainer App Example
+OpenBikeControl TCP Trainer App Example
 ============================================================
 
 🔍 Discovering OpenBikeControl devices...
@@ -162,7 +166,7 @@ OpenBikeControl mDNS Trainer App Example
 Found 1 device(s)
 
 🔗 Connecting to OpenBike Remote._openbikecontrol._tcp.local....
-   WebSocket URL: ws://192.168.1.100:8080/api/ws
+   TCP: 192.168.1.100:8080
 
 ✓ Connected to OpenBike Remote
 
@@ -267,19 +271,22 @@ The tests verify:
 A mock device simulator is provided for testing without physical hardware:
 
 ```bash
-# Install additional dependencies
-pip install aiohttp zeroconf
+# Install zeroconf for mDNS discovery
+pip install zeroconf
 
 # Start the mock device
 python mock_device.py
+# or
+python mock_device_tcp.py
 ```
 
 The mock device will:
-- Start a WebSocket server on port 8080
+- Start a TCP server on port 8080
 - Advertise via mDNS/zeroconf (automatic device discovery)
-- Accept connections from the mDNS trainer app
+- Accept connections from the TCP trainer app
 - Automatically simulate button presses (Shift Up, Shift Down, Select, Wave)
 - Respond to haptic feedback commands
+- Use binary data format (same as BLE)
 
 To test with the mock device:
 
@@ -288,14 +295,16 @@ To test with the mock device:
    python mock_device.py
    ```
 
-2. In another terminal, run the mDNS trainer app to discover and connect:
+2. In another terminal, run the TCP trainer app to discover and connect:
    ```bash
+   python tcp_trainer_app.py
+   # or
    python mdns_trainer_app.py
    ```
    
    The trainer app will automatically discover the mock device via mDNS and connect to it.
 
-Note: If zeroconf is not installed, the mock device will still provide the WebSocket endpoint for direct connection testing, but automatic discovery won't be available.
+Note: If zeroconf is not installed, the mock device will still provide the TCP endpoint for direct connection testing, but automatic discovery won't be available.
 
 ### Using the Mock BLE Device
 
@@ -348,13 +357,17 @@ To test with the mock BLE device:
 - Subscribes to button state characteristic notifications
 - Sends haptic feedback via write characteristic
 - Handles connection management and cleanup
+- Uses shared `protocol_parser` module for binary data encoding/decoding
 
-### mDNS Implementation
+### TCP Implementation
 - Uses `zeroconf` for mDNS/Bonjour service discovery
 - Discovers devices advertising `_openbikecontrol._tcp.local.`
-- Connects via WebSocket (`ws://<ip>:<port>/api/ws`)
-- Handles JSON message format for button states and status
+- Connects via TCP sockets to `<device-ip>:<port>`
+- Handles binary message format for button states and status
 - Supports bidirectional communication for haptic feedback
+- Uses the **same binary format as BLE** for consistency
+- Message types: 0x01 (button state), 0x02 (device status), 0x03 (haptic), 0x04 (app info)
+- Uses shared `protocol_parser` module for binary data encoding/decoding
 
 ## Troubleshooting
 
@@ -370,7 +383,7 @@ To test with the mock BLE device:
 - Try restarting both the device and Bluetooth on your computer
 - On Linux, make sure BlueZ is running: `sudo systemctl start bluetooth`
 
-### mDNS Issues
+### TCP/mDNS Issues
 
 **No devices found:**
 - Ensure both computer and device are on the same network
@@ -378,10 +391,11 @@ To test with the mock BLE device:
 - Verify firewall settings allow mDNS traffic (UDP port 5353)
 - Some corporate networks may block mDNS
 
-**WebSocket connection failed:**
-- Verify the device's WebSocket endpoint is accessible
+**TCP connection failed:**
+- Verify the device's TCP endpoint is accessible
 - Check firewall settings on both device and computer
-- Ensure the device's HTTP/WebSocket server is running
+- Ensure the device's TCP server is running
+- Try connecting directly to IP:port if mDNS discovery fails
 
 ### General Issues
 
