@@ -31,12 +31,13 @@ This service UUID is used for OpenBikeControl device advertisement and discovery
 
 **Data Format:**
 
-The characteristic value consists of button state pairs:
+The characteristic value uses the same binary format as the mDNS protocol for consistency:
 
 ```
-[Button_ID_1] [State_1] [Button_ID_2] [State_2] ... [Button_ID_N] [State_N]
+[Message_Type] [Button_ID_1] [State_1] [Button_ID_2] [State_2] ... [Button_ID_N] [State_N]
 ```
 
+- **Message_Type** (1 byte): Always `0x01` for button state messages
 - **Button_ID** (1 byte): Identifier for the button (see [Button Mapping](PROTOCOL.md#button-mapping) section)
 - **State** (1 byte): Current state of the button
   - `0x00` = Released/Off
@@ -48,19 +49,19 @@ The characteristic value consists of button state pairs:
 - Notifications MUST be sent only when a button state changes
 - Include all changed buttons in a single notification to minimize BLE traffic
 - If multiple buttons change simultaneously, combine them in one notification
-- Maximum recommended payload: 20 bytes (10 button state pairs)
+- Maximum recommended payload: 20 bytes (1 message type + 9 button state pairs)
 
 **Example Notifications:**
 
 ```
 // Single button press (button 0x01 pressed)
-[0x01, 0x01]
+[0x01, 0x01, 0x01]
 
 // Multiple buttons (button 0x01 pressed, button 0x02 released)
-[0x01, 0x01, 0x02, 0x00]
+[0x01, 0x01, 0x01, 0x02, 0x00]
 
 // Analog input (button 0x10 at 50% = 0x80)
-[0x10, 0x80]
+[0x01, 0x10, 0x80]
 ```
 
 ---
@@ -75,12 +76,13 @@ The characteristic value consists of button state pairs:
 
 **Data Format:**
 
-The characteristic value consists of three bytes defining the haptic feedback pattern:
+The characteristic value uses the same binary format as the mDNS protocol for consistency:
 
 ```
-[Pattern] [Duration] [Intensity]
+[Message_Type] [Pattern] [Duration] [Intensity]
 ```
 
+- **Message_Type** (1 byte): Always `0x03` for haptic feedback commands
 - **Pattern** (1 byte): Type of haptic feedback pattern
   - `0x00` = No haptic (stop)
   - `0x01` = Single short vibration
@@ -107,16 +109,16 @@ The characteristic value consists of three bytes defining the haptic feedback pa
 
 ```
 // Single short vibration with default settings
-[0x01, 0x00, 0x00]
+[0x03, 0x01, 0x00, 0x00]
 
 // Double pulse, 200ms duration, medium intensity (128)
-[0x02, 0x14, 0x80]
+[0x03, 0x02, 0x14, 0x80]
 
 // Success pattern with maximum intensity
-[0x05, 0x00, 0xFF]
+[0x03, 0x05, 0x00, 0xFF]
 
 // Stop all haptic feedback
-[0x00, 0x00, 0x00]
+[0x03, 0x00, 0x00, 0x00]
 ```
 
 **Write Behavior:**
@@ -147,12 +149,13 @@ The characteristic value consists of three bytes defining the haptic feedback pa
 
 **Data Format:**
 
-The characteristic value uses a compact binary format for efficient transmission:
+The characteristic value uses the same binary format as the mDNS protocol for consistency:
 
 ```
-[Version] [App_ID_Length] [App_ID...] [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...]
+[Message_Type] [Version] [App_ID_Length] [App_ID...] [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...]
 ```
 
+- **Message_Type** (1 byte): Always `0x04` for app information messages
 - **Version** (1 byte): Format version, currently `0x01`
 - **App_ID_Length** (1 byte): Length of the App ID string (0-32 characters)
 - **App_ID** (variable): UTF-8 encoded app identifier string
@@ -172,7 +175,7 @@ The characteristic value uses a compact binary format for efficient transmission
 
 ```
 // App: "zwift", Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14]
-[0x01, 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14]
+[0x04, 0x01, 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14]
 ```
 
 **Write Behavior:**
@@ -198,7 +201,7 @@ The characteristic value uses a compact binary format for efficient transmission
 **Maximum Payload Size:**
 
 The maximum size of this characteristic depends on MTU, but should aim to fit within standard MTU (23 bytes data):
-- Version (1) + Max App ID (1+32) + Max Version (1+32) + Button Count (1) = 68 bytes minimum
+- Message Type (1) + Version (1) + Max App ID (1+32) + Max Version (1+32) + Button Count (1) = 69 bytes minimum
 - Recommended to keep App ID + Version under 40 characters combined for compatibility
 - For longer values, increase MTU negotiation or truncate gracefully
 
