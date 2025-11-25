@@ -35,30 +35,25 @@ def test_parse_button_state():
     """Test button state parsing."""
     print("Testing parse_button_state...")
     
-    # Single button press (with message type - now used for both BLE and TCP)
+    # Single button press (with message type)
     data = bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01])
-    result = parse_button_state(data, is_tcp=True)
+    result = parse_button_state(data)
     assert result == [(0x01, 0x01)], f"Expected [(1, 1)], got {result}"
     
     # Multiple buttons (with message type)
     data = bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01, 0x02, 0x00])
-    result = parse_button_state(data, is_tcp=True)
+    result = parse_button_state(data)
     assert result == [(0x01, 0x01), (0x02, 0x00)], f"Expected [(1, 1), (2, 0)], got {result}"
     
     # Analog value (with message type)
     data = bytes([MSG_TYPE_BUTTON_STATE, 0x10, 0x80])
-    result = parse_button_state(data, is_tcp=True)
+    result = parse_button_state(data)
     assert result == [(0x10, 0x80)], f"Expected [(16, 128)], got {result}"
     
     # Empty data
     data = bytes([])
     result = parse_button_state(data)
     assert result == [], f"Expected [], got {result}"
-    
-    # Auto-detection should handle message type format
-    data = bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01, 0x02, 0x00])
-    result = parse_button_state(data)  # Auto-detect
-    assert result == [(0x01, 0x01), (0x02, 0x00)], f"Expected [(1, 1), (2, 0)], got {result}"
     
     print("  ✓ All parse_button_state tests passed")
 
@@ -125,17 +120,13 @@ def test_encode_button_state():
     """Test button state encoding."""
     print("Testing encode_button_state...")
     
-    # Single button (with message type - now used for both BLE and TCP)
-    result = encode_button_state([(0x01, 0x01)], include_msg_type=True)
+    # Single button (with message type)
+    result = encode_button_state([(0x01, 0x01)])
     assert result == bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01]), f"Expected [0x01, 0x01, 0x01], got {result}"
     
     # Multiple buttons (with message type)
-    result = encode_button_state([(0x01, 0x01), (0x02, 0x00)], include_msg_type=True)
+    result = encode_button_state([(0x01, 0x01), (0x02, 0x00)])
     assert result == bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01, 0x02, 0x00]), f"Expected [0x01, 0x01, 0x01, 0x02, 0x00], got {result}"
-    
-    # Legacy format without message type (for backward compatibility)
-    result = encode_button_state([(0x01, 0x01)], include_msg_type=False)
-    assert result == bytes([0x01, 0x01]), f"Expected [0x01, 0x01], got {result}"
     
     print("  ✓ All encode_button_state tests passed")
 
@@ -169,29 +160,25 @@ def test_haptic_feedback():
     """Test haptic feedback encoding and parsing."""
     print("Testing haptic feedback...")
     
-    # Encode haptic (with message type - now used for both BLE and TCP)
-    encoded = encode_haptic_feedback("short", 0, 0, include_msg_type=True)
+    # Encode haptic (with message type)
+    encoded = encode_haptic_feedback("short", 0, 0)
     assert encoded == bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x01, 0x00, 0x00]), f"Unexpected encoding: {encoded}"
     
     # Encode haptic with custom values (with message type)
-    encoded = encode_haptic_feedback("double", 20, 128, include_msg_type=True)
+    encoded = encode_haptic_feedback("double", 20, 128)
     assert encoded == bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x02, 20, 128]), f"Unexpected encoding: {encoded}"
     
     # Parse haptic (with message type)
-    parsed = parse_haptic_feedback(bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x01, 0x00, 0x00]), is_tcp=True)
+    parsed = parse_haptic_feedback(bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x01, 0x00, 0x00]))
     assert parsed["pattern"] == "short", f"Pattern mismatch: {parsed['pattern']}"
     assert parsed["duration"] == 0, f"Duration mismatch: {parsed['duration']}"
     assert parsed["intensity"] == 0, f"Intensity mismatch: {parsed['intensity']}"
     
     # Parse haptic (with message type)
-    parsed = parse_haptic_feedback(bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x02, 20, 128]), is_tcp=True)
+    parsed = parse_haptic_feedback(bytes([MSG_TYPE_HAPTIC_FEEDBACK, 0x02, 20, 128]))
     assert parsed["pattern"] == "double", f"Pattern mismatch: {parsed['pattern']}"
     assert parsed["duration"] == 20, f"Duration mismatch: {parsed['duration']}"
     assert parsed["intensity"] == 128, f"Intensity mismatch: {parsed['intensity']}"
-    
-    # Legacy format without message type (for backward compatibility)
-    encoded = encode_haptic_feedback("short", 0, 0, include_msg_type=False)
-    assert encoded == bytes([0x01, 0x00, 0x00]), f"Unexpected encoding: {encoded}"
     
     print("  ✓ All haptic feedback tests passed")
 
@@ -322,8 +309,8 @@ def test_app_info_encoding():
     """Test app info encoding and decoding."""
     print("Testing app info encoding and decoding...")
     
-    # Test basic encoding (with message type - now used for both BLE and TCP)
-    result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14], include_msg_type=True)
+    # Test basic encoding (with message type)
+    result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14])
     
     # Verify structure
     assert result[0] == MSG_TYPE_APP_INFO, "Message type byte incorrect"
@@ -337,32 +324,32 @@ def test_app_info_encoding():
     assert result[17] == 0x02, "Second button ID incorrect"
     
     # Test decoding (with message type)
-    decoded = parse_app_info(result, is_tcp=True)
+    decoded = parse_app_info(result)
     assert decoded["app_id"] == "zwift", "App ID decode failed"
     assert decoded["app_version"] == "1.52.0", "App version decode failed"
     assert len(decoded["supported_buttons"]) == 4, "Button count decode failed"
     assert decoded["supported_buttons"][0] == 0x01, "Button ID decode failed"
     
     # Test encoding with message type
-    result_tcp = encode_app_info("test", "1.0", [], include_msg_type=True)
+    result_tcp = encode_app_info("test", "1.0", [])
     assert result_tcp[0] == MSG_TYPE_APP_INFO, "Message type incorrect"
     assert result_tcp[1] == 0x01, "Version byte incorrect"
     
     # Test decoding with message type
-    decoded_tcp = parse_app_info(result_tcp, is_tcp=True)
+    decoded_tcp = parse_app_info(result_tcp)
     assert decoded_tcp["app_id"] == "test", "App ID decode failed"
     assert decoded_tcp["app_version"] == "1.0", "App version decode failed"
     assert len(decoded_tcp["supported_buttons"]) == 0, "Empty button list decode failed"
     
     # Test long app ID (should truncate)
     long_id = "a" * 50
-    result3 = encode_app_info(long_id, "1.0", [], include_msg_type=True)
+    result3 = encode_app_info(long_id, "1.0", [])
     assert result3[2] == 32, "Long app ID should be truncated to 32 bytes"
     
     # Test round-trip encoding/decoding
     original = {"app_id": "myapp", "app_version": "2.1.3", "supported_buttons": [0x01, 0x20, 0x30]}
-    encoded = encode_app_info(original["app_id"], original["app_version"], original["supported_buttons"], include_msg_type=True)
-    decoded = parse_app_info(encoded, is_tcp=True)
+    encoded = encode_app_info(original["app_id"], original["app_version"], original["supported_buttons"])
+    decoded = parse_app_info(encoded)
     
     assert decoded["app_id"] == original["app_id"], "Round-trip app_id failed"
     assert decoded["app_version"] == original["app_version"], "Round-trip app_version failed"
@@ -370,7 +357,7 @@ def test_app_info_encoding():
     
     # Test malformed data (too short)
     try:
-        parse_app_info(bytes([MSG_TYPE_APP_INFO, 0x01]), is_tcp=True)
+        parse_app_info(bytes([MSG_TYPE_APP_INFO, 0x01]))
         assert False, "Should have raised ValueError for truncated data"
     except ValueError:
         pass  # Expected
@@ -378,7 +365,7 @@ def test_app_info_encoding():
     # Test malformed data (app_id_len exceeds buffer)
     try:
         malformed = bytes([MSG_TYPE_APP_INFO, 0x01, 0xFF, 0x01, 0x02])  # Claims 255 bytes but only has 2
-        parse_app_info(malformed, is_tcp=True)
+        parse_app_info(malformed)
         assert False, "Should have raised ValueError for out-of-bounds app ID"
     except ValueError:
         pass  # Expected

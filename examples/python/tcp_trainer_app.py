@@ -119,7 +119,7 @@ async def send_haptic_feedback(writer: asyncio.StreamWriter, pattern: str = "sho
         duration: Duration in 10ms units (0 = use default)
         intensity: Intensity 0-255 (0 = use default)
     """
-    message = encode_haptic_feedback(pattern, duration, intensity, include_msg_type=True)
+    message = encode_haptic_feedback(pattern, duration, intensity)
     
     try:
         writer.write(message)
@@ -150,7 +150,7 @@ async def send_app_info(writer: asyncio.StreamWriter, app_id: str = "example-tra
             0x30, 0x31, 0x32, 0x33, 0x34,  # Training Controls
         ]
     
-    message = encode_app_info(app_id, app_version, supported_buttons, include_msg_type=True)
+    message = encode_app_info(app_id, app_version, supported_buttons)
     
     try:
         writer.write(message)
@@ -162,7 +162,7 @@ async def send_app_info(writer: asyncio.StreamWriter, app_id: str = "example-tra
 
 async def handle_button_state_message(data: bytes, writer: asyncio.StreamWriter):
     """Handle incoming button state message."""
-    buttons = parse_button_state(data, is_tcp=True)
+    buttons = parse_button_state(data)
     
     timestamp_ms = int(datetime.now().timestamp() * 1000)
     print(f"\n📍 Button State Update [{format_timestamp(timestamp_ms)}]:")

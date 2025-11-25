@@ -59,10 +59,10 @@ class MockDevice:
     def simulate_button_press(self, button_id: int):
         """Simulate a button press and release."""
         # Button press
-        press_msg = encode_button_state([(button_id, 0x01)], include_msg_type=True)
+        press_msg = encode_button_state([(button_id, 0x01)])
         
         # Button release
-        release_msg = encode_button_state([(button_id, 0x00)], include_msg_type=True)
+        release_msg = encode_button_state([(button_id, 0x00)])
         
         return press_msg, release_msg
     
@@ -133,7 +133,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 
                 full_message = msg_type_data + haptic_data
                 try:
-                    haptic_info = parse_haptic_feedback(full_message, is_tcp=True)
+                    haptic_info = parse_haptic_feedback(full_message)
                     pattern = haptic_info["pattern"]
                     print(f"  ← Received haptic feedback: {pattern}")
                 except Exception as e:
@@ -157,7 +157,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 full_message = msg_type_data + header + remaining
                 
                 try:
-                    app_info = parse_app_info(full_message, is_tcp=True)
+                    app_info = parse_app_info(full_message)
                     app_id = app_info["app_id"]
                     app_version = app_info["app_version"]
                     supported_buttons = app_info["supported_buttons"]
