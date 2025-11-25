@@ -22,7 +22,7 @@ Both trainer app examples provide:
 - Haptic feedback support
 - Clear console output showing received data
 
-**Note:** The TCP protocol uses the same binary data format as BLE for consistency and efficiency.
+**Note:** Both BLE and TCP protocols use the same binary data format for consistency and efficiency, including the message type prefix byte.
 
 ## Requirements
 

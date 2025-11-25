@@ -50,7 +50,7 @@ async def send_haptic_feedback(client: BleakClient, pattern: str = "short",
         duration: Duration in 10ms units (0 = use default)
         intensity: Intensity 0-255 (0 = use default)
     """
-    data = encode_haptic_feedback(pattern, duration, intensity, include_msg_type=False)
+    data = encode_haptic_feedback(pattern, duration, intensity)
     
     try:
         await client.write_gatt_char(HAPTIC_FEEDBACK_CHAR_UUID, data, response=False)
@@ -80,7 +80,7 @@ async def send_app_info(client: BleakClient, app_id: str = "example-trainer-app"
             0x30, 0x31, 0x32, 0x33, 0x34,  # Training Controls
         ]
     
-    data = encode_app_info(app_id, app_version, supported_buttons, include_msg_type=False)
+    data = encode_app_info(app_id, app_version, supported_buttons)
     
     try:
         await client.write_gatt_char(APP_INFO_CHAR_UUID, data, response=False)

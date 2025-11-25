@@ -35,7 +35,7 @@ OpenBikeControl uses two transport mechanisms:
 1. **[BLE (Bluetooth Low Energy)](BLE.md)** - For direct device-to-app connections, or as a fallback for apps if mDNS is not possible
 2. **[mDNS (Multicast DNS)](MDNS.md)** - For network-based connections ("Direct Connect")
 
-Both transports use the same logical data format, ensuring consistency across connection types.
+Both transports use the identical binary message format (including the message type prefix byte), ensuring consistency across connection types.
 
 ### Quick Reference
 
@@ -44,12 +44,14 @@ Both transports use the same logical data format, ensuring consistency across co
 - Button State Characteristic (Read/Notify): `d273f681-d548-419d-b9d1-fa0472345229`
 - Haptic Feedback Characteristic (Write): `d273f682-d548-419d-b9d1-fa0472345229`
 - App Information Characteristic (Write): `d273f683-d548-419d-b9d1-fa0472345229`
+- Message types: `0x01` (button state), `0x03` (haptic feedback), `0x04` (app info)
 - See [BLE.md](BLE.md) for complete specification
 
 **mDNS Protocol:**
 - Service Type: `_openbikecontrol._tcp.local.`
 - TCP endpoint: `<device-ip>:<port>`
-- Binary data format (same as BLE)
+- Binary data format (identical to BLE)
+- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info)
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---

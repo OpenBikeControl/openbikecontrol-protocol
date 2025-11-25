@@ -102,7 +102,7 @@ class MockBLEDevice:
     def _haptic_write_callback(self, characteristic, value: bytes):
         """Handle haptic feedback writes."""
         try:
-            haptic_info = parse_haptic_feedback(value, is_tcp=False)
+            haptic_info = parse_haptic_feedback(value)
             pattern = haptic_info["pattern"]
             duration = haptic_info["duration"]
             intensity = haptic_info["intensity"]
@@ -115,7 +115,7 @@ class MockBLEDevice:
     def _app_info_write_callback(self, characteristic, value: bytes):
         """Handle app info writes."""
         try:
-            app_info = parse_app_info(value, is_tcp=False)
+            app_info = parse_app_info(value)
             app_id = app_info["app_id"]
             app_version = app_info["app_version"]
             button_ids = app_info["supported_buttons"]
@@ -255,7 +255,7 @@ class MockBLEDevice:
         if not self.server:
             return
 
-        self._button_state_value = encode_button_state([(button_id, state)], include_msg_type=False)
+        self._button_state_value = encode_button_state([(button_id, state)])
         self.server.get_characteristic(BUTTON_STATE_CHAR_UUID).value = self._button_state_value
         self.server.update_value(SERVICE_UUID, BUTTON_STATE_CHAR_UUID)
 
