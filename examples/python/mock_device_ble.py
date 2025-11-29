@@ -106,7 +106,7 @@ class MockBLEDevice:
             pattern = haptic_info["pattern"]
             duration = haptic_info["duration"]
             intensity = haptic_info["intensity"]
-            
+
             print(f"  ← Received haptic feedback: pattern={pattern}, "
                   f"duration={duration}×10ms, intensity={intensity}")
         except Exception as e:
@@ -119,7 +119,7 @@ class MockBLEDevice:
             app_id = app_info["app_id"]
             app_version = app_info["app_version"]
             button_ids = app_info["supported_buttons"]
-            
+
             print(f"  ← Received app info:")
             print(f"     App ID: {app_id}")
             print(f"     Version: {app_version}")
@@ -135,7 +135,7 @@ class MockBLEDevice:
     def _write_callback_router(self, characteristic, value: bytes):
         """Route write requests to appropriate handlers."""
         char_uuid = str(characteristic.uuid).lower()
-        
+
         if HAPTIC_FEEDBACK_CHAR_UUID.lower() in char_uuid:
             self._haptic_write_callback(characteristic, value)
         elif APP_INFO_CHAR_UUID.lower() in char_uuid:
@@ -143,6 +143,17 @@ class MockBLEDevice:
         else:
             print(f"  ← Received write to unknown characteristic: {characteristic.uuid}")
 
+    def _read_callback_router(self, characteristic) -> bytes:
+        """Route read requests to appropriate handlers."""
+        char_uuid = str(characteristic.uuid).lower()
+
+        if BATTERY_LEVEL_CHAR_UUID.lower() in char_uuid:
+            battery_level = bytes([self.battery])
+            print(f"  → Read Battery Level: {self.battery}%")
+            return battery_level
+
+        print(f"  → Read from unknown characteristic: {characteristic.uuid}")
+        return bytes()
 
     async def setup_ble_server(self):
         """Set up the BLE GATT server with all required services and characteristics."""
@@ -157,6 +168,7 @@ class MockBLEDevice:
 
         # Set write callback router for all writable characteristics
         self.server.write_request_func = self._write_callback_router
+        self.server.read_request_func = self._read_callback_router
 
         # Add OpenBikeControl Service
         await self.server.add_new_service(SERVICE_UUID)
