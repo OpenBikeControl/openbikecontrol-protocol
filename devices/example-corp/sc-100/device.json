@@ -84,6 +84,7 @@
     {
       "physical_button": "Emote Dial",
       "button_id": 32,
+      "_comment": "button_id 32 = 0x20 in protocol hex notation",
       "standard_action": "Emote Selector",
       "type": "analog",
       "range": "0-31",
@@ -92,6 +93,7 @@
     {
       "physical_button": "Camera Switch",
       "button_id": 64,
+      "_comment": "button_id 64 = 0x40 in protocol hex notation",
       "standard_action": "Camera View Selector",
       "type": "analog",
       "range": "0-31",

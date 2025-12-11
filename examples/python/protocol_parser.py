@@ -19,6 +19,8 @@ IMPORTANT NOTES:
   define custom actions via button_hints without protocol changes
 """
 
+import json
+
 # Button ID to name mapping (based on PROTOCOL.md)
 BUTTON_NAMES = {
     # Gear Shifting (0x01-0x0F)
@@ -139,6 +141,9 @@ def format_button_state(button_id: int, state: int) -> str:
     button_name = BUTTON_NAMES.get(button_id, f"Button 0x{button_id:02X}")
     
     # Special handling for analog enum buttons (0x20 Emote, 0x40 Camera)
+    # NOTE: These hardcoded mappings provide default display values for common enum IDs.
+    # Apps should provide complete mappings via button_hints in App Information (0x04).
+    # These defaults are for logging/debugging when button_hints are not available.
     if button_id == 0x20:  # Emote (analog enum 0-31)
         # Map common emote values
         emote_map = {0: "None", 1: "Wave", 2: "Thumbs Up", 3: "Hammer Time", 4: "Bell"}
@@ -290,7 +295,6 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
     app_version_bytes = app_version.encode('utf-8')[:32]  # Max 32 chars
     
     # Convert button_hints to JSON
-    import json
     button_hints_json = json.dumps(button_hints) if button_hints else ""
     button_hints_bytes = button_hints_json.encode('utf-8')
     
@@ -330,8 +334,6 @@ def parse_app_info(data: bytes) -> dict:
     Returns:
         Dictionary with device_type, app_id, app_version, supported_buttons, and button_hints
     """
-    import json
-    
     if len(data) < 1 or data[0] != MSG_TYPE_APP_INFO:
         raise ValueError("Invalid message type")
     
