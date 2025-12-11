@@ -269,7 +269,7 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
         app_id: App identifier string
         app_version: App version string
         supported_buttons: List of supported button IDs (empty list = all buttons)
-        device_type: Device type ("remote", "controller", or "app")
+        device_type: Device type ("controller" or "app")
         button_hints: Optional dict mapping button_id (int) -> label (str)
                      Example: {0x20: "Emote", 0x40: "Camera"}
         
@@ -281,15 +281,20 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
     if button_hints is None:
         button_hints = {}
     
-    device_type_bytes = device_type.encode('utf-8')[:32]  # Max 32 chars
+    # Map device type to byte value
+    device_type_map = {
+        "controller": 0x01,
+        "app": 0x02
+    }
+    device_type_byte = device_type_map.get(device_type.lower(), 0x02)  # Default to app
+    
     app_id_bytes = app_id.encode('utf-8')[:32]  # Max 32 chars
     app_version_bytes = app_version.encode('utf-8')[:32]  # Max 32 chars
     
     data = bytearray()
     data.append(MSG_TYPE_APP_INFO)
     data.append(0x01)  # Version
-    data.append(len(device_type_bytes))  # Device Type length
-    data.extend(device_type_bytes)  # Device Type
+    data.append(device_type_byte)  # Device Type (single byte)
     data.append(len(app_id_bytes))  # App ID length
     data.extend(app_id_bytes)  # App ID
     data.append(len(app_version_bytes))  # App Version length
@@ -312,7 +317,7 @@ def parse_app_info(data: bytes) -> dict:
     """
     Parse app information from binary format.
     
-    Data format: [Message_Type, Version, Device_Type_Length, Device_Type..., 
+    Data format: [Message_Type, Version, Device_Type, 
                   App_ID_Length, App_ID..., App_Version_Length, App_Version..., 
                   Button_Count, Button_IDs..., Hint_Count, Hints...]
     
@@ -336,15 +341,18 @@ def parse_app_info(data: bytes) -> dict:
     if version != 0x01:
         raise ValueError(f"Unsupported app info version: {version}")
     
-    # Parse Device Type with bounds checking
+    # Parse Device Type (single byte)
     if idx >= len(data):
-        raise ValueError("Missing device type length")
-    device_type_len = data[idx]
+        raise ValueError("Missing device type")
+    device_type_byte = data[idx]
     idx += 1
-    if idx + device_type_len > len(data):
-        raise ValueError("Device type length exceeds buffer")
-    device_type = data[idx:idx+device_type_len].decode('utf-8')
-    idx += device_type_len
+    
+    # Map byte value to device type string
+    device_type_map = {
+        0x01: "controller",
+        0x02: "app"
+    }
+    device_type = device_type_map.get(device_type_byte, "unknown")
     
     # Parse App ID with bounds checking
     if idx >= len(data):

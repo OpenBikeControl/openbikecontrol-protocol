@@ -152,17 +152,17 @@ The characteristic value uses the same binary format as the mDNS protocol for co
 The characteristic value uses the same binary format as the mDNS protocol for consistency:
 
 ```
-[Message_Type] [Version] [Device_Type_Length] [Device_Type...] [App_ID_Length] [App_ID...] 
+[Message_Type] [Version] [Device_Type] [App_ID_Length] [App_ID...] 
 [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...] 
 [Hint_Count] [Hint_1...] [Hint_2...] ...
 ```
 
 - **Message_Type** (1 byte): Always `0x04` for app information messages
 - **Version** (1 byte): Format version, currently `0x01`
-- **Device_Type_Length** (1 byte): Length of the Device Type string (0-32 characters)
-- **Device_Type** (variable): UTF-8 encoded device type identifier
-  - Values: `"remote"`, `"controller"`, or `"app"`
-  - Indicates sender type: physical remote, game controller, or app itself
+- **Device_Type** (1 byte): Device type identifier
+  - `0x01` = Controller (physical game controller)
+  - `0x02` = App (software application)
+  - Indicates sender type
 - **App_ID_Length** (1 byte): Length of the App ID string (0-32 characters)
 - **App_ID** (variable): UTF-8 encoded app identifier string
   - Should be lowercase, alphanumeric with optional hyphens/underscores
@@ -187,14 +187,15 @@ The characteristic value uses the same binary format as the mDNS protocol for co
 **Example Data:**
 
 ```
-// App: "zwift", Type: "app", Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14], no hints
-[0x04, 0x01, 0x03, 'a', 'p', 'p', 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14, 0x00]
+// App: "zwift", Type: app (0x02), Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14], no hints
+[0x04, 0x01, 0x02, 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14, 0x00]
 
-// With button hints for Emote (0x20) and Camera (0x40)
+// Controller with button hints for Emote (0x20) and Camera (0x40)
+// Type: controller (0x01)
 // Hint count: 2
 // Hint 1: Button 0x20 (32), Label "Emote" (5 bytes)
 // Hint 2: Button 0x40 (64), Label "Camera" (6 bytes)
-[0x04, 0x01, 0x03, 'a', 'p', 'p', ..., 0x02, 0x20, 0x05, 'E', 'm', 'o', 't', 'e', 0x40, 0x06, 'C', 'a', 'm', 'e', 'r', 'a']
+[0x04, 0x01, 0x01, ..., 0x02, 0x20, 0x05, 'E', 'm', 'o', 't', 'e', 0x40, 0x06, 'C', 'a', 'm', 'e', 'r', 'a']
 ```
 
 **Button Hints for Analog Enums:**

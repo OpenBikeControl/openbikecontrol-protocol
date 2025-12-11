@@ -318,11 +318,10 @@ def test_app_info_encoding():
     # Test basic encoding with new format (device_type, no button_hints)
     result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14], device_type="app")
     
-    # Verify structure
+    # Verify structure (single byte for device_type now)
     assert result[0] == MSG_TYPE_APP_INFO, "Message type byte incorrect"
     assert result[1] == 0x01, "Version byte incorrect"
-    assert result[2] == 3, "Device type length incorrect"
-    assert result[3:6] == b'app', "Device type incorrect"
+    assert result[2] == 0x02, "Device type should be 0x02 for app"
     
     # Test decoding (with message type and new fields)
     decoded = parse_app_info(result)
@@ -338,10 +337,12 @@ def test_app_info_encoding():
         0x20: "Emote",
         0x40: "Camera"
     }
-    result_with_hints = encode_app_info("test", "1.0", [], device_type="remote", button_hints=hints)
+    result_with_hints = encode_app_info("test", "1.0", [], device_type="controller", button_hints=hints)
     decoded_with_hints = parse_app_info(result_with_hints)
     
-    assert decoded_with_hints["device_type"] == "remote", "Device type decode failed"
+    # Check controller type
+    assert result_with_hints[2] == 0x01, "Device type should be 0x01 for controller"
+    assert decoded_with_hints["device_type"] == "controller", "Device type decode failed"
     assert decoded_with_hints["app_id"] == "test", "App ID decode failed"
     assert decoded_with_hints["app_version"] == "1.0", "App version decode failed"
     assert len(decoded_with_hints["supported_buttons"]) == 0, "Empty button list decode failed"
