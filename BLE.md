@@ -152,11 +152,17 @@ The characteristic value uses the same binary format as the mDNS protocol for co
 The characteristic value uses the same binary format as the mDNS protocol for consistency:
 
 ```
-[Message_Type] [Version] [App_ID_Length] [App_ID...] [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...]
+[Message_Type] [Version] [Device_Type] [App_ID_Length] [App_ID...] 
+[App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...] 
+[Hint_Count] [Hint_1...] [Hint_2...] ...
 ```
 
 - **Message_Type** (1 byte): Always `0x04` for app information messages
 - **Version** (1 byte): Format version, currently `0x01`
+- **Device_Type** (1 byte): Device type identifier
+  - `0x01` = Controller (physical game controller)
+  - `0x02` = App (software application)
+  - Indicates sender type
 - **App_ID_Length** (1 byte): Length of the App ID string (0-32 characters)
 - **App_ID** (variable): UTF-8 encoded app identifier string
   - Should be lowercase, alphanumeric with optional hyphens/underscores
@@ -170,13 +176,35 @@ The characteristic value uses the same binary format as the mDNS protocol for co
 - **Button_IDs** (variable): Array of button ID bytes
   - Each byte represents a supported button ID from [Button Mapping](PROTOCOL.md#button-mapping)
   - Devices can use this to provide visual feedback or customize layouts
+- **Hint_Count** (1 byte): Number of button hints (0-255)
+  - If 0, no button hints provided
+- **Hint** (variable, repeated): Each hint consists of:
+  - **Button_ID** (1 byte): The button this hint applies to
+  - **Label_Length** (1 byte): Length of label string (0-32 characters)
+  - **Label** (variable): UTF-8 encoded label for the button
+  - Helps apps interpret generic button ranges (0x50-0x5F, 0x60-0x6F) and analog enums (0x20, 0x40)
 
 **Example Data:**
 
 ```
-// App: "zwift", Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14]
-[0x04, 0x01, 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14]
+// App: "zwift", Type: app (0x02), Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14], no hints
+[0x04, 0x01, 0x02, 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14, 0x00]
+
+// Controller with button hints for Emote (0x20) and Camera (0x40)
+// Type: controller (0x01)
+// Hint count: 2
+// Hint 1: Button 0x20 (32), Label "Emote" (5 bytes)
+// Hint 2: Button 0x40 (64), Label "Camera" (6 bytes)
+[0x04, 0x01, 0x01, ..., 0x02, 0x20, 0x05, 'E', 'm', 'o', 't', 'e', 0x40, 0x06, 'C', 'a', 'm', 'e', 'r', 'a']
 ```
+
+**Button Hints for Analog Enums:**
+
+Apps should use `button_hints` to provide labels for buttons like:
+- **Emote (0x20)**: Label could be "Emote" or "Wave/Thumbs Up"
+- **Camera View (0x40)**: Label could be "Camera" or "Cycle View"
+
+For analog enum buttons, the label provides context about the button's purpose. The actual enum value meanings (e.g., 0=none, 1=wave) are communicated through the button state values as defined in the protocol.
 
 **Write Behavior:**
 
@@ -197,6 +225,8 @@ The characteristic value uses the same binary format as the mDNS protocol for co
 - Device customizes button layouts for popular apps
 - Device logs connection history for diagnostics
 - Device provides app-specific haptic patterns or feedback
+- Device interprets analog enum values (0x20 Emote, 0x40 Camera) based on app's hints
+- Device shows custom labels for generic buttons (0x50-0x5F, 0x60-0x6F)
 
 **Maximum Payload Size:**
 

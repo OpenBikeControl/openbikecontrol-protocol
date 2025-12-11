@@ -74,44 +74,25 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 | Button ID | Action | Description |
 |-----------|--------|-------------|
-| `0x10` | Up | Navigate up / Steer left |
-| `0x11` | Down | Navigate down / Steer right |
-| `0x12` | Left | Navigate left / Look left |
-| `0x13` | Right | Navigate right / Look right |
+| `0x10` | Up | Navigate up |
+| `0x11` | Down | Navigate down |
+| `0x12` | Left | Navigate left / Steer left |
+| `0x13` | Right | Navigate right / Steer right |
 | `0x14` | Select/Confirm | Confirm selection |
 | `0x15` | Back/Cancel | Go back / Cancel |
 | `0x16` | Menu | Open menu |
-| `0x17` | Home | Return to home screen |
 
 #### Social/Emotes (0x20-0x2F)
 
-| Button ID | Action      | Description |
-|-----------|-------------|-------------|
-| `0x20`    | Wave        | Wave to other riders |
-| `0x21`    | Thumbs Up   | Give thumbs up |
-| `0x22`    | Hammer Time | Activate power-up |
-| `0x23`    | Bell        | Ring bell |
-| `0x24`    | Screenshot  | Take screenshot |
-
-#### Training Controls (0x30-0x3F)
-
 | Button ID | Action | Description |
 |-----------|--------|-------------|
-| `0x30` | ERG Up | Increase ERG mode power |
-| `0x31` | ERG Down | Decrease ERG mode power |
-| `0x32` | Skip Interval | Skip to next workout interval |
-| `0x33` | Pause | Pause workout |
-| `0x34` | Resume | Resume workout |
-| `0x35` | Lap | Mark lap |
+| `0x20` | Emote | Analog emote selector (enum 0–31). State value indicates emote ID: 0 = none/neutral, 1 = wave, 2 = thumbs up, 3 = hammer time, 4 = bell, etc. Apps define mappings. |
 
 #### View Controls (0x40-0x4F)
 
 | Button ID | Action | Description |
 |-----------|--------|-------------|
-| `0x40` | Camera Angle | Cycle camera view |
-| `0x41` | Camera 1 | Switch to camera 1 |
-| `0x42` | Camera 2 | Switch to camera 2 |
-| `0x43` | Camera 3 | Switch to camera 3 |
+| `0x40` | Switch Camera View | Analog camera selector (enum 0–31). State value indicates camera view: 0 = camera 1, 1 = camera 2, 2 = camera 3, etc. Apps define available views. |
 | `0x44` | HUD Toggle | Show/hide HUD |
 | `0x45` | Map Toggle | Show/hide map |
 
@@ -123,11 +104,22 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 | `0x51` | Power-up 2 | Activate power-up slot 2 |
 | `0x52` | Power-up 3 | Activate power-up slot 3 |
 
-#### Custom/Reserved (0x60-0xFF)
+**Generic App-Driven Digital Buttons (0x50-0x5F):**
+- Buttons in this range are generic digital inputs
+- Apps may assign custom actions via `button_hints` in App Information
+- Useful for app-specific features without protocol changes
+
+#### Analog App-Driven Inputs (0x60-0x6F)
 
 | Range | Purpose |
 |-------|---------|
-| `0x60-0x7F` | Reserved for future standard actions |
+| `0x60-0x6F` | Generic analog inputs for app-driven mapping. Apps define semantics via `button_hints`. State values 0–255 represent analog positions or enum values. |
+
+#### Custom/Reserved (0x70-0xFF)
+
+| Range | Purpose |
+|-------|---------|
+| `0x70-0x7F` | Reserved for future standard actions |
 | `0x80-0x9F` | App-specific custom actions |
 | `0xA0-0xFF` | Manufacturer-specific custom actions |
 

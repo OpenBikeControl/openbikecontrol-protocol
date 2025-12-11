@@ -271,44 +271,51 @@ class MockBLEDevice:
         self.server.get_characteristic(BUTTON_STATE_CHAR_UUID).value = self._button_state_value
         self.server.update_value(SERVICE_UUID, BUTTON_STATE_CHAR_UUID)
 
-    async def simulate_button_press(self, button_id: int):
+    async def simulate_button_press(self, button_id: int, analog_value: int = None):
         """Simulate a button press and release with BLE notifications."""
         if not self.server:
             return
 
-        # Button press
-        await self.update_button_state(button_id, 0x01)
-        print(f"  → Sent button press notification: 0x{button_id:02X}")
+        if analog_value is not None:
+            # Analog/enum button - just send the value
+            await self.update_button_state(button_id, analog_value)
+            print(f"  → Sent analog/enum button notification: 0x{button_id:02X} = {analog_value}")
+        else:
+            # Digital button - press and release
+            # Button press
+            await self.update_button_state(button_id, 0x01)
+            print(f"  → Sent button press notification: 0x{button_id:02X}")
 
-        # Wait a bit for press duration
-        await asyncio.sleep(0.1)
+            # Wait a bit for press duration
+            await asyncio.sleep(0.1)
 
-        # Button release
-        await self.update_button_state(button_id, 0x00)
-        print(f"  → Sent button release notification: 0x{button_id:02X}")
+            # Button release
+            await self.update_button_state(button_id, 0x00)
+            print(f"  → Sent button release notification: 0x{button_id:02X}")
 
     async def simulate_buttons_loop(self):
         """Background task to simulate button presses periodically."""
         # Button sequence to simulate
         button_sequence = [
-            (3.0, 0x01),   # Shift Up after 3s
-            (3.0, 0x02),   # Shift Down after 3s
-            (3.0, 0x14),   # Select after 3s
-            (3.0, 0x20),   # Wave after 3s
+            (3.0, 0x01, None),   # Shift Up after 3s (digital)
+            (3.0, 0x02, None),   # Shift Down after 3s (digital)
+            (3.0, 0x14, None),   # Select after 3s (digital)
+            (3.0, 0x20, 1),      # Emote: Wave (enum value 1) after 3s
+            (3.0, 0x40, 0),      # Camera: View 1 (enum value 0) after 3s
         ]
 
         print("\n👉 Starting button simulation...")
         print("   Buttons will be pressed every few seconds")
 
         while self.is_running:
-            for delay, button_id in button_sequence:
+            for delay, button_id, analog_value in button_sequence:
                 if not self.is_running:
                     break
 
                 await asyncio.sleep(delay)
 
                 if self.is_running:
-                    await self.simulate_button_press(button_id)
+                    await self.simulate_button_press(button_id, analog_value)
 
     async def start(self):
         """Start the BLE device simulation."""
@@ -341,7 +348,8 @@ class MockBLEDevice:
         print("  Every 3s: Shift Up (0x01)")
         print("  Every 3s: Shift Down (0x02)")
         print("  Every 3s: Select (0x14)")
-        print("  Every 3s: Wave (0x20)")
+        print("  Every 3s: Emote = Wave (0x20, enum value 1)")
+        print("  Every 3s: Camera = View 1 (0x40, enum value 0)")
         print()
         print("Connect using the BLE trainer app:")
         print("  python ble_trainer_app.py")

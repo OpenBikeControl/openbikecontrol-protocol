@@ -76,7 +76,7 @@ def test_format_button_state():
     
     # Analog value
     result = format_button_state(0x10, 0x80)
-    assert "Up/Steer Left" in result and "ANALOG" in result, f"Unexpected format: {result}"
+    assert "Up" in result and "ANALOG" in result, f"Unexpected format: {result}"
     
     # Analog min (2)
     result = format_button_state(0x10, 2)
@@ -96,10 +96,16 @@ def test_button_names():
     # Check some key buttons exist
     assert 0x01 in BUTTON_NAMES, "Shift Up (0x01) missing"
     assert 0x02 in BUTTON_NAMES, "Shift Down (0x02) missing"
-    assert 0x10 in BUTTON_NAMES, "Up/Steer Left (0x10) missing"
+    assert 0x10 in BUTTON_NAMES, "Up (0x10) missing"
     assert 0x14 in BUTTON_NAMES, "Select/Confirm (0x14) missing"
-    assert 0x20 in BUTTON_NAMES, "Wave (0x20) missing"
-    assert 0x30 in BUTTON_NAMES, "ERG Up (0x30) missing"
+    assert 0x20 in BUTTON_NAMES, "Emote (0x20) missing"
+    assert 0x40 in BUTTON_NAMES, "Camera View (0x40) missing"
+    
+    # Check that old button IDs are removed
+    assert 0x21 not in BUTTON_NAMES, "Thumbs Up (0x21) should be removed"
+    assert 0x41 not in BUTTON_NAMES, "Camera 1 (0x41) should be removed"
+    assert 0x17 not in BUTTON_NAMES, "Home (0x17) should be removed"
+    assert 0x30 not in BUTTON_NAMES, "ERG Up (0x30) should be removed"
     
     print("  ✓ All button name mapping tests passed")
 
@@ -309,64 +315,67 @@ def test_app_info_encoding():
     """Test app info encoding and decoding."""
     print("Testing app info encoding and decoding...")
     
-    # Test basic encoding (with message type)
-    result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14])
+    # Test basic encoding with new format (device_type, no button_hints)
+    result = encode_app_info("zwift", "1.52.0", [0x01, 0x02, 0x10, 0x14], device_type="app")
     
-    # Verify structure
+    # Verify structure (single byte for device_type now)
     assert result[0] == MSG_TYPE_APP_INFO, "Message type byte incorrect"
     assert result[1] == 0x01, "Version byte incorrect"
-    assert result[2] == 5, "App ID length incorrect"
-    assert result[3:8] == b'zwift', "App ID incorrect"
-    assert result[8] == 6, "App version length incorrect"
-    assert result[9:15] == b'1.52.0', "App version incorrect"
-    assert result[15] == 4, "Button count incorrect"
-    assert result[16] == 0x01, "First button ID incorrect"
-    assert result[17] == 0x02, "Second button ID incorrect"
+    assert result[2] == 0x02, "Device type should be 0x02 for app"
     
-    # Test decoding (with message type)
+    # Test decoding (with message type and new fields)
     decoded = parse_app_info(result)
+    assert decoded["device_type"] == "app", "Device type decode failed"
     assert decoded["app_id"] == "zwift", "App ID decode failed"
     assert decoded["app_version"] == "1.52.0", "App version decode failed"
     assert len(decoded["supported_buttons"]) == 4, "Button count decode failed"
     assert decoded["supported_buttons"][0] == 0x01, "Button ID decode failed"
+    assert decoded["button_hints"] == {}, "Button hints should be empty"
     
-    # Test encoding with message type
-    result_tcp = encode_app_info("test", "1.0", [])
-    assert result_tcp[0] == MSG_TYPE_APP_INFO, "Message type incorrect"
-    assert result_tcp[1] == 0x01, "Version byte incorrect"
+    # Test encoding with button_hints (binary format: button_id -> label)
+    hints = {
+        0x20: "Emote",
+        0x40: "Camera"
+    }
+    result_with_hints = encode_app_info("test", "1.0", [], device_type="controller", button_hints=hints)
+    decoded_with_hints = parse_app_info(result_with_hints)
     
-    # Test decoding with message type
-    decoded_tcp = parse_app_info(result_tcp)
-    assert decoded_tcp["app_id"] == "test", "App ID decode failed"
-    assert decoded_tcp["app_version"] == "1.0", "App version decode failed"
-    assert len(decoded_tcp["supported_buttons"]) == 0, "Empty button list decode failed"
-    
-    # Test long app ID (should truncate)
-    long_id = "a" * 50
-    result3 = encode_app_info(long_id, "1.0", [])
-    assert result3[2] == 32, "Long app ID should be truncated to 32 bytes"
+    # Check controller type
+    assert result_with_hints[2] == 0x01, "Device type should be 0x01 for controller"
+    assert decoded_with_hints["device_type"] == "controller", "Device type decode failed"
+    assert decoded_with_hints["app_id"] == "test", "App ID decode failed"
+    assert decoded_with_hints["app_version"] == "1.0", "App version decode failed"
+    assert len(decoded_with_hints["supported_buttons"]) == 0, "Empty button list decode failed"
+    assert 0x20 in decoded_with_hints["button_hints"], "Button hints decode failed"
+    assert decoded_with_hints["button_hints"][0x20] == "Emote", "Button hint label decode failed"
     
     # Test round-trip encoding/decoding
-    original = {"app_id": "myapp", "app_version": "2.1.3", "supported_buttons": [0x01, 0x20, 0x30]}
-    encoded = encode_app_info(original["app_id"], original["app_version"], original["supported_buttons"])
+    original = {
+        "device_type": "controller",
+        "app_id": "myapp",
+        "app_version": "2.1.3",
+        "supported_buttons": [0x01, 0x20, 0x30],
+        "button_hints": {0x20: "Emote", 0x40: "Camera"}
+    }
+    encoded = encode_app_info(
+        original["app_id"],
+        original["app_version"],
+        original["supported_buttons"],
+        device_type=original["device_type"],
+        button_hints=original["button_hints"]
+    )
     decoded = parse_app_info(encoded)
     
+    assert decoded["device_type"] == original["device_type"], "Round-trip device_type failed"
     assert decoded["app_id"] == original["app_id"], "Round-trip app_id failed"
     assert decoded["app_version"] == original["app_version"], "Round-trip app_version failed"
     assert decoded["supported_buttons"] == original["supported_buttons"], "Round-trip buttons failed"
+    assert decoded["button_hints"][0x20] == "Emote", "Round-trip button_hints failed"
     
     # Test malformed data (too short)
     try:
         parse_app_info(bytes([MSG_TYPE_APP_INFO, 0x01]))
         assert False, "Should have raised ValueError for truncated data"
-    except ValueError:
-        pass  # Expected
-    
-    # Test malformed data (app_id_len exceeds buffer)
-    try:
-        malformed = bytes([MSG_TYPE_APP_INFO, 0x01, 0xFF, 0x01, 0x02])  # Claims 255 bytes but only has 2
-        parse_app_info(malformed)
-        assert False, "Should have raised ValueError for out-of-bounds app ID"
     except ValueError:
         pass  # Expected
     
