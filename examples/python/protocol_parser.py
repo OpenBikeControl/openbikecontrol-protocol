@@ -138,26 +138,25 @@ def format_button_state(button_id: int, state: int) -> str:
     """
     button_name = BUTTON_NAMES.get(button_id, f"Button 0x{button_id:02X}")
     
-    if state == 0:
+    # Special handling for analog enum buttons (0x20 Emote, 0x40 Camera)
+    if button_id == 0x20:  # Emote (analog enum 0-31)
+        # Map common emote values
+        emote_map = {0: "None", 1: "Wave", 2: "Thumbs Up", 3: "Hammer Time", 4: "Bell"}
+        emote_name = emote_map.get(state, f"Emote {state}")
+        state_str = f"ENUM: {emote_name}"
+    elif button_id == 0x40:  # Camera View (analog enum 0-31)
+        # Map common camera values
+        camera_map = {0: "Camera 1", 1: "Camera 2", 2: "Camera 3"}
+        camera_name = camera_map.get(state, f"Camera View {state}")
+        state_str = f"ENUM: {camera_name}"
+    elif state == 0:
         state_str = "RELEASED"
     elif state == 1:
         state_str = "PRESSED"
     else:
-        # Analog value (2-255) or enum value for 0x20, 0x40
-        if button_id == 0x20:  # Emote (analog enum 0-31)
-            # Map common emote values
-            emote_map = {0: "None", 1: "Wave", 2: "Thumbs Up", 3: "Hammer Time", 4: "Bell"}
-            emote_name = emote_map.get(state, f"Emote {state}")
-            state_str = f"ENUM: {emote_name}"
-        elif button_id == 0x40:  # Camera View (analog enum 0-31)
-            # Map common camera values
-            camera_map = {0: "Camera 1", 1: "Camera 2", 2: "Camera 3"}
-            camera_name = camera_map.get(state, f"Camera View {state}")
-            state_str = f"ENUM: {camera_name}"
-        else:
-            # Regular analog value (2-255)
-            percentage = int((state - 2) / (255 - 2) * 100)
-            state_str = f"ANALOG {percentage}%"
+        # Regular analog value (2-255)
+        percentage = int((state - 2) / (255 - 2) * 100)
+        state_str = f"ANALOG {percentage}%"
     
     return f"{button_name}: {state_str}"
 
