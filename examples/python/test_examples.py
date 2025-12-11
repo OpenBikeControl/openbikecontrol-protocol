@@ -332,10 +332,10 @@ def test_app_info_encoding():
     assert decoded["supported_buttons"][0] == 0x01, "Button ID decode failed"
     assert decoded["button_hints"] == {}, "Button hints should be empty"
     
-    # Test encoding with button_hints
+    # Test encoding with button_hints (binary format: button_id -> label)
     hints = {
-        "32": {"role_hint": "emote", "label": "Emote"},
-        "64": {"role_hint": "camera", "label": "Camera"}
+        0x20: "Emote",
+        0x40: "Camera"
     }
     result_with_hints = encode_app_info("test", "1.0", [], device_type="remote", button_hints=hints)
     decoded_with_hints = parse_app_info(result_with_hints)
@@ -344,8 +344,8 @@ def test_app_info_encoding():
     assert decoded_with_hints["app_id"] == "test", "App ID decode failed"
     assert decoded_with_hints["app_version"] == "1.0", "App version decode failed"
     assert len(decoded_with_hints["supported_buttons"]) == 0, "Empty button list decode failed"
-    assert "32" in decoded_with_hints["button_hints"], "Button hints decode failed"
-    assert decoded_with_hints["button_hints"]["32"]["label"] == "Emote", "Button hint label decode failed"
+    assert 0x20 in decoded_with_hints["button_hints"], "Button hints decode failed"
+    assert decoded_with_hints["button_hints"][0x20] == "Emote", "Button hint label decode failed"
     
     # Test round-trip encoding/decoding
     original = {
@@ -353,7 +353,7 @@ def test_app_info_encoding():
         "app_id": "myapp",
         "app_version": "2.1.3",
         "supported_buttons": [0x01, 0x20, 0x30],
-        "button_hints": {"20": {"role_hint": "emote", "label": "Emote"}}
+        "button_hints": {0x20: "Emote", 0x40: "Camera"}
     }
     encoded = encode_app_info(
         original["app_id"],
@@ -368,7 +368,7 @@ def test_app_info_encoding():
     assert decoded["app_id"] == original["app_id"], "Round-trip app_id failed"
     assert decoded["app_version"] == original["app_version"], "Round-trip app_version failed"
     assert decoded["supported_buttons"] == original["supported_buttons"], "Round-trip buttons failed"
-    assert decoded["button_hints"]["20"]["label"] == "Emote", "Round-trip button_hints failed"
+    assert decoded["button_hints"][0x20] == "Emote", "Round-trip button_hints failed"
     
     # Test malformed data (too short)
     try:

@@ -12,14 +12,12 @@ IMPORTANT NOTES:
   * Legacy apps may still send 0x21, 0x22, etc. for backward compatibility
   * New devices should accept both formats during a transition period
   
-- App-side mapping: Apps use button_hints in App Info (0x04) to communicate
-  enum mappings to devices (e.g., "1" = "Wave", "2" = "Thumbs Up")
+- App-side mapping: Apps use button_hints in App Info (0x04) to provide
+  labels for buttons (binary format: button_id + label string)
   
 - Generic button ranges (0x50-0x5F digital, 0x60-0x6F analog) allow apps to
   define custom actions via button_hints without protocol changes
 """
-
-import json
 
 # Button ID to name mapping (based on PROTOCOL.md)
 BUTTON_NAMES = {
@@ -280,7 +278,8 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
         app_version: App version string
         supported_buttons: List of supported button IDs (empty list = all buttons)
         device_type: Device type ("remote", "controller", or "app")
-        button_hints: Optional dict mapping button_id -> {role_hint, label, enum_values}
+        button_hints: Optional dict mapping button_id (int) -> label (str)
+                     Example: {0x20: "Emote", 0x40: "Camera"}
         
     Returns:
         Encoded bytes with message type prefix
@@ -294,10 +293,6 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
     app_id_bytes = app_id.encode('utf-8')[:32]  # Max 32 chars
     app_version_bytes = app_version.encode('utf-8')[:32]  # Max 32 chars
     
-    # Convert button_hints to JSON
-    button_hints_json = json.dumps(button_hints) if button_hints else ""
-    button_hints_bytes = button_hints_json.encode('utf-8')
-    
     data = bytearray()
     data.append(MSG_TYPE_APP_INFO)
     data.append(0x01)  # Version
@@ -310,11 +305,13 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
     data.append(len(supported_buttons))  # Button count
     data.extend(supported_buttons)  # Button IDs
     
-    # Add button hints length (2 bytes, MSB first) and data
-    hints_len = len(button_hints_bytes)
-    data.append((hints_len >> 8) & 0xFF)  # MSB
-    data.append(hints_len & 0xFF)  # LSB
-    data.extend(button_hints_bytes)  # Button hints JSON
+    # Add button hints in binary format
+    data.append(len(button_hints))  # Hint count
+    for button_id, label in button_hints.items():
+        label_bytes = label.encode('utf-8')[:32]  # Max 32 chars per label
+        data.append(button_id)  # Button ID
+        data.append(len(label_bytes))  # Label length
+        data.extend(label_bytes)  # Label
     
     return bytes(data)
 
@@ -325,8 +322,7 @@ def parse_app_info(data: bytes) -> dict:
     
     Data format: [Message_Type, Version, Device_Type_Length, Device_Type..., 
                   App_ID_Length, App_ID..., App_Version_Length, App_Version..., 
-                  Button_Count, Button_IDs..., Button_Hints_Length_MSB, 
-                  Button_Hints_Length_LSB, Button_Hints_JSON...]
+                  Button_Count, Button_IDs..., Hint_Count, Hints...]
     
     Args:
         data: Raw bytes
@@ -388,20 +384,35 @@ def parse_app_info(data: bytes) -> dict:
     button_ids = list(data[idx:idx+button_count])
     idx += button_count
     
-    # Parse optional button hints
+    # Parse optional button hints (binary format)
     button_hints = {}
-    if idx + 2 <= len(data):
-        hints_len = (data[idx] << 8) | data[idx + 1]
-        idx += 2
-        if hints_len > 0:
-            if idx + hints_len > len(data):
-                raise ValueError("Button hints length exceeds buffer")
-            hints_json = data[idx:idx+hints_len].decode('utf-8')
-            try:
-                button_hints = json.loads(hints_json)
-            except json.JSONDecodeError:
-                # Ignore malformed JSON
-                pass
+    if idx < len(data):
+        hint_count = data[idx]
+        idx += 1
+        
+        for _ in range(hint_count):
+            if idx >= len(data):
+                break
+            
+            # Parse button ID
+            button_id = data[idx]
+            idx += 1
+            
+            if idx >= len(data):
+                break
+            
+            # Parse label length
+            label_len = data[idx]
+            idx += 1
+            
+            if idx + label_len > len(data):
+                break
+            
+            # Parse label
+            label = data[idx:idx+label_len].decode('utf-8')
+            idx += label_len
+            
+            button_hints[button_id] = label
     
     return {
         "device_type": device_type,

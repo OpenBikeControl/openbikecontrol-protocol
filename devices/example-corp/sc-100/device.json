@@ -101,6 +101,7 @@
     }
   ],
   "button_hints": {
+    "_comment": "Note: Wire protocol uses simplified binary format (button_id + label only). This JSON structure is for device configuration and documentation.",
     "1": {
       "role_hint": "gear_shift_up",
       "label": "Shift Up"

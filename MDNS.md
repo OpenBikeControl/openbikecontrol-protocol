@@ -185,7 +185,7 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 ```
 [Message_Type] [Version] [Device_Type_Length] [Device_Type...] [App_ID_Length] [App_ID...] 
 [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...] 
-[Button_Hints_JSON_Length_MSB] [Button_Hints_JSON_Length_LSB] [Button_Hints_JSON...]
+[Hint_Count] [Hint_1...] [Hint_2...] ...
 ```
 
 - **Message_Type** (1 byte): Always `0x04` for app information messages
@@ -207,63 +207,43 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 - **Button_IDs** (variable): Array of button ID bytes
   - Each byte represents a supported button ID from [Button Mapping](PROTOCOL.md#button-mapping)
   - Devices can use this to provide visual feedback or customize layouts
-- **Button_Hints_JSON_Length** (2 bytes, MSB first): Length of optional button hints JSON (0-65535)
+- **Hint_Count** (1 byte): Number of button hints (0-255)
   - If 0, no button hints provided
-- **Button_Hints_JSON** (variable): Optional JSON object mapping button IDs to hints
-  - Format: `{"button_id": {"role_hint": "description", "label": "text"}}`
-  - Example: `{"32": {"role_hint": "emote", "label": "Wave"}, "64": {"role_hint": "camera", "label": "View 1"}}`
+- **Hint** (variable, repeated): Each hint consists of:
+  - **Button_ID** (1 byte): The button this hint applies to
+  - **Label_Length** (1 byte): Length of label string (0-32 characters)
+  - **Label** (variable): UTF-8 encoded label for the button
   - Helps apps interpret generic button ranges (0x50-0x5F, 0x60-0x6F) and analog enums (0x20, 0x40)
 
 **Example Data:**
 
 ```
 // App: "zwift", Type: "app", Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14], no hints
-[0x04, 0x01, 0x03, 'a', 'p', 'p', 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14, 0x00, 0x00]
+[0x04, 0x01, 0x03, 'a', 'p', 'p', 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14, 0x00]
 
-// With button hints for Emote (0x20) and Camera (0x40) analog enums
-[0x04, 0x01, 0x03, 'a', 'p', 'p', ..., 0x00, 0x3C, '{"32":{"role_hint":"emote","label":"Wave"},"64":{"role_hint":"camera","label":"Cam 1"}}']
+// With button hints for Emote (0x20) and Camera (0x40)
+// Hint count: 2
+// Hint 1: Button 0x20 (32), Label "Emote" (5 bytes)
+// Hint 2: Button 0x40 (64), Label "Camera" (6 bytes)
+[0x04, 0x01, 0x03, 'a', 'p', 'p', ..., 0x02, 0x20, 0x05, 'E', 'm', 'o', 't', 'e', 0x40, 0x06, 'C', 'a', 'm', 'e', 'r', 'a']
 ```
 
 **Button Hints for Analog Enums:**
 
-Apps should use `button_hints` to document the meaning of analog enum values for buttons like:
-- **Emote (0x20)**: State values 0–31 map to emote IDs (1 = wave, 2 = thumbs up, etc.)
-- **Camera View (0x40)**: State values 0–31 map to camera angles (0 = camera 1, 1 = camera 2, etc.)
+Apps should use `button_hints` to provide labels for buttons like:
+- **Emote (0x20)**: Label could be "Emote" or "Wave/Thumbs Up"
+- **Camera View (0x40)**: Label could be "Camera" or "Cycle View"
 
-Example button hints JSON:
-```json
-{
-  "32": {
-    "role_hint": "emote_selector",
-    "label": "Emote",
-    "enum_values": {
-      "0": "None",
-      "1": "Wave",
-      "2": "Thumbs Up",
-      "3": "Hammer Time"
-    }
-  },
-  "64": {
-    "role_hint": "camera_selector",
-    "label": "Camera View",
-    "enum_values": {
-      "0": "Camera 1",
-      "1": "Camera 2",
-      "2": "Camera 3"
-    }
-  }
-}
-```
+For analog enum buttons, the label provides context about the button's purpose. The actual enum value meanings (e.g., 0=none, 1=wave) are communicated through the button state values as defined in the protocol.
 
 **Usage:**
 - Apps SHOULD send this message immediately after establishing the TCP connection
 - Apps MAY send updated information if capabilities change during the session
 - Devices SHOULD handle the absence of this message gracefully (assume all buttons supported)
 - The app information is cleared when the TCP connection is closed
-- Apps should provide button hints for analog enums (0x20 Emote, 0x40 Camera) to help devices interpret enum values
-- Generic button ranges (0x50-0x5F, 0x60-0x6F) benefit from button hints for custom labeling
+- Apps should provide button hints for analog enums (0x20 Emote, 0x40 Camera) and generic buttons (0x50-0x5F, 0x60-0x6F) to help devices display appropriate labels
 
-**Note:** This message is **optional** for apps to implement, but the information is important for devices to provide the best user experience (e.g., highlighting supported buttons, customizing layouts for specific apps, displaying enum value meanings).
+**Note:** This message is **optional** for apps to implement, but the information is important for devices to provide the best user experience (e.g., highlighting supported buttons, customizing layouts for specific apps, displaying meaningful button labels).
 
 ---
 
