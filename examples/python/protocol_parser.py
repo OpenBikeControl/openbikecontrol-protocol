@@ -5,6 +5,18 @@ OpenBikeControl Protocol Parser
 Shared module for parsing OpenBikeControl protocol data in both BLE and TCP implementations.
 This module provides common functionality for encoding and decoding messages according to
 the OpenBikeControl protocol specification.
+
+IMPORTANT NOTES:
+- Emote (0x20) and Camera View (0x40) now use analog enum semantics (0-31)
+  * State values map to specific actions (e.g., 0x20 with value 1 = Wave)
+  * Legacy apps may still send 0x21, 0x22, etc. for backward compatibility
+  * New devices should accept both formats during a transition period
+  
+- App-side mapping: Apps use button_hints in App Info (0x04) to communicate
+  enum mappings to devices (e.g., "1" = "Wave", "2" = "Thumbs Up")
+  
+- Generic button ranges (0x50-0x5F digital, 0x60-0x6F analog) allow apps to
+  define custom actions via button_hints without protocol changes
 """
 
 # Button ID to name mapping (based on PROTOCOL.md)
@@ -22,12 +34,8 @@ BUTTON_NAMES = {
     0x15: "Back/Cancel",
     0x16: "Menu",
     0x17: "Home",
-    # Social/Emotes (0x20-0x2F)
-    0x20: "Wave",
-    0x21: "Thumbs Up",
-    0x22: "Hammer Time",
-    0x23: "Bell",
-    0x24: "Screenshot",
+    # Social/Emotes (0x20-0x2F) - now analog enum
+    0x20: "Emote (analog enum)",
     # Training Controls (0x30-0x3F)
     0x30: "ERG Up",
     0x31: "ERG Down",
@@ -35,17 +43,16 @@ BUTTON_NAMES = {
     0x33: "Pause",
     0x34: "Resume",
     0x35: "Lap",
-    # View Controls (0x40-0x4F)
-    0x40: "Camera Angle",
-    0x41: "Camera 1",
-    0x42: "Camera 2",
-    0x43: "Camera 3",
+    # View Controls (0x40-0x4F) - 0x40 now analog enum
+    0x40: "Switch Camera View (analog enum)",
     0x44: "HUD Toggle",
     0x45: "Map Toggle",
-    # Power-ups (0x50-0x5F)
+    # Power-ups / Generic Digital (0x50-0x5F)
     0x50: "Power-up 1",
     0x51: "Power-up 2",
     0x52: "Power-up 3",
+    # Generic Analog (0x60-0x6F)
+    # (Apps define via button_hints)
 }
 
 # Haptic feedback patterns
@@ -136,9 +143,21 @@ def format_button_state(button_id: int, state: int) -> str:
     elif state == 1:
         state_str = "PRESSED"
     else:
-        # Analog value (2-255)
-        percentage = int((state - 2) / (255 - 2) * 100)
-        state_str = f"ANALOG {percentage}%"
+        # Analog value (2-255) or enum value for 0x20, 0x40
+        if button_id == 0x20:  # Emote (analog enum 0-31)
+            # Map common emote values
+            emote_map = {0: "None", 1: "Wave", 2: "Thumbs Up", 3: "Hammer Time", 4: "Bell"}
+            emote_name = emote_map.get(state, f"Emote {state}")
+            state_str = f"ENUM: {emote_name}"
+        elif button_id == 0x40:  # Camera View (analog enum 0-31)
+            # Map common camera values
+            camera_map = {0: "Camera 1", 1: "Camera 2", 2: "Camera 3"}
+            camera_name = camera_map.get(state, f"Camera View {state}")
+            state_str = f"ENUM: {camera_name}"
+        else:
+            # Regular analog value (2-255)
+            percentage = int((state - 2) / (255 - 2) * 100)
+            state_str = f"ANALOG {percentage}%"
     
     return f"{button_name}: {state_str}"
 
@@ -247,7 +266,8 @@ def parse_haptic_feedback(data: bytes) -> dict:
 
 
 def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
-                   supported_buttons: list = None) -> bytes:
+                   supported_buttons: list = None, device_type: str = "app",
+                   button_hints: dict = None) -> bytes:
     """
     Encode app information to binary format.
     
@@ -255,25 +275,43 @@ def encode_app_info(app_id: str = "example-app", app_version: str = "1.0.0",
         app_id: App identifier string
         app_version: App version string
         supported_buttons: List of supported button IDs (empty list = all buttons)
+        device_type: Device type ("remote", "controller", or "app")
+        button_hints: Optional dict mapping button_id -> {role_hint, label, enum_values}
         
     Returns:
         Encoded bytes with message type prefix
     """
     if supported_buttons is None:
         supported_buttons = []
+    if button_hints is None:
+        button_hints = {}
     
+    device_type_bytes = device_type.encode('utf-8')[:32]  # Max 32 chars
     app_id_bytes = app_id.encode('utf-8')[:32]  # Max 32 chars
     app_version_bytes = app_version.encode('utf-8')[:32]  # Max 32 chars
+    
+    # Convert button_hints to JSON
+    import json
+    button_hints_json = json.dumps(button_hints) if button_hints else ""
+    button_hints_bytes = button_hints_json.encode('utf-8')
     
     data = bytearray()
     data.append(MSG_TYPE_APP_INFO)
     data.append(0x01)  # Version
+    data.append(len(device_type_bytes))  # Device Type length
+    data.extend(device_type_bytes)  # Device Type
     data.append(len(app_id_bytes))  # App ID length
     data.extend(app_id_bytes)  # App ID
     data.append(len(app_version_bytes))  # App Version length
     data.extend(app_version_bytes)  # App Version
     data.append(len(supported_buttons))  # Button count
     data.extend(supported_buttons)  # Button IDs
+    
+    # Add button hints length (2 bytes, MSB first) and data
+    hints_len = len(button_hints_bytes)
+    data.append((hints_len >> 8) & 0xFF)  # MSB
+    data.append(hints_len & 0xFF)  # LSB
+    data.extend(button_hints_bytes)  # Button hints JSON
     
     return bytes(data)
 
@@ -282,14 +320,19 @@ def parse_app_info(data: bytes) -> dict:
     """
     Parse app information from binary format.
     
-    Data format: [Message_Type, Version, App_ID_Length, App_ID..., ...]
+    Data format: [Message_Type, Version, Device_Type_Length, Device_Type..., 
+                  App_ID_Length, App_ID..., App_Version_Length, App_Version..., 
+                  Button_Count, Button_IDs..., Button_Hints_Length_MSB, 
+                  Button_Hints_Length_LSB, Button_Hints_JSON...]
     
     Args:
         data: Raw bytes
         
     Returns:
-        Dictionary with app_id, app_version, and supported_buttons
+        Dictionary with device_type, app_id, app_version, supported_buttons, and button_hints
     """
+    import json
+    
     if len(data) < 1 or data[0] != MSG_TYPE_APP_INFO:
         raise ValueError("Invalid message type")
     
@@ -303,6 +346,16 @@ def parse_app_info(data: bytes) -> dict:
     
     if version != 0x01:
         raise ValueError(f"Unsupported app info version: {version}")
+    
+    # Parse Device Type with bounds checking
+    if idx >= len(data):
+        raise ValueError("Missing device type length")
+    device_type_len = data[idx]
+    idx += 1
+    if idx + device_type_len > len(data):
+        raise ValueError("Device type length exceeds buffer")
+    device_type = data[idx:idx+device_type_len].decode('utf-8')
+    idx += device_type_len
     
     # Parse App ID with bounds checking
     if idx >= len(data):
@@ -332,9 +385,27 @@ def parse_app_info(data: bytes) -> dict:
     if idx + button_count > len(data):
         raise ValueError("Button count exceeds buffer")
     button_ids = list(data[idx:idx+button_count])
+    idx += button_count
+    
+    # Parse optional button hints
+    button_hints = {}
+    if idx + 2 <= len(data):
+        hints_len = (data[idx] << 8) | data[idx + 1]
+        idx += 2
+        if hints_len > 0:
+            if idx + hints_len > len(data):
+                raise ValueError("Button hints length exceeds buffer")
+            hints_json = data[idx:idx+hints_len].decode('utf-8')
+            try:
+                button_hints = json.loads(hints_json)
+            except json.JSONDecodeError:
+                # Ignore malformed JSON
+                pass
     
     return {
+        "device_type": device_type,
         "app_id": app_id,
         "app_version": app_version,
-        "supported_buttons": button_ids
+        "supported_buttons": button_ids,
+        "button_hints": button_hints
     }

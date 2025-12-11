@@ -82,22 +82,76 @@
       "description": "Go back or cancel current action"
     },
     {
-      "physical_button": "Left Trigger",
-      "button_id": 48,
-      "standard_action": "ERG Down",
+      "physical_button": "Emote Dial",
+      "button_id": 32,
+      "standard_action": "Emote Selector",
       "type": "analog",
-      "range": "0-255",
-      "description": "Analog trigger to decrease ERG mode power (0=released, 255=fully pressed)"
+      "range": "0-31",
+      "description": "Analog emote selector (enum 0-31). Value indicates emote ID: 0=none, 1=wave, 2=thumbs up, 3=hammer time, 4=bell, etc."
     },
     {
-      "physical_button": "Right Trigger",
-      "button_id": 49,
-      "standard_action": "ERG Up",
+      "physical_button": "Camera Switch",
+      "button_id": 64,
+      "standard_action": "Camera View Selector",
       "type": "analog",
-      "range": "0-255",
-      "description": "Analog trigger to increase ERG mode power (0=released, 255=fully pressed)"
+      "range": "0-31",
+      "description": "Analog camera view selector (enum 0-31). Value indicates camera: 0=camera 1, 1=camera 2, 2=camera 3, etc."
     }
   ],
+  "button_hints": {
+    "1": {
+      "role_hint": "gear_shift_up",
+      "label": "Shift Up"
+    },
+    "2": {
+      "role_hint": "gear_shift_down",
+      "label": "Shift Down"
+    },
+    "16": {
+      "role_hint": "navigate_up",
+      "label": "Up"
+    },
+    "17": {
+      "role_hint": "navigate_down",
+      "label": "Down"
+    },
+    "18": {
+      "role_hint": "navigate_left",
+      "label": "Left"
+    },
+    "19": {
+      "role_hint": "navigate_right",
+      "label": "Right"
+    },
+    "20": {
+      "role_hint": "select_confirm",
+      "label": "Select"
+    },
+    "21": {
+      "role_hint": "back_cancel",
+      "label": "Back"
+    },
+    "32": {
+      "role_hint": "emote_selector",
+      "label": "Emote",
+      "enum_values": {
+        "0": "None",
+        "1": "Wave",
+        "2": "Thumbs Up",
+        "3": "Hammer Time",
+        "4": "Bell"
+      }
+    },
+    "64": {
+      "role_hint": "camera_selector",
+      "label": "Camera View",
+      "enum_values": {
+        "0": "Camera 1",
+        "1": "Camera 2",
+        "2": "Camera 3"
+      }
+    }
+  },
   "ble_services": {
     "primary_service": "d273f680-d548-419d-b9d1-fa0472345229",
     "button_characteristic": "d273f681-d548-419d-b9d1-fa0472345229",

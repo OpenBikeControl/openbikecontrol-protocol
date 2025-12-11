@@ -183,11 +183,17 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 **Data Format:**
 
 ```
-[Message_Type] [Version] [App_ID_Length] [App_ID...] [App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...]
+[Message_Type] [Version] [Device_Type_Length] [Device_Type...] [App_ID_Length] [App_ID...] 
+[App_Version_Length] [App_Version...] [Button_Count] [Button_IDs...] 
+[Button_Hints_JSON_Length_MSB] [Button_Hints_JSON_Length_LSB] [Button_Hints_JSON...]
 ```
 
 - **Message_Type** (1 byte): Always `0x04` for app information messages
 - **Version** (1 byte): Format version, currently `0x01`
+- **Device_Type_Length** (1 byte): Length of the Device Type string (0-32 characters)
+- **Device_Type** (variable): UTF-8 encoded device type identifier
+  - Values: `"remote"`, `"controller"`, or `"app"`
+  - Indicates sender type: physical remote, game controller, or app itself
 - **App_ID_Length** (1 byte): Length of the App ID string (0-32 characters)
 - **App_ID** (variable): UTF-8 encoded app identifier string
   - Should be lowercase, alphanumeric with optional hyphens/underscores
@@ -201,12 +207,52 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 - **Button_IDs** (variable): Array of button ID bytes
   - Each byte represents a supported button ID from [Button Mapping](PROTOCOL.md#button-mapping)
   - Devices can use this to provide visual feedback or customize layouts
+- **Button_Hints_JSON_Length** (2 bytes, MSB first): Length of optional button hints JSON (0-65535)
+  - If 0, no button hints provided
+- **Button_Hints_JSON** (variable): Optional JSON object mapping button IDs to hints
+  - Format: `{"button_id": {"role_hint": "description", "label": "text"}}`
+  - Example: `{"32": {"role_hint": "emote", "label": "Wave"}, "64": {"role_hint": "camera", "label": "View 1"}}`
+  - Helps apps interpret generic button ranges (0x50-0x5F, 0x60-0x6F) and analog enums (0x20, 0x40)
 
 **Example Data:**
 
 ```
-// App: "zwift", Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14]
-[0x04, 0x01, 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14]
+// App: "zwift", Type: "app", Version: "1.52.0", Buttons: [0x01, 0x02, 0x10, 0x14], no hints
+[0x04, 0x01, 0x03, 'a', 'p', 'p', 0x05, 'z', 'w', 'i', 'f', 't', 0x06, '1', '.', '5', '2', '.', '0', 0x04, 0x01, 0x02, 0x10, 0x14, 0x00, 0x00]
+
+// With button hints for Emote (0x20) and Camera (0x40) analog enums
+[0x04, 0x01, 0x03, 'a', 'p', 'p', ..., 0x00, 0x3C, '{"32":{"role_hint":"emote","label":"Wave"},"64":{"role_hint":"camera","label":"Cam 1"}}']
+```
+
+**Button Hints for Analog Enums:**
+
+Apps should use `button_hints` to document the meaning of analog enum values for buttons like:
+- **Emote (0x20)**: State values 0–31 map to emote IDs (1 = wave, 2 = thumbs up, etc.)
+- **Camera View (0x40)**: State values 0–31 map to camera angles (0 = camera 1, 1 = camera 2, etc.)
+
+Example button hints JSON:
+```json
+{
+  "32": {
+    "role_hint": "emote_selector",
+    "label": "Emote",
+    "enum_values": {
+      "0": "None",
+      "1": "Wave",
+      "2": "Thumbs Up",
+      "3": "Hammer Time"
+    }
+  },
+  "64": {
+    "role_hint": "camera_selector",
+    "label": "Camera View",
+    "enum_values": {
+      "0": "Camera 1",
+      "1": "Camera 2",
+      "2": "Camera 3"
+    }
+  }
+}
 ```
 
 **Usage:**
@@ -214,8 +260,10 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 - Apps MAY send updated information if capabilities change during the session
 - Devices SHOULD handle the absence of this message gracefully (assume all buttons supported)
 - The app information is cleared when the TCP connection is closed
+- Apps should provide button hints for analog enums (0x20 Emote, 0x40 Camera) to help devices interpret enum values
+- Generic button ranges (0x50-0x5F, 0x60-0x6F) benefit from button hints for custom labeling
 
-**Note:** This message is **optional** for apps to implement, but the information is important for devices to provide the best user experience (e.g., highlighting supported buttons, customizing layouts for specific apps).
+**Note:** This message is **optional** for apps to implement, but the information is important for devices to provide the best user experience (e.g., highlighting supported buttons, customizing layouts for specific apps, displaying enum value meanings).
 
 ---
 

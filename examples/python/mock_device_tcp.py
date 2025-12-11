@@ -88,30 +88,45 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
             (1.0, 0x01),  # Shift Up after 1s
             (2.0, 0x02),  # Shift Down after 2s
             (3.0, 0x14),  # Select after 3s
-            (4.0, 0x20),  # Wave after 4s
+            (4.0, 0x20, 1),  # Emote: Wave (enum value 1) after 4s
+            (5.0, 0x40, 0),  # Camera: View 1 (enum value 0) after 5s
         ]
         
         async def simulate_buttons():
             """Background task to simulate button presses."""
-            for delay, button_id in button_sequence:
+            for item in button_sequence:
+                if len(item) == 2:
+                    delay, button_id = item
+                    analog_value = None
+                else:
+                    delay, button_id, analog_value = item
+                
                 await asyncio.sleep(delay)
                 if writer.is_closing():
                     break
                 
-                press_msg, release_msg = device.simulate_button_press(button_id)
-                
-                # Send press
-                writer.write(press_msg)
-                await writer.drain()
-                print(f"  → Sent button press: 0x{button_id:02X}")
-                
-                # Wait a bit
-                await asyncio.sleep(0.1)
-                
-                # Send release
-                writer.write(release_msg)
-                await writer.drain()
-                print(f"  → Sent button release: 0x{button_id:02X}")
+                if analog_value is not None:
+                    # Analog/enum button - send analog value directly
+                    msg = encode_button_state([(button_id, analog_value)])
+                    writer.write(msg)
+                    await writer.drain()
+                    print(f"  → Sent analog/enum button: 0x{button_id:02X} = {analog_value}")
+                else:
+                    # Digital button - press and release
+                    press_msg, release_msg = device.simulate_button_press(button_id)
+                    
+                    # Send press
+                    writer.write(press_msg)
+                    await writer.drain()
+                    print(f"  → Sent button press: 0x{button_id:02X}")
+                    
+                    # Wait a bit
+                    await asyncio.sleep(0.1)
+                    
+                    # Send release
+                    writer.write(release_msg)
+                    await writer.drain()
+                    print(f"  → Sent button release: 0x{button_id:02X}")
         
         # Start button simulation
         button_task = asyncio.create_task(simulate_buttons())
@@ -311,7 +326,8 @@ async def start_mock_server(host='0.0.0.0', port=8080):
     print("  1s: Shift Up (0x01)")
     print("  2s: Shift Down (0x02)")
     print("  3s: Select (0x14)")
-    print("  4s: Wave (0x20)")
+    print("  4s: Emote = Wave (0x20, enum value 1)")
+    print("  5s: Camera = View 1 (0x40, enum value 0)")
     print()
     print("Connect using the TCP trainer app:")
     print("  python tcp_trainer_app.py")
