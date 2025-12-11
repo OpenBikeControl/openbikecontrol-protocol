@@ -74,31 +74,19 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 | Button ID | Action | Description |
 |-----------|--------|-------------|
-| `0x10` | Up | Navigate up / Steer left |
-| `0x11` | Down | Navigate down / Steer right |
-| `0x12` | Left | Navigate left / Look left |
-| `0x13` | Right | Navigate right / Look right |
+| `0x10` | Up | Navigate up |
+| `0x11` | Down | Navigate down |
+| `0x12` | Left | Navigate left / Steer left |
+| `0x13` | Right | Navigate right / Steer right |
 | `0x14` | Select/Confirm | Confirm selection |
 | `0x15` | Back/Cancel | Go back / Cancel |
 | `0x16` | Menu | Open menu |
-| `0x17` | Home | Return to home screen |
 
 #### Social/Emotes (0x20-0x2F)
 
 | Button ID | Action | Description |
 |-----------|--------|-------------|
 | `0x20` | Emote | Analog emote selector (enum 0–31). State value indicates emote ID: 0 = none/neutral, 1 = wave, 2 = thumbs up, 3 = hammer time, 4 = bell, etc. Apps define mappings. |
-
-#### Training Controls (0x30-0x3F)
-
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x30` | ERG Up | Increase ERG mode power |
-| `0x31` | ERG Down | Decrease ERG mode power |
-| `0x32` | Skip Interval | Skip to next workout interval |
-| `0x33` | Pause | Pause workout |
-| `0x34` | Resume | Resume workout |
-| `0x35` | Lap | Mark lap |
 
 #### View Controls (0x40-0x4F)
 

@@ -76,7 +76,7 @@ def test_format_button_state():
     
     # Analog value
     result = format_button_state(0x10, 0x80)
-    assert "Up/Steer Left" in result and "ANALOG" in result, f"Unexpected format: {result}"
+    assert "Up" in result and "ANALOG" in result, f"Unexpected format: {result}"
     
     # Analog min (2)
     result = format_button_state(0x10, 2)
@@ -96,15 +96,16 @@ def test_button_names():
     # Check some key buttons exist
     assert 0x01 in BUTTON_NAMES, "Shift Up (0x01) missing"
     assert 0x02 in BUTTON_NAMES, "Shift Down (0x02) missing"
-    assert 0x10 in BUTTON_NAMES, "Up/Steer Left (0x10) missing"
+    assert 0x10 in BUTTON_NAMES, "Up (0x10) missing"
     assert 0x14 in BUTTON_NAMES, "Select/Confirm (0x14) missing"
     assert 0x20 in BUTTON_NAMES, "Emote (0x20) missing"
     assert 0x40 in BUTTON_NAMES, "Camera View (0x40) missing"
-    assert 0x30 in BUTTON_NAMES, "ERG Up (0x30) missing"
     
     # Check that old button IDs are removed
     assert 0x21 not in BUTTON_NAMES, "Thumbs Up (0x21) should be removed"
     assert 0x41 not in BUTTON_NAMES, "Camera 1 (0x41) should be removed"
+    assert 0x17 not in BUTTON_NAMES, "Home (0x17) should be removed"
+    assert 0x30 not in BUTTON_NAMES, "ERG Up (0x30) should be removed"
     
     print("  ✓ All button name mapping tests passed")
 

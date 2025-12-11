@@ -26,23 +26,15 @@ BUTTON_NAMES = {
     0x02: "Shift Down",
     0x03: "Gear Set",
     # Navigation (0x10-0x1F)
-    0x10: "Up/Steer Left",
-    0x11: "Down/Steer Right",
-    0x12: "Left/Look Left",
-    0x13: "Right/Look Right",
+    0x10: "Up",
+    0x11: "Down",
+    0x12: "Left/Steer Left",
+    0x13: "Right/Steer Right",
     0x14: "Select/Confirm",
     0x15: "Back/Cancel",
     0x16: "Menu",
-    0x17: "Home",
     # Social/Emotes (0x20-0x2F) - now analog enum
     0x20: "Emote (analog enum)",
-    # Training Controls (0x30-0x3F)
-    0x30: "ERG Up",
-    0x31: "ERG Down",
-    0x32: "Skip Interval",
-    0x33: "Pause",
-    0x34: "Resume",
-    0x35: "Lap",
     # View Controls (0x40-0x4F) - 0x40 now analog enum
     0x40: "Switch Camera View (analog enum)",
     0x44: "HUD Toggle",
