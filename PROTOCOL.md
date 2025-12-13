@@ -94,12 +94,7 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 **Emote Analog Values:**
 - `0x00` = No emote / Released
 - `0x01` = Pressed (cycle through emotes)
-- `0x02` = Wave
-- `0x03` = Thumbs Up
-- `0x04` = Hammer Time
-- `0x05` = Bell
-- `0x06` = Screenshot
-- `0x07-0x1F` = Reserved for additional emotes
+- `0x02-0x1F` = Reserved for app-specific emotes
 
 #### Training Controls (0x30-0x3F)
 
@@ -123,16 +118,7 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 **Camera View Analog Values:**
 - `0x00` = No change / Released
 - `0x01` = Pressed (cycle through camera views)
-- `0x02` = Camera 1
-- `0x03` = Camera 2
-- `0x04` = Camera 3
-- `0x05` = Camera 4
-- `0x06` = Camera 5
-- `0x07` = Camera 6
-- `0x08` = Camera 7
-- `0x09` = Camera 8
-- `0x0A` = Camera 9
-- `0x0B-0x1F` = Reserved for additional camera views
+- `0x02-0x1F` = Reserved for app-specific camera views
 
 #### Power-ups (0x50-0x5F)
 

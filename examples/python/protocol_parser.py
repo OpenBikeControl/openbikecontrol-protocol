@@ -47,26 +47,12 @@ BUTTON_NAMES = {
 EMOTE_VALUES = {
     0x00: "No emote",
     0x01: "Pressed (cycle)",
-    0x02: "Wave",
-    0x03: "Thumbs Up",
-    0x04: "Hammer Time",
-    0x05: "Bell",
-    0x06: "Screenshot",
 }
 
 # Camera view analog values
 CAMERA_VIEW_VALUES = {
     0x00: "No change",
     0x01: "Pressed (cycle)",
-    0x02: "Camera 1",
-    0x03: "Camera 2",
-    0x04: "Camera 3",
-    0x05: "Camera 4",
-    0x06: "Camera 5",
-    0x07: "Camera 6",
-    0x08: "Camera 7",
-    0x09: "Camera 8",
-    0x0A: "Camera 9",
 }
 
 # Haptic feedback patterns

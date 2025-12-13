@@ -207,7 +207,7 @@ Both examples support the full OpenBikeControl button mapping:
 - 0x19: Steer Right
 
 ### Social/Emotes (0x20-0x2F)
-- 0x20: Emote (use analog value: 0x02=Wave, 0x03=Thumbs Up, 0x04=Hammer Time, 0x05=Bell, 0x06=Screenshot)
+- 0x20: Emote (use analog value 0x02-0x1F for app-specific emotes)
 
 ### Training Controls (0x30-0x3F)
 - 0x30: ERG Up
@@ -218,7 +218,7 @@ Both examples support the full OpenBikeControl button mapping:
 - 0x35: Lap
 
 ### View Controls (0x40-0x4F)
-- 0x40: Camera View (use analog value: 0x02=Camera 1, 0x03=Camera 2, 0x04=Camera 3, etc.)
+- 0x40: Camera View (use analog value 0x02-0x1F for app-specific camera views)
 - 0x44: HUD Toggle
 - 0x45: Map Toggle
 
