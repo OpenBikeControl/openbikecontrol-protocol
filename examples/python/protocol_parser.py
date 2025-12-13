@@ -14,20 +14,18 @@ BUTTON_NAMES = {
     0x02: "Shift Down",
     0x03: "Gear Set",
     # Navigation (0x10-0x1F)
-    0x10: "Up/Steer Left",
-    0x11: "Down/Steer Right",
+    0x10: "Up",
+    0x11: "Down",
     0x12: "Left/Look Left",
     0x13: "Right/Look Right",
     0x14: "Select/Confirm",
     0x15: "Back/Cancel",
     0x16: "Menu",
     0x17: "Home",
+    0x18: "Steer Left",
+    0x19: "Steer Right",
     # Social/Emotes (0x20-0x2F)
-    0x20: "Wave",
-    0x21: "Thumbs Up",
-    0x22: "Hammer Time",
-    0x23: "Bell",
-    0x24: "Screenshot",
+    0x20: "Emote",
     # Training Controls (0x30-0x3F)
     0x30: "ERG Up",
     0x31: "ERG Down",
@@ -36,16 +34,39 @@ BUTTON_NAMES = {
     0x34: "Resume",
     0x35: "Lap",
     # View Controls (0x40-0x4F)
-    0x40: "Camera Angle",
-    0x41: "Camera 1",
-    0x42: "Camera 2",
-    0x43: "Camera 3",
+    0x40: "Camera View",
     0x44: "HUD Toggle",
     0x45: "Map Toggle",
     # Power-ups (0x50-0x5F)
     0x50: "Power-up 1",
     0x51: "Power-up 2",
     0x52: "Power-up 3",
+}
+
+# Emote analog values
+EMOTE_VALUES = {
+    0x00: "No emote",
+    0x01: "Pressed (cycle)",
+    0x02: "Wave",
+    0x03: "Thumbs Up",
+    0x04: "Hammer Time",
+    0x05: "Bell",
+    0x06: "Screenshot",
+}
+
+# Camera view analog values
+CAMERA_VIEW_VALUES = {
+    0x00: "No change",
+    0x01: "Pressed (cycle)",
+    0x02: "Camera 1",
+    0x03: "Camera 2",
+    0x04: "Camera 3",
+    0x05: "Camera 4",
+    0x06: "Camera 5",
+    0x07: "Camera 6",
+    0x08: "Camera 7",
+    0x09: "Camera 8",
+    0x0A: "Camera 9",
 }
 
 # Haptic feedback patterns
@@ -131,6 +152,17 @@ def format_button_state(button_id: int, state: int) -> str:
     """
     button_name = BUTTON_NAMES.get(button_id, f"Button 0x{button_id:02X}")
     
+    # Special handling for Emote button (0x20)
+    if button_id == 0x20:
+        emote_name = EMOTE_VALUES.get(state, f"Unknown emote (0x{state:02X})")
+        return f"{button_name}: {emote_name}"
+    
+    # Special handling for Camera View button (0x40)
+    if button_id == 0x40:
+        camera_name = CAMERA_VIEW_VALUES.get(state, f"Unknown camera (0x{state:02X})")
+        return f"{button_name}: {camera_name}"
+    
+    # Standard button state handling
     if state == 0:
         state_str = "RELEASED"
     elif state == 1:

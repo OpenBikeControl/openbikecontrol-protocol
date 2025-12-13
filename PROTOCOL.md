@@ -74,24 +74,32 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 | Button ID | Action | Description |
 |-----------|--------|-------------|
-| `0x10` | Up | Navigate up / Steer left |
-| `0x11` | Down | Navigate down / Steer right |
+| `0x10` | Up | Navigate up in menus |
+| `0x11` | Down | Navigate down in menus |
 | `0x12` | Left | Navigate left / Look left |
 | `0x13` | Right | Navigate right / Look right |
 | `0x14` | Select/Confirm | Confirm selection |
 | `0x15` | Back/Cancel | Go back / Cancel |
 | `0x16` | Menu | Open menu |
 | `0x17` | Home | Return to home screen |
+| `0x18` | Steer Left | Steer left in-game |
+| `0x19` | Steer Right | Steer right in-game |
 
 #### Social/Emotes (0x20-0x2F)
 
-| Button ID | Action      | Description |
-|-----------|-------------|-------------|
-| `0x20`    | Wave        | Wave to other riders |
-| `0x21`    | Thumbs Up   | Give thumbs up |
-| `0x22`    | Hammer Time | Activate power-up |
-| `0x23`    | Bell        | Ring bell |
-| `0x24`    | Screenshot  | Take screenshot |
+| Button ID | Action | Description |
+|-----------|--------|-------------|
+| `0x20` | Emote | Send social emote (use analog value to specify emote type) |
+
+**Emote Analog Values:**
+- `0x00` = No emote / Released
+- `0x01` = Pressed (cycle through emotes)
+- `0x02` = Wave
+- `0x03` = Thumbs Up
+- `0x04` = Hammer Time
+- `0x05` = Bell
+- `0x06` = Screenshot
+- `0x07-0x1F` = Reserved for additional emotes
 
 #### Training Controls (0x30-0x3F)
 
@@ -108,12 +116,23 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 | Button ID | Action | Description |
 |-----------|--------|-------------|
-| `0x40` | Camera Angle | Cycle camera view |
-| `0x41` | Camera 1 | Switch to camera 1 |
-| `0x42` | Camera 2 | Switch to camera 2 |
-| `0x43` | Camera 3 | Switch to camera 3 |
+| `0x40` | Camera View | Select camera view (use analog value to specify view) |
 | `0x44` | HUD Toggle | Show/hide HUD |
 | `0x45` | Map Toggle | Show/hide map |
+
+**Camera View Analog Values:**
+- `0x00` = No change / Released
+- `0x01` = Pressed (cycle through camera views)
+- `0x02` = Camera 1
+- `0x03` = Camera 2
+- `0x04` = Camera 3
+- `0x05` = Camera 4
+- `0x06` = Camera 5
+- `0x07` = Camera 6
+- `0x08` = Camera 7
+- `0x09` = Camera 8
+- `0x0A` = Camera 9
+- `0x0B-0x1F` = Reserved for additional camera views
 
 #### Power-ups (0x50-0x5F)
 
@@ -136,6 +155,43 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 Apps may implement multi-button combinations by detecting multiple simultaneous button presses. For example:
 - Shift Up + Shift Down simultaneously = Reset gear to neutral
 - Menu + Select = Quick settings
+
+### Multiple Actions Per Button
+
+Hardware or software (such as BikeControl) can send **multiple actions per button press** to maximize flexibility and compatibility across different trainer apps. This allows a single physical button to trigger multiple related actions simultaneously, with the app deciding which action to respond to based on its capabilities.
+
+**Example Use Case:**
+
+A "Plus" button on a controller could send three different actions at once:
+- `0x01` (Shift Up) - For apps that support virtual gear shifting
+- `0x30` (ERG Up) - For apps that support ERG mode power adjustment
+- `0x14` (Select/Confirm) - For apps that use it for menu navigation
+
+**Implementation:**
+
+When a button is pressed, send a single button state message containing all relevant action IDs:
+```
+[0x01, 0x01, 0x01, 0x30, 0x01, 0x14, 0x01]
+```
+
+This means: Shift Up pressed (0x01, 0x01), ERG Up pressed (0x30, 0x01), and Select pressed (0x14, 0x01).
+
+**Benefits:**
+- **Compatibility**: Works with any app that supports at least one of the actions
+- **Flexibility**: Easy to remap hardware buttons through software configuration
+- **Discovery**: Apps communicate supported actions via the App Information Characteristic, allowing devices to optimize button mappings
+- **User Experience**: Physical buttons can have consistent behavior across different apps
+
+**Guidelines for Device Manufacturers:**
+- Group related actions that make sense together (e.g., shift up, increase resistance, navigate up)
+- Allow users to customize which actions are sent per button
+- Use the App Information Characteristic to understand which actions the app supports
+- Consider providing visual feedback on the device about which actions are active
+
+**Guidelines for App Developers:**
+- Process only the button IDs your app supports, ignoring others
+- Send the App Information Characteristic after connecting to inform devices of supported actions
+- Handle multiple simultaneous button presses gracefully
 
 ---
 
