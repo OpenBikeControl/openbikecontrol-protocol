@@ -76,7 +76,7 @@ def test_format_button_state():
     
     # Analog value
     result = format_button_state(0x10, 0x80)
-    assert "Up/Steer Left" in result and "ANALOG" in result, f"Unexpected format: {result}"
+    assert "Up" in result and "ANALOG" in result, f"Unexpected format: {result}"
     
     # Analog min (2)
     result = format_button_state(0x10, 2)
@@ -96,9 +96,9 @@ def test_button_names():
     # Check some key buttons exist
     assert 0x01 in BUTTON_NAMES, "Shift Up (0x01) missing"
     assert 0x02 in BUTTON_NAMES, "Shift Down (0x02) missing"
-    assert 0x10 in BUTTON_NAMES, "Up/Steer Left (0x10) missing"
+    assert 0x10 in BUTTON_NAMES, "Up (0x10) missing"
     assert 0x14 in BUTTON_NAMES, "Select/Confirm (0x14) missing"
-    assert 0x20 in BUTTON_NAMES, "Wave (0x20) missing"
+    assert 0x20 in BUTTON_NAMES, "Emote (0x20) missing"
     assert 0x30 in BUTTON_NAMES, "ERG Up (0x30) missing"
     
     print("  ✓ All button name mapping tests passed")
