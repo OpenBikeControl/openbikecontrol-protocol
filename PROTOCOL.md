@@ -90,6 +90,7 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 | Button ID | Action | Description |
 |-----------|--------|-------------|
 | `0x20` | Emote | Send social emote (use analog value to specify emote type) |
+| `0x21` | Push to Talk | Activate microphone for voice input |
 
 **Emote Analog Values:**
 - `0x00` = No emote / Released

@@ -26,6 +26,7 @@ BUTTON_NAMES = {
     0x19: "Steer Right",
     # Social/Emotes (0x20-0x2F)
     0x20: "Emote",
+    0x21: "Push to Talk",
     # Training Controls (0x30-0x3F)
     0x30: "ERG Up",
     0x31: "ERG Down",
@@ -140,12 +141,22 @@ def format_button_state(button_id: int, state: int) -> str:
     
     # Special handling for Emote button (0x20)
     if button_id == 0x20:
-        emote_name = EMOTE_VALUES.get(state, f"Unknown emote (0x{state:02X})")
+        if state in EMOTE_VALUES:
+            emote_name = EMOTE_VALUES[state]
+        elif 0x02 <= state <= 0x1F:
+            emote_name = f"App-specific emote (0x{state:02X})"
+        else:
+            emote_name = f"Unknown emote (0x{state:02X})"
         return f"{button_name}: {emote_name}"
     
     # Special handling for Camera View button (0x40)
     if button_id == 0x40:
-        camera_name = CAMERA_VIEW_VALUES.get(state, f"Unknown camera (0x{state:02X})")
+        if state in CAMERA_VIEW_VALUES:
+            camera_name = CAMERA_VIEW_VALUES[state]
+        elif 0x02 <= state <= 0x1F:
+            camera_name = f"App-specific camera view (0x{state:02X})"
+        else:
+            camera_name = f"Unknown camera (0x{state:02X})"
         return f"{button_name}: {camera_name}"
     
     # Standard button state handling

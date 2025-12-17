@@ -208,6 +208,7 @@ Both examples support the full OpenBikeControl button mapping:
 
 ### Social/Emotes (0x20-0x2F)
 - 0x20: Emote (use analog value 0x02-0x1F for app-specific emotes)
+- 0x21: Push to Talk
 
 ### Training Controls (0x30-0x3F)
 - 0x30: ERG Up
