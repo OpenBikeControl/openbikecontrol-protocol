@@ -294,7 +294,7 @@ class MockBLEDevice:
             (3.0, 0x01),   # Shift Up after 3s
             (3.0, 0x02),   # Shift Down after 3s
             (3.0, 0x14),   # Select after 3s
-            (3.0, 0x20),   # Wave after 3s
+            (3.0, 0x20),   # Emote after 3s
         ]
 
         print("\n👉 Starting button simulation...")
@@ -341,7 +341,7 @@ class MockBLEDevice:
         print("  Every 3s: Shift Up (0x01)")
         print("  Every 3s: Shift Down (0x02)")
         print("  Every 3s: Select (0x14)")
-        print("  Every 3s: Wave (0x20)")
+        print("  Every 3s: Emote (0x20)")
         print()
         print("Connect using the BLE trainer app:")
         print("  python ble_trainer_app.py")

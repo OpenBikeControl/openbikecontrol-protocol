@@ -88,7 +88,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
             (1.0, 0x01),  # Shift Up after 1s
             (2.0, 0x02),  # Shift Down after 2s
             (3.0, 0x14),  # Select after 3s
-            (4.0, 0x20),  # Wave after 4s
+            (4.0, 0x20),  # Emote after 4s
         ]
         
         async def simulate_buttons():
@@ -311,7 +311,7 @@ async def start_mock_server(host='0.0.0.0', port=8080):
     print("  1s: Shift Up (0x01)")
     print("  2s: Shift Down (0x02)")
     print("  3s: Select (0x14)")
-    print("  4s: Wave (0x20)")
+    print("  4s: Emote (0x20)")
     print()
     print("Connect using the TCP trainer app:")
     print("  python tcp_trainer_app.py")

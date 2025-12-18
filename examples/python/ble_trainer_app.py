@@ -76,8 +76,10 @@ async def send_app_info(client: BleakClient, app_id: str = "example-trainer-app"
         supported_buttons = [
             0x01, 0x02,  # Shift Up/Down
             0x10, 0x11, 0x12, 0x13, 0x14, 0x15,  # Navigation
-            0x20, 0x21,  # Wave, Thumbs Up
+            0x18, 0x19,  # Steer Left/Right
+            0x20,  # Emote
             0x30, 0x31, 0x32, 0x33, 0x34,  # Training Controls
+            0x40,  # Camera View
         ]
     
     data = encode_app_info(app_id, app_version, supported_buttons)
