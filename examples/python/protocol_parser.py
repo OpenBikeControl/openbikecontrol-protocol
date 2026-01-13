@@ -340,9 +340,9 @@ def parse_app_info(data: bytes) -> dict:
     idx += 1
     if idx + app_id_len > len(data):
         raise ValueError("App ID length exceeds buffer")
-    app_id = data[idx:idx+app_id_len].decode('utf-8')
+    app_id = bytes(data[idx:idx+app_id_len]).decode('utf-8')
     idx += app_id_len
-    
+
     # Parse App Version with bounds checking
     if idx >= len(data):
         raise ValueError("Missing app version length")
@@ -350,9 +350,9 @@ def parse_app_info(data: bytes) -> dict:
     idx += 1
     if idx + app_version_len > len(data):
         raise ValueError("App version length exceeds buffer")
-    app_version = data[idx:idx+app_version_len].decode('utf-8')
+    app_version = bytes(data[idx:idx+app_version_len]).decode('utf-8')
     idx += app_version_len
-    
+
     # Parse Button IDs with bounds checking
     if idx >= len(data):
         raise ValueError("Missing button count")
