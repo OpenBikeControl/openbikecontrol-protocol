@@ -18,14 +18,15 @@ OpenBikeControl provides a unified, open protocol that:
 - **Already partially adopted** - Similar technology as the existing "Direct Connect" implementations
 - **Apple-friendly** - Does not rely on manufacturer data fields that cannot be emulated on iOS
 
-### Implementations
+Continue along at [PROTOCOL.md](PROTOCOL.md).
 
-# BikeControl
+# Implementations
+
+### BikeControl
 The OpenBikeControl protocol is already implemented into the BikeControl app, allowing the control of supported trainer apps, using a good amount of different input devices:
+
 ![BikeControl logo](implementations/bikecontrol.png)
 
 [https://bikecontrol.app/](https://bikecontrol.app/)
 
 Several trainer apps are either currently implementing the protocol, or have expressed interest in doing so. More details to follow.
-
-Continue along at [PROTOCOL.md](PROTOCOL.md).
