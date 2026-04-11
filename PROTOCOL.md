@@ -64,33 +64,33 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 #### Gear Shifting (0x01-0x0F)
 
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x01` | Shift Up | Increase virtual gear |
-| `0x02` | Shift Down | Decrease virtual gear |
-| `0x03` | Gear Set | Direct gear selection (use analog value) |
+| Button ID | Action     | Description                              |
+|-----------|------------|------------------------------------------|
+| `0x01`    | Shift Up   | Increase virtual gear                    |
+| `0x02`    | Shift Down | Decrease virtual gear                    |
+| `0x03`    | Gear Set   | Direct gear selection (use analog value) |
 
 #### Navigation (0x10-0x1F)
 
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x10` | Up | Navigate up in menus |
-| `0x11` | Down | Navigate down in menus |
-| `0x12` | Left | Navigate left / Look left |
-| `0x13` | Right | Navigate right / Look right |
-| `0x14` | Select/Confirm | Confirm selection |
-| `0x15` | Back/Cancel | Go back / Cancel |
-| `0x16` | Menu | Open menu |
-| `0x17` | Home | Return to home screen |
-| `0x18` | Steer Left | Steer left in-game |
-| `0x19` | Steer Right | Steer right in-game |
+| Button ID | Action         | Description                 |
+|-----------|----------------|-----------------------------|
+| `0x10`    | Up             | Navigate up in menus        |
+| `0x11`    | Down           | Navigate down in menus      |
+| `0x12`    | Left           | Navigate left / Look left   |
+| `0x13`    | Right          | Navigate right / Look right |
+| `0x14`    | Select/Confirm | Confirm selection           |
+| `0x15`    | Back/Cancel    | Go back / Cancel            |
+| `0x16`    | Menu           | Open menu                   |
+| `0x17`    | Home           | Return to home screen       |
+| `0x18`    | Steer Left     | Steer left in-game          |
+| `0x19`    | Steer Right    | Steer right in-game         |
 
 #### Social/Emotes (0x20-0x2F)
 
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x20` | Emote | Send social emote (use analog value to specify emote type) |
-| `0x21` | Push to Talk | Activate microphone for voice input |
+| Button ID | Action       | Description                                                |
+|-----------|--------------|------------------------------------------------------------|
+| `0x20`    | Emote        | Send social emote (use analog value to specify emote type) |
+| `0x21`    | Push to Talk | Activate microphone for voice input                        |
 
 **Emote Analog Values:**
 - `0x00` = No emote / Released
@@ -99,22 +99,29 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 #### Training Controls (0x30-0x3F)
 
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x30` | ERG Up | Increase ERG mode power |
-| `0x31` | ERG Down | Decrease ERG mode power |
-| `0x32` | Skip Interval | Skip to next workout interval |
-| `0x33` | Pause | Pause workout |
-| `0x34` | Resume | Resume workout |
-| `0x35` | Lap | Mark lap |
+| Button ID | Action              | Description                                                               |
+|-----------|---------------------|---------------------------------------------------------------------------|
+| `0x30`    | Increase Difficulty | Increase workout intensity / workout difficulty / increase ERG mode power |
+| `0x31`    | Decrease Difficulty | Decrease workout intensity / workout difficulty / decrease ERG mode power |
+| `0x32`    | Skip Interval       | Skip to next workout interval                                             |
+| `0x33`    | Pause               | Pause workout                                                             |
+| `0x34`    | Resume              | Resume workout                                                            |
+| `0x35`    | Lap                 | Mark lap                                                                  |
+| `0x36`    | Previous Internal   | Skip to previous workout interval                                         |
+| `0x37`    | U-Turn              | Perform U-Turn                                                            |
+| `0x38`    | Change Mode         | Toggle between modes, e.g. ERG and others                                 |
+| `0x39`    | Take a break        | Take a break                                                              |
+| `0x3A`    | Join another rider  | "Teleport" to another rider                                               |
+| `0x3B`    | Change route        | Show route change selection                                               |
 
 #### View Controls (0x40-0x4F)
 
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x40` | Camera View | Select camera view (use analog value to specify view) |
-| `0x44` | HUD Toggle | Show/hide HUD |
-| `0x45` | Map Toggle | Show/hide map |
+| Button ID | Action         | Description                                           |
+|-----------|----------------|-------------------------------------------------------|
+| `0x40`    | Camera View    | Select camera view (use analog value to specify view) |
+| `0x44`    | HUD Toggle     | Show/hide HUD                                         |
+| `0x45`    | Map Toggle     | Show/hide map                                         |
+| `0x46`    | Spectate rider | Spectate another rider                                |
 
 **Camera View Analog Values:**
 - `0x00` = No change / Released
@@ -123,18 +130,18 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 #### Power-ups (0x50-0x5F)
 
-| Button ID | Action | Description |
-|-----------|--------|-------------|
-| `0x50` | Power-up 1 | Activate power-up slot 1 |
-| `0x51` | Power-up 2 | Activate power-up slot 2 |
-| `0x52` | Power-up 3 | Activate power-up slot 3 |
+| Button ID | Action     | Description              |
+|-----------|------------|--------------------------|
+| `0x50`    | Power-up 1 | Activate power-up slot 1 |
+| `0x51`    | Power-up 2 | Activate power-up slot 2 |
+| `0x52`    | Power-up 3 | Activate power-up slot 3 |
 
 #### Custom/Reserved (0x60-0xFF)
 
-| Range | Purpose |
-|-------|---------|
+| Range       | Purpose                              |
+|-------------|--------------------------------------|
 | `0x60-0x7F` | Reserved for future standard actions |
-| `0x80-0x9F` | App-specific custom actions |
+| `0x80-0x9F` | App-specific custom actions          |
 | `0xA0-0xFF` | Manufacturer-specific custom actions |
 
 ### Multi-Button Combinations
@@ -252,7 +259,7 @@ Certified devices receive:
 
 ## Version History
 
-- **Version 1.0** (Current)
+- **Version 1** (Current)
   - Initial protocol specification
   - BLE and mDNS transport definitions
   - Standard button mappings

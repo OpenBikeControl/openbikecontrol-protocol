@@ -291,15 +291,15 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 
 ## Comparison with BLE
 
-| Feature | BLE | mDNS/TCP |
-|---------|-----|----------|
-| **Range** | 10-30m | WiFi network range |
-| **Latency** | 7-15ms | 20-50ms |
-| **Setup** | Pairing required | Network connection required |
-| **Battery** | Low power | Higher power (WiFi) |
-| **Compatibility** | Direct device support | Works through proxies/bridges |
-| **Multi-device** | Limited | Easy multiple connections |
-| **Data Format** | Binary (byte array) | Binary (byte array) - **same format as BLE** |
+| Feature           | BLE                   | mDNS/TCP                                     |
+|-------------------|-----------------------|----------------------------------------------|
+| **Range**         | 10-30m                | WiFi network range                           |
+| **Latency**       | 7-15ms                | 20-50ms                                      |
+| **Setup**         | Pairing required      | Network connection required                  |
+| **Battery**       | Low power             | Higher power (WiFi)                          |
+| **Compatibility** | Direct device support | Works through proxies/bridges                |
+| **Multi-device**  | Limited               | Easy multiple connections                    |
+| **Data Format**   | Binary (byte array)   | Binary (byte array) - **same format as BLE** |
 
 ---
 
