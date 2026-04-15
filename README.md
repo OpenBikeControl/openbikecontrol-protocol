@@ -20,6 +20,27 @@ OpenBikeControl provides a unified, open protocol that:
 
 Continue along at [PROTOCOL.md](PROTOCOL.md).
 
+## Trainer apps
+These are the trainer apps that have, or plan to, implement support for the OpenBikeControl protocol, allowing users to control them using compatible BLE controllers or network-based input devices.
+
+### MyWhoosh
+
+![MyWhoosh logo](implementations/mywhoosh.png)
+
+[https://mywhoosh.com/](https://mywhoosh.com/)
+
+### Rouvy
+
+![Rouvy logo](implementations/rouvy.svg)
+
+[https://rouvy.com/](https://rouvy.com/)
+
+### TrainingPeaks
+
+![TrainingPeaks logo](implementations/trainingpeaks.png)
+
+[https://www.trainingpeaks.com/](https://www.trainingpeaks.com/)
+
 # Implementations
 
 ### BikeControl
@@ -28,5 +49,3 @@ The OpenBikeControl protocol is already implemented into the BikeControl app, al
 ![BikeControl logo](implementations/bikecontrol.png)
 
 [https://bikecontrol.app/](https://bikecontrol.app/)
-
-Several trainer apps are either currently implementing the protocol, or have expressed interest in doing so. More details to follow.
