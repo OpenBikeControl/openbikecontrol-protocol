@@ -41,6 +41,12 @@ These are the trainer apps that have, or plan to, implement support for the Open
 
 [https://www.trainingpeaks.com/](https://www.trainingpeaks.com/)
 
+### icTrainer
+
+![icTrainer logo](implementations/ictrainer.png)
+
+[https://ictrainer.de/](https://ictrainer.de/)
+
 # Implementations
 
 ### BikeControl
