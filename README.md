@@ -47,6 +47,12 @@ These are the trainer apps that have, or plan to, implement support for the Open
 
 [https://ictrainer.de/](https://ictrainer.de/)
 
+### Biketerra
+
+![Biketerra logo](implementations/biketerra.svg)
+
+[https://biketerra.com/](https://biketerra.com/)
+
 # Implementations
 
 ### BikeControl
