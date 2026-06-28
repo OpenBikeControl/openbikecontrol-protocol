@@ -53,6 +53,12 @@ These are the trainer apps that have, or plan to, implement support for the Open
 
 [https://biketerra.com/](https://biketerra.com/)
 
+### Strappo
+
+![Strappo logo](implementations/strappo.png)
+
+[https://getstrappo.com/](https://getstrappo.com/)
+
 # Implementations
 
 ### BikeControl
