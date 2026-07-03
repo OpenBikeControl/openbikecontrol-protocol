@@ -64,11 +64,36 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 #### Gear Shifting (0x01-0x0F)
 
-| Button ID | Action     | Description                              |
-|-----------|------------|------------------------------------------|
-| `0x01`    | Shift Up   | Increase virtual gear                    |
-| `0x02`    | Shift Down | Decrease virtual gear                    |
-| `0x03`    | Gear Set   | Direct gear selection (use analog value) |
+| Button ID | Action        | Description                                                |
+|-----------|---------------|------------------------------------------------------------|
+| `0x01`    | Shift Up      | Increase virtual gear                                      |
+| `0x02`    | Shift Down    | Decrease virtual gear                                      |
+| `0x03`    | Gear Set      | Direct gear selection, flat index (use analog value)       |
+| `0x04`    | Chainring Set | Direct front chainring selection (use analog value)        |
+| `0x05`    | Cassette Set  | Direct rear cassette selection (use analog value)          |
+
+**Gear Selection Analog Values (0x03, 0x04, 0x05):**
+
+The analog value encodes a direct, 1-based gear position, offset by +1 so that the
+values `0x00` and `0x01` keep their standard meaning:
+
+- `0x00` = Released / no change
+- `0x01` = Not used for gear selection (reserved)
+- `0x02-0xFF` = Gear position + 1 (`0x02` = gear 1, `0x03` = gear 2, ..., up to 254 positions)
+
+The value is a direct index, **not** a percentage. Apps MUST NOT scale it and SHOULD
+clamp values outside their supported gear range to the nearest valid gear.
+
+**Flat vs. front/rear gearing:**
+
+`0x03` addresses gears as a single linear sequence (1..N), which is how most trainer
+apps model virtual shifting. Devices emulating a front/rear (N×M) drivetrain SHOULD
+use `0x04` (chainring) and `0x05` (cassette), and MAY additionally include a flattened
+`0x03` index in the same message for apps that only support the flat model (see
+[Multiple Actions Per Button](#multiple-actions-per-button)). How an N×M drivetrain
+flattens into a linear index (e.g. by concatenation, or ordered by effective gear
+ratio) is the device's choice. Use the App Information message to determine which
+button IDs the connected app supports.
 
 #### Navigation (0x10-0x1F)
 
@@ -84,6 +109,16 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 | `0x17`    | Home           | Return to home screen       |
 | `0x18`    | Steer Left     | Steer left in-game          |
 | `0x19`    | Steer Right    | Steer right in-game         |
+| `0x1A`    | Brake          | Apply brake (use analog value for strength) |
+
+**Brake Analog Values:**
+- `0x00` = Released / no braking
+- `0x01` = Full braking (digital button press)
+- `0x02-0xFF` = Analog braking strength (`0x02` = minimum, `0xFF` = maximum)
+
+Braking is a single axis: trainer apps do not currently distinguish front and rear
+brakes. Devices with two brake levers SHOULD report the stronger of the two levers.
+`0x1B` is reserved for a second brake axis should the distinction become meaningful.
 
 #### Social/Emotes (0x20-0x2F)
 
@@ -107,12 +142,23 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 | `0x33`    | Pause               | Pause workout                                                             |
 | `0x34`    | Resume              | Resume workout                                                            |
 | `0x35`    | Lap                 | Mark lap                                                                  |
-| `0x36`    | Previous Internal   | Skip to previous workout interval                                         |
+| `0x36`    | Previous Interval   | Skip to previous workout interval                                         |
 | `0x37`    | U-Turn              | Perform U-Turn                                                            |
 | `0x38`    | Change Mode         | Toggle between modes, e.g. ERG and others                                 |
 | `0x39`    | Take a break        | Take a break                                                              |
 | `0x3A`    | Join another rider  | "Teleport" to another rider                                               |
 | `0x3B`    | Change route        | Show route change selection                                               |
+| `0x3C`    | Cruise Control      | Toggle cruise control (use analog value for optional target power)        |
+
+**Cruise Control Analog Values:**
+- `0x00` = Released
+- `0x01` = Pressed — toggle cruise control on/off, engaging at the rider's current power
+- `0x02-0xFF` = Engage cruise control with an absolute target power of value × 5 watts (`0x0A` = 50 W, `0x64` = 500 W, up to 1275 W)
+
+Most devices SHOULD simply send `0x01` and let the app capture the rider's current
+power as the setpoint; subsequent adjustments use `0x30`/`0x31` (Increase/Decrease
+Difficulty). The absolute form is intended for devices with their own target-power UI.
+Apps SHOULD clamp target power values to the range they support.
 
 #### View Controls (0x40-0x4F)
 

@@ -13,6 +13,8 @@ BUTTON_NAMES = {
     0x01: "Shift Up",
     0x02: "Shift Down",
     0x03: "Gear Set",
+    0x04: "Chainring Set",
+    0x05: "Cassette Set",
     # Navigation (0x10-0x1F)
     0x10: "Up",
     0x11: "Down",
@@ -24,6 +26,7 @@ BUTTON_NAMES = {
     0x17: "Home",
     0x18: "Steer Left",
     0x19: "Steer Right",
+    0x1A: "Brake",
     # Social/Emotes (0x20-0x2F)
     0x20: "Emote",
     0x21: "Push to Talk",
@@ -34,6 +37,7 @@ BUTTON_NAMES = {
     0x33: "Pause",
     0x34: "Resume",
     0x35: "Lap",
+    0x3C: "Cruise Control",
     # View Controls (0x40-0x4F)
     0x40: "Camera View",
     0x44: "HUD Toggle",
