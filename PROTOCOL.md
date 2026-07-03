@@ -74,11 +74,11 @@ OpenBikeControl defines standard button IDs for common actions. Device manufactu
 
 **Gear Selection Analog Values (0x03, 0x04, 0x05):**
 
-The analog value encodes a direct, 1-based gear position, offset by +1 so that the
-values `0x00` and `0x01` keep their standard meaning:
+The analog value encodes a direct, 1-based gear position, offset by +1 to avoid
+colliding with the standard released/pressed values `0x00` and `0x01`:
 
 - `0x00` = Released / no change
-- `0x01` = Not used for gear selection (reserved)
+- `0x01` = Not used for gear selection; receivers MUST treat it as a no-op (same as `0x00`)
 - `0x02-0xFF` = Gear position + 1 (`0x02` = gear 1, `0x03` = gear 2, ..., up to 254 positions)
 
 The value is a direct index, **not** a percentage. Apps MUST NOT scale it and SHOULD
@@ -153,7 +153,8 @@ brakes. Devices with two brake levers SHOULD report the stronger of the two leve
 **Cruise Control Analog Values:**
 - `0x00` = Released
 - `0x01` = Pressed — toggle cruise control on/off, engaging at the rider's current power
-- `0x02-0xFF` = Engage cruise control with an absolute target power of value × 5 watts (`0x0A` = 50 W, `0x64` = 500 W, up to 1275 W)
+- `0x02-0x09` = Reserved; receivers MUST treat these values as a no-op
+- `0x0A-0xFF` = Engage cruise control with an absolute target power of value × 5 watts (`0x64` = 500 W, `0xFF` = 1275 W)
 
 Most devices SHOULD simply send `0x01` and let the app capture the rider's current
 power as the setpoint; subsequent adjustments use `0x30`/`0x31` (Increase/Decrease
@@ -204,7 +205,7 @@ Hardware or software (such as BikeControl) can send **multiple actions per butto
 
 A "Plus" button on a controller could send three different actions at once:
 - `0x01` (Shift Up) - For apps that support virtual gear shifting
-- `0x30` (ERG Up) - For apps that support ERG mode power adjustment
+- `0x30` (Increase Difficulty) - For apps that support ERG mode power adjustment
 - `0x14` (Select/Confirm) - For apps that use it for menu navigation
 
 **Implementation:**
@@ -214,7 +215,7 @@ When a button is pressed, send a single button state message containing all rele
 [0x01, 0x01, 0x01, 0x30, 0x01, 0x14, 0x01]
 ```
 
-This means: Shift Up pressed (0x01, 0x01), ERG Up pressed (0x30, 0x01), and Select pressed (0x14, 0x01).
+This means: Shift Up pressed (0x01, 0x01), Increase Difficulty pressed (0x30, 0x01), and Select pressed (0x14, 0x01).
 
 **Benefits:**
 - **Compatibility**: Works with any app that supports at least one of the actions

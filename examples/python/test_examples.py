@@ -85,7 +85,27 @@ def test_format_button_state():
     # Analog max (255)
     result = format_button_state(0x10, 255)
     assert "ANALOG" in result and "100%" in result, f"Unexpected format: {result}"
-    
+
+    # Gear selection is a direct index, not a percentage
+    result = format_button_state(0x03, 0x02)
+    assert "Gear Set" in result and "GEAR 1" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x05, 0x0D)
+    assert "Cassette Set" in result and "GEAR 12" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x03, 0x01)
+    assert "NO-OP" in result, f"Unexpected format: {result}"
+
+    # Cruise control target power is value x 5 watts
+    result = format_button_state(0x3C, 0x64)
+    assert "Cruise Control" in result and "500 W" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x3C, 0x01)
+    assert "Cruise Control" in result and "PRESSED" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x3C, 0x05)
+    assert "NO-OP" in result, f"Unexpected format: {result}"
+
     print("  ✓ All format_button_state tests passed")
 
 
@@ -99,7 +119,7 @@ def test_button_names():
     assert 0x10 in BUTTON_NAMES, "Up (0x10) missing"
     assert 0x14 in BUTTON_NAMES, "Select/Confirm (0x14) missing"
     assert 0x20 in BUTTON_NAMES, "Emote (0x20) missing"
-    assert 0x30 in BUTTON_NAMES, "ERG Up (0x30) missing"
+    assert 0x30 in BUTTON_NAMES, "Increase Difficulty (0x30) missing"
     
     print("  ✓ All button name mapping tests passed")
 
