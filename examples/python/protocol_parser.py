@@ -13,6 +13,8 @@ BUTTON_NAMES = {
     0x01: "Shift Up",
     0x02: "Shift Down",
     0x03: "Gear Set",
+    0x04: "Chainring Set",
+    0x05: "Cassette Set",
     # Navigation (0x10-0x1F)
     0x10: "Up",
     0x11: "Down",
@@ -24,16 +26,18 @@ BUTTON_NAMES = {
     0x17: "Home",
     0x18: "Steer Left",
     0x19: "Steer Right",
+    0x1A: "Brake",
     # Social/Emotes (0x20-0x2F)
     0x20: "Emote",
     0x21: "Push to Talk",
     # Training Controls (0x30-0x3F)
-    0x30: "ERG Up",
-    0x31: "ERG Down",
+    0x30: "Increase Difficulty",
+    0x31: "Decrease Difficulty",
     0x32: "Skip Interval",
     0x33: "Pause",
     0x34: "Resume",
     0x35: "Lap",
+    0x3C: "Cruise Control",
     # View Controls (0x40-0x4F)
     0x40: "Camera View",
     0x44: "HUD Toggle",
@@ -138,7 +142,33 @@ def format_button_state(button_id: int, state: int) -> str:
         Formatted string
     """
     button_name = BUTTON_NAMES.get(button_id, f"Button 0x{button_id:02X}")
-    
+
+    # Special handling for gear selection buttons (0x03-0x05): direct 1-based index, not a percentage
+    if button_id in (0x03, 0x04, 0x05):
+        if state == 0:
+            return f"{button_name}: RELEASED"
+        if state == 1:
+            return f"{button_name}: NO-OP (reserved)"
+        return f"{button_name}: GEAR {state - 1}"
+
+    # Special handling for Brake button (0x1A): value - 1 = percent, up to 200% for two levers
+    if button_id == 0x1A:
+        if state == 0:
+            return f"{button_name}: RELEASED"
+        if state == 1:
+            return f"{button_name}: FULL (100%)"
+        return f"{button_name}: {min(state - 1, 200)}%"
+
+    # Special handling for Cruise Control button (0x3C): value x 5 watts, not a percentage
+    if button_id == 0x3C:
+        if state == 0:
+            return f"{button_name}: RELEASED"
+        if state == 1:
+            return f"{button_name}: PRESSED (engage at current power)"
+        if state <= 0x09:
+            return f"{button_name}: NO-OP (reserved 0x{state:02X})"
+        return f"{button_name}: TARGET {state * 5} W"
+
     # Special handling for Emote button (0x20)
     if button_id == 0x20:
         if state in EMOTE_VALUES:

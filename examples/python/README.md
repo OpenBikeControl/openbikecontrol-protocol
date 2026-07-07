@@ -211,8 +211,8 @@ Both examples support the full OpenBikeControl button mapping:
 - 0x21: Push to Talk
 
 ### Training Controls (0x30-0x3F)
-- 0x30: ERG Up
-- 0x31: ERG Down
+- 0x30: Increase Difficulty
+- 0x31: Decrease Difficulty
 - 0x32: Skip Interval
 - 0x33: Pause
 - 0x34: Resume
