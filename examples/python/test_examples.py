@@ -129,6 +129,7 @@ def test_button_names():
     assert 0x10 in BUTTON_NAMES, "Up (0x10) missing"
     assert 0x14 in BUTTON_NAMES, "Select/Confirm (0x14) missing"
     assert 0x20 in BUTTON_NAMES, "Emote (0x20) missing"
+    assert 0x24 in BUTTON_NAMES, "Screenshot (0x24) missing"
     assert 0x30 in BUTTON_NAMES, "Increase Difficulty (0x30) missing"
     
     print("  ✓ All button name mapping tests passed")
