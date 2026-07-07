@@ -113,12 +113,14 @@ button IDs the connected app supports.
 
 **Brake Analog Values:**
 - `0x00` = Released / no braking
-- `0x01` = Full braking (digital button press)
-- `0x02-0xFF` = Analog braking strength (`0x02` = minimum, `0xFF` = maximum)
+- `0x01` = Full braking (digital button press, equivalent to 100%)
+- `0x02-0xC9` = Braking strength in percent: value − 1 (`0x02` = 1%, `0x65` = 100%, `0xC9` = 200%)
+- `0xCA-0xFF` = Reserved; apps SHOULD treat these as 200%
 
-Braking is a single axis: trainer apps do not currently distinguish front and rear
-brakes. Devices with two brake levers SHOULD report the stronger of the two levers.
-`0x1B` is reserved for a second brake axis should the distinction become meaningful.
+Braking is a single axis with a single button ID. 100% represents full application
+of one brake; devices with two brake levers MAY report a combined strength of up to
+200%. Apps that do not model braking beyond a single brake SHOULD clamp values
+above 100%.
 
 #### Social/Emotes (0x20-0x2F)
 
@@ -149,6 +151,15 @@ brakes. Devices with two brake levers SHOULD report the stronger of the two leve
 | `0x3A`    | Join another rider  | "Teleport" to another rider                                               |
 | `0x3B`    | Change route        | Show route change selection                                               |
 | `0x3C`    | Cruise Control      | Toggle cruise control (use analog value for optional target power)        |
+
+**Repeated Presses (0x30/0x31):**
+
+Apps MAY scale the adjustment step with the rate of repeated presses (e.g. slow
+presses adjust by ±1 W, faster presses by proportionally larger steps). To make
+this possible, devices MUST send every physical press as its own press/release
+transition and MUST NOT insert artificial cooldowns between presses or coalesce
+rapid presses into one. (Switch debouncing per the firmware guidelines is fine —
+it filters contact bounce, not distinct presses.)
 
 **Cruise Control Analog Values:**
 - `0x00` = Released
