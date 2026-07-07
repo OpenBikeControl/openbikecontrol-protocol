@@ -128,6 +128,7 @@ above 100%.
 |-----------|--------------|------------------------------------------------------------|
 | `0x20`    | Emote        | Send social emote (use analog value to specify emote type) |
 | `0x21`    | Push to Talk | Activate microphone for voice input                        |
+| `0x24`    | Screenshot   | Take an in-game screenshot                                 |
 
 **Emote Analog Values:**
 - `0x00` = No emote / Released
