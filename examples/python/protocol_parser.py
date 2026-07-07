@@ -151,6 +151,14 @@ def format_button_state(button_id: int, state: int) -> str:
             return f"{button_name}: NO-OP (reserved)"
         return f"{button_name}: GEAR {state - 1}"
 
+    # Special handling for Brake button (0x1A): value - 1 = percent, up to 200% for two levers
+    if button_id == 0x1A:
+        if state == 0:
+            return f"{button_name}: RELEASED"
+        if state == 1:
+            return f"{button_name}: FULL (100%)"
+        return f"{button_name}: {min(state - 1, 200)}%"
+
     # Special handling for Cruise Control button (0x3C): value x 5 watts, not a percentage
     if button_id == 0x3C:
         if state == 0:

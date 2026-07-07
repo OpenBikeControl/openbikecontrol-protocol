@@ -96,6 +96,16 @@ def test_format_button_state():
     result = format_button_state(0x03, 0x01)
     assert "NO-OP" in result, f"Unexpected format: {result}"
 
+    # Brake strength is value - 1 percent, up to 200% for two levers
+    result = format_button_state(0x1A, 0x65)
+    assert "Brake" in result and "100%" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x1A, 0xC9)
+    assert "Brake" in result and "200%" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x1A, 0xFF)
+    assert "Brake" in result and "200%" in result, f"Unexpected format: {result}"
+
     # Cruise control target power is value x 5 watts
     result = format_button_state(0x3C, 0x64)
     assert "Cruise Control" in result and "500 W" in result, f"Unexpected format: {result}"
