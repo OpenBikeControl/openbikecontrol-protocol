@@ -119,4 +119,4 @@ Help improve the certified devices directory:
 
 - Open a [GitHub Issue](https://github.com/OpenBikeControl/openbikecontrol-protocol/issues)
 - Review [Certification Documentation](../CERTIFICATION.md)
-- Contact: certification@bikecontrol.app
+- Contact: support@bikecontrol.app

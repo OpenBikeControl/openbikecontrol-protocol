@@ -303,7 +303,7 @@ Recertification follows expedited process for previously certified manufacturers
 
 ## Certification Costs
 
-Please contact certification@bikecontrol.app and we will find a fair price - or none at all!
+Please contact support@bikecontrol.app and we will find a fair price - or none at all!
 
 ## Certification Withdrawal
 
@@ -332,7 +332,7 @@ Ready to certify your device?
 ### Questions?
 
 - Open a [GitHub Issue](https://github.com/jonasbark/openbikecontrol-protocol/issues) with the `certification` label
-- Email: certification@bikecontrol.app
+- Email: support@bikecontrol.app
 
 ## Example Certified Devices
 
