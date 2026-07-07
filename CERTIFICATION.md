@@ -104,8 +104,8 @@ Submit a certification request by creating a GitHub Pull Request:
 
 1. **Fork the Repository**
    ```bash
-   git clone https://github.com/jonasbark/swiftcontrol-protocol.git
-   cd swiftcontrol-protocol
+   git clone https://github.com/OpenBikeControl/openbikecontrol-protocol.git
+   cd openbikecontrol-protocol
    git checkout -b certification/your-device-name
    ```
 
@@ -303,7 +303,7 @@ Recertification follows expedited process for previously certified manufacturers
 
 ## Certification Costs
 
-Please contact certification@swiftcontrol.app and we will find a fair price - or none at all!
+Please contact support@bikecontrol.app and we will find a fair price - or none at all!
 
 ## Certification Withdrawal
 
@@ -332,7 +332,7 @@ Ready to certify your device?
 ### Questions?
 
 - Open a [GitHub Issue](https://github.com/jonasbark/openbikecontrol-protocol/issues) with the `certification` label
-- Email: certification@swiftcontrol.app
+- Email: support@bikecontrol.app
 
 ## Example Certified Devices
 
