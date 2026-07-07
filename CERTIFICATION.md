@@ -349,7 +349,15 @@ Once devices are certified, they will be listed here with:
 
 ### Certified Badge
 
-![OpenBikeControl Certified](https://img.shields.io/badge/OpenBikeControl-Certified-brightgreen)
+<img src="badges/openbikecontrol-certified.png" alt="OpenBikeControl Certified badge" width="240">
+
+The badge is provided in three variants (2048 × 2048 px PNG, transparent background):
+
+| Variant | File | Intended use |
+|---------|------|--------------|
+| Color (primary) | [openbikecontrol-certified.png](badges/openbikecontrol-certified.png) | Light backgrounds, packaging, web |
+| Black | [openbikecontrol-certified-black.png](badges/openbikecontrol-certified-black.png) | Light backgrounds, single-color print |
+| White | [openbikecontrol-certified-white.png](badges/openbikecontrol-certified-white.png) | Dark backgrounds, dark packaging |
 
 Manufacturers may use the certification badge on:
 - Product packaging
