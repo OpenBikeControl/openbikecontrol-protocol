@@ -117,6 +117,6 @@ Help improve the certified devices directory:
 
 ## Questions?
 
-- Open a [GitHub Issue](https://github.com/jonasbark/openbikecontrol-protocol/issues)
+- Open a [GitHub Issue](https://github.com/OpenBikeControl/openbikecontrol-protocol/issues)
 - Review [Certification Documentation](../CERTIFICATION.md)
-- Contact: certification@swiftcontrol.app
+- Contact: certification@bikecontrol.app
