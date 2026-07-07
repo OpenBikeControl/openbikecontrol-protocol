@@ -30,6 +30,7 @@ BUTTON_NAMES = {
     # Social/Emotes (0x20-0x2F)
     0x20: "Emote",
     0x21: "Push to Talk",
+    0x24: "Screenshot",
     # Training Controls (0x30-0x3F)
     0x30: "Increase Difficulty",
     0x31: "Decrease Difficulty",
