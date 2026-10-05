@@ -24,14 +24,19 @@ Continue along at [PROTOCOL.md](PROTOCOL.md).
 OpenBikeControl is now built into shipping hardware.
 
 ### Stages SB200
-The [Stages SB200](https://stagescycling.com/en_us/stages-sb200-indoor-smart-bike) smart bike is the first hardware with OpenBikeControl built into its firmware. It connects over Bluetooth and Wi-Fi and exposes its shifters, brake levers and 10 customizable buttons through the protocol, with TrainingPeaks Virtual supporting it natively from launch day.
+The [Stages SB200](https://stagescycling.com/en_us/stages-sb200-indoor-smart-bike) smart bike is the first hardware with OpenBikeControl built into its firmware. It connects over Bluetooth and Wi-Fi and exposes its shifters, brake levers and 10 customizable buttons through the protocol, with TrainingPeaks Virtual supporting it natively from launch day. Through BikeControl it is also compatible with most other trainer apps.
 
 Read more in the announcement: [The Stages SB200 is the first hardware with OpenBikeControl built in](https://bikecontrol.app/blog/stages-sb200-openbikecontrol/).
 
 ## Trainer apps
-These are the trainer apps that have, or plan to, implement support for the OpenBikeControl protocol, allowing users to control them using compatible BLE controllers or network-based input devices.
+These are the trainer apps that implement the OpenBikeControl protocol, or plan to, allowing users to control them using compatible BLE controllers or network-based input devices.
+
+- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo
+- **Planned:** Rouvy, icTrainer, Biketerra
 
 ### MyWhoosh
+
+Status: **Implemented**
 
 ![MyWhoosh logo](implementations/mywhoosh.png)
 
@@ -39,11 +44,15 @@ These are the trainer apps that have, or plan to, implement support for the Open
 
 ### Rouvy
 
+Status: **Planned**
+
 ![Rouvy logo](implementations/rouvy.svg)
 
 [https://rouvy.com/](https://rouvy.com/)
 
 ### TrainingPeaks
+
+Status: **Implemented**
 
 ![TrainingPeaks logo](implementations/trainingpeaks.png)
 
@@ -51,17 +60,23 @@ These are the trainer apps that have, or plan to, implement support for the Open
 
 ### icTrainer
 
+Status: **Planned**
+
 ![icTrainer logo](implementations/ictrainer.png)
 
 [https://ictrainer.de/](https://ictrainer.de/)
 
 ### Biketerra
 
+Status: **Planned**
+
 ![Biketerra logo](implementations/biketerra.svg)
 
 [https://biketerra.com/](https://biketerra.com/)
 
 ### Strappo
+
+Status: **Implemented**
 
 ![Strappo logo](implementations/strappo.png)
 
