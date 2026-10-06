@@ -219,6 +219,42 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 
 ---
 
+### Virtual Shifting Control (App to Trainer)
+
+**Message Type:** `0x05`
+
+Optional, for smart trainers and smart bikes. Sent by the app to set the simulated gear
+ratio, rider mass and bike mass.
+
+**Data Format:**
+
+```
+[0x05] [Version] [Mode] [Gear_Ratio_L] [Gear_Ratio_H] [Rider_Mass_L] [Rider_Mass_H] [Bike_Mass_L] [Bike_Mass_H] [Gear_Index] [Gear_Count]
+```
+
+Fixed length of 11 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-control-app-to-trainer).
+
+---
+
+### Virtual Shifting State (Trainer to App)
+
+**Message Type:** `0x06`
+
+Optional, for smart trainers and smart bikes. Sent by the trainer once right after the TCP
+connection is accepted (so the app can detect support) and whenever its state changes.
+
+**Data Format:**
+
+```
+[0x06] [Version] [Flags] [Gear_Ratio_L] [Gear_Ratio_H] [Gear_Index] [Gear_Count] [Front_Index] [Front_Count] [Rear_Index] [Rear_Count]
+```
+
+Fixed length of 11 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-state-trainer-to-app).
+
+---
+
 ## Implementation Guidelines
 
 ### For App Developers
@@ -241,6 +277,7 @@ Sent by the app to inform the device about the app's identity and capabilities. 
    - Status messages (0x02) are always 3 bytes
    - Haptic feedback commands (0x03) are always 4 bytes
    - App info messages (0x04) have variable length
+   - Virtual shifting messages (0x05, 0x06) are always 11 bytes
 
 4. **Button Handling:**
    - Listen for button state messages (type 0x01)
@@ -280,6 +317,7 @@ Sent by the app to inform the device about the app's identity and capabilities. 
    - Send periodic device status updates (type 0x02) every 30-60 seconds
    - Process haptic feedback commands (type 0x03) immediately
    - Process app info messages (type 0x04) for device customization
+   - Smart trainers: process Virtual Shifting Control (type 0x05) and send Virtual Shifting State (type 0x06) on connect and on change
    - Use the same binary format as BLE for consistency
 
 5. **Power Management:**
@@ -307,5 +345,6 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 
 - [Main Protocol Documentation](PROTOCOL.md)
 - [BLE Protocol Specification](BLE.md)
+- [Virtual Shifting Extension](VIRTUAL_SHIFTING.md)
 - [Button Mapping](PROTOCOL.md#button-mapping)
 - [Certification Program](CERTIFICATION.md)
