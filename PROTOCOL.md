@@ -50,14 +50,15 @@ that smart trainers can simulate the selected gear.
 - App Information Characteristic (Write): `d273f683-d548-419d-b9d1-fa0472345229`
 - Virtual Shifting Control Characteristic (Write, trainers only): `d273f684-d548-419d-b9d1-fa0472345229`
 - Virtual Shifting State Characteristic (Read/Notify, trainers only): `d273f685-d548-419d-b9d1-fa0472345229`
-- Message types: `0x01` (button state), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state)
+- Ride State Characteristic (Write Without Response, trainers only): `d273f686-d548-419d-b9d1-fa0472345229`
+- Message types: `0x01` (button state), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state)
 - See [BLE.md](BLE.md) for complete specification
 
 **mDNS Protocol:**
 - Service Type: `_openbikecontrol._tcp.local.`
 - TCP endpoint: `<device-ip>:<port>`
 - Binary data format (identical to BLE)
-- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state)
+- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state)
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---
@@ -292,6 +293,7 @@ This means: Shift Up pressed (0x01, 0x01), Increase Difficulty pressed (0x30, 0x
    - Detect smart trainers that expose the Virtual Shifting State characteristic or send a `0x06` message on connect
    - Send the simulated gear ratio on every shift via the Virtual Shifting Control message
    - Keep using FTMS for grade, wind, rolling resistance, wheel circumference and ERG mode
+   - Optionally stream the simulated speed via Ride State so the trainer's inertia matches the on-screen speed
    - See [VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md)
 
 ### For Device Manufacturers
@@ -348,7 +350,7 @@ Certified devices receive:
   - BLE and mDNS transport definitions
   - Standard button mappings
   - Certification program launch
-  - Virtual Shifting Extension (message types `0x05`/`0x06`, optional, for smart trainers)
+  - Virtual Shifting Extension (message types `0x05`/`0x06`/`0x07`, optional, for smart trainers)
 
 ---
 

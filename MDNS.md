@@ -255,6 +255,25 @@ Fixed length of 11 bytes. Field definitions, examples and behaviour are specifie
 
 ---
 
+### Ride State (App to Trainer)
+
+**Message Type:** `0x07`
+
+Optional, for smart trainers and smart bikes. Sent by the app at 1–4 Hz with the
+simulated bike speed so the trainer can align its inertia and gravity simulation with the
+on-screen speed.
+
+**Data Format:**
+
+```
+[0x07] [Version] [Speed_L] [Speed_H] [Reserved]
+```
+
+Fixed length of 5 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#ride-state-app-to-trainer).
+
+---
+
 ## Implementation Guidelines
 
 ### For App Developers
@@ -278,6 +297,7 @@ Fixed length of 11 bytes. Field definitions, examples and behaviour are specifie
    - Haptic feedback commands (0x03) are always 4 bytes
    - App info messages (0x04) have variable length
    - Virtual shifting messages (0x05, 0x06) are always 11 bytes
+   - Ride state messages (0x07) are always 5 bytes
 
 4. **Button Handling:**
    - Listen for button state messages (type 0x01)
@@ -318,6 +338,7 @@ Fixed length of 11 bytes. Field definitions, examples and behaviour are specifie
    - Process haptic feedback commands (type 0x03) immediately
    - Process app info messages (type 0x04) for device customization
    - Smart trainers: process Virtual Shifting Control (type 0x05) and send Virtual Shifting State (type 0x06) on connect and on change
+   - Smart trainers: optionally use Ride State (type 0x07) as the speed reference for inertia and gravity simulation
    - Use the same binary format as BLE for consistency
 
 5. **Power Management:**

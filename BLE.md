@@ -262,6 +262,33 @@ Fixed length of 11 bytes. Field definitions, examples and behaviour are specifie
 
 ---
 
+### 6. Ride State Characteristic (WRITE WITHOUT RESPONSE)
+
+**UUID:** `d273f686-d548-419d-b9d1-fa0472345229`
+
+**Properties:** Write Without Response
+
+**Description:** Optional. Implemented by smart trainers and smart bikes. Receives the
+app's simulated speed at 1–4 Hz so the trainer can align its inertia and gravity
+simulation with what the rider sees on screen.
+
+**Data Format:**
+
+```
+[0x07] [Version] [Speed_L] [Speed_H] [Reserved]
+```
+
+Fixed length of 5 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#ride-state-app-to-trainer).
+
+**Write Behaviour:**
+
+- Only "Write Without Response" is used; the stream is periodic and a lost sample is
+  replaced by the next one
+- Trainers MAY ignore this characteristic and derive speed from cadence and gear ratio
+
+---
+
 ## Standard BLE Services
 
 OpenBikeControl devices MUST implement the following standard BLE services:

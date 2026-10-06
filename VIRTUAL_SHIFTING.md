@@ -43,6 +43,8 @@ What FTMS lacks, and what this extension adds, is:
 - **Rider mass** and **bike mass**, needed for a realistic acceleration feel
 - Feedback on the **gear actually in use**, including front/rear indices for
   trainers that model a multi-chainring drivetrain themselves
+- The app's **simulated speed**, so the trainer can align its inertia and
+  gravity simulation with what the rider sees on screen
 
 ---
 
@@ -50,8 +52,8 @@ What FTMS lacks, and what this extension adds, is:
 
 | Role        | Sends                              | Receives                           |
 |-------------|------------------------------------|------------------------------------|
-| Trainer app | Virtual Shifting Control (`0x05`)  | Virtual Shifting State (`0x06`)    |
-| Trainer     | Virtual Shifting State (`0x06`)    | Virtual Shifting Control (`0x05`)  |
+| Trainer app | Virtual Shifting Control (`0x05`), Ride State (`0x07`) | Virtual Shifting State (`0x06`)    |
+| Trainer     | Virtual Shifting State (`0x06`)    | Virtual Shifting Control (`0x05`), Ride State (`0x07`) |
 
 "Trainer app" means whichever application is driving the trainer. This can be
 the training software itself, or a bridge app that sits between a controller and
@@ -198,7 +200,9 @@ Total length: 11 bytes.
     table; the app should display the reported gear and not send ratios
   - Bit 3 (`0x08`) = *ERG override*: a target power is active and the gear
     ratio is ignored until it is cleared
-  - Bits 4–7 = Reserved, MUST be `0`
+  - Bit 4 (`0x10`) = *Uses app speed*: the trainer is currently using the
+    speed from Ride State messages as its inertia and gravity reference
+  - Bits 5–7 = Reserved, MUST be `0`
 - **Gear_Ratio** (2 bytes, uint16, little-endian): Ratio currently simulated,
   multiplied by 1000. `0` = Not simulating / unknown.
 - **Gear_Index** (1 byte): 1-based current gear in a flat gear table.
@@ -256,6 +260,65 @@ for apps that only display a single gear number.
 
 ---
 
+## Ride State (App to Trainer)
+
+**Message Type:** `0x07`
+
+Optional. Sent periodically by the app so the trainer can align its inertia and
+gravity simulation with the speed the rider sees on screen. The app's speed
+includes effects the trainer cannot know about, such as drafting, coasting on a
+descent, braking, or the app's own mass and drag model. Without it the trainer
+has to derive a speed from cadence and gear ratio alone, which can drift away
+from the on-screen speed in exactly the moments where feel matters most.
+
+**Data Format:**
+
+```
+[Message_Type] [Version] [Speed_L] [Speed_H] [Reserved]
+```
+
+Total length: 5 bytes.
+
+- **Message_Type** (1 byte): Always `0x07`
+- **Version** (1 byte): Format version, currently `0x01`
+- **Speed** (2 bytes, uint16, little-endian): Simulated bike speed in 0.01 km/h,
+  the same unit FTMS uses for Indoor Bike Data.
+  - `0` = Stationary
+  - Example: 32.50 km/h → `3250` = `[0xB2, 0x0C]`
+- **Reserved** (1 byte): MUST be `0`
+
+**Example Messages:**
+
+```
+// 32.50 km/h
+[0x07, 0x01, 0xB2, 0x0C, 0x00]
+
+// 0 km/h (rider stopped)
+[0x07, 0x01, 0x00, 0x00, 0x00]
+```
+
+**App Behaviour:**
+
+- Apps SHOULD send Ride State at 1–4 Hz while virtual shifting is on. Higher
+  rates add BLE traffic without improving the simulation.
+- Apps that do not model speed themselves MAY omit this message entirely.
+- Apps SHOULD stop sending Ride State when they send `Mode = 0x00` in the
+  Control message.
+
+**Trainer Behaviour:**
+
+- The speed is a *reference* for inertia and gravity simulation, not a target
+  the trainer should chase. Trainers MUST NOT adjust resistance to force the
+  flywheel towards this speed; doing so would oscillate whenever the stream lags.
+- Trainers MAY ignore Ride State entirely and derive speed from cadence and
+  gear ratio. Trainers that use it MUST set the *Uses app speed* flag in the
+  State message while doing so.
+- If no Ride State message arrives for 2 seconds, the trainer SHOULD fall back
+  to cadence-derived speed and clear the *Uses app speed* flag.
+- Trainers MUST NOT reply to a Ride State message.
+
+---
+
 ## Transport Mapping
 
 ### BLE
@@ -267,14 +330,15 @@ Two additional characteristics on the OpenBikeControl service
 |--------------------------|----------------------------------------|------------------------------|--------------|
 | Virtual Shifting Control | `d273f684-d548-419d-b9d1-fa0472345229` | Write, Write Without Response | `0x05`       |
 | Virtual Shifting State   | `d273f685-d548-419d-b9d1-fa0472345229` | Read, Notify                 | `0x06`       |
+| Ride State               | `d273f686-d548-419d-b9d1-fa0472345229` | Write Without Response       | `0x07`       |
 
 Apps detect support by discovering the State characteristic. See
 [BLE.md](BLE.md#4-virtual-shifting-control-characteristic-write) for details.
 
 ### mDNS / TCP
 
-Message types `0x05` and `0x06` are exchanged on the same TCP connection as all
-other messages. Both are fixed-length (11 bytes). See
+Message types `0x05`, `0x06` and `0x07` are exchanged on the same TCP connection as
+all other messages. All are fixed-length (11, 11 and 5 bytes). See
 [MDNS.md](MDNS.md#virtual-shifting-control-app-to-trainer) for details.
 
 ---
