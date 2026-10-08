@@ -110,6 +110,7 @@ button IDs the connected app supports.
 | `0x18`    | Steer Left     | Steer left in-game          |
 | `0x19`    | Steer Right    | Steer right in-game         |
 | `0x1A`    | Brake          | Apply brake (use analog value for strength) |
+| `0x1B`    | Steering Angle | Proportional steering (use analog value for angle) |
 
 **Brake Analog Values:**
 - `0x00` = Released / no braking
@@ -121,6 +122,58 @@ Braking is a single axis with a single button ID. 100% represents full applicati
 of one brake; devices with two brake levers MAY report a combined strength of up to
 200%. Apps that do not model braking beyond a single brake SHOULD clamp values
 above 100%.
+
+**Steering Angle Analog Values:**
+
+`0x1B` reports the calibrated handlebar angle relative to straight ahead, so apps
+can steer proportionally instead of only reacting to Steer Left / Steer Right.
+
+- `0x00` = No angle available (not calibrated, recalibrating, or sensor lost); apps SHOULD fall back to their own steering behavior
+- `0x01` = Not used for steering angle; receivers MUST treat it as a no-op
+- `0x02-0xFE` = Signed angle in 0.5° steps: (value − `0x80`) × 0.5°
+  - `0x80` = 0° (straight ahead)
+  - `0x81-0xFE` = Steering **right**, `0x81` = +0.5°, `0xFE` = +63°
+  - `0x02-0x7F` = Steering **left**, `0x7F` = −0.5°, `0x02` = −63°
+- `0xFF` = Reserved; receivers MUST treat it as a no-op
+
+Positive angles steer right, negative angles steer left. Devices MUST clamp angles
+outside ±63° to `0x02` / `0xFE`. Apps SHOULD map the angle to their own steering
+range and MAY apply their own dead zone and sensitivity.
+
+The angle is the device's **calibrated** angle, before any dead zone or button
+thresholding. Calibration (finding straight ahead) is the device's responsibility;
+uncalibrated sensor values MUST NOT be sent on `0x1B`.
+
+**Update behavior:**
+
+- Send a new value whenever the encoded value changes, but no more often than
+  30 times per second per device. When the angle settles, the last value MUST be sent
+  so the app does not stay at a stale intermediate angle.
+- When the handlebar returns to center, send `0x80`.
+- When the angle becomes unavailable (e.g. recalibration or sensor loss), send `0x00`.
+  On disconnect, apps MUST treat the angle as unavailable.
+
+**Combining with Steer Left / Steer Right:**
+
+Devices MAY send `0x1B` together with `0x18`/`0x19` in the same message (see
+[Multiple Actions Per Button](#multiple-actions-per-button)), so apps without
+proportional steering keep working. Apps that list `0x1B` in their App Information
+message signal that they steer from the angle; devices MAY then stop sending
+`0x18`/`0x19` for the same steering input. Apps that receive both SHOULD use `0x1B`
+and ignore `0x18`/`0x19` from that device while the angle is available.
+
+**Example:**
+
+```
+// Handlebar turned 10° right
+[0x01, 0x1B, 0x94]
+
+// 4.5° left
+[0x01, 0x1B, 0x77]
+
+// Back to center
+[0x01, 0x1B, 0x80]
+```
 
 #### Social/Emotes (0x20-0x2F)
 
