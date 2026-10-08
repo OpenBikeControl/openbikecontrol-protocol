@@ -207,6 +207,40 @@ The maximum size of this characteristic depends on MTU, but should aim to fit wi
 
 ---
 
+## Trainer Service (Optional)
+
+**Service UUID:** `d273f690-d548-419d-b9d1-fa0472345229`
+
+Smart trainers and smart bikes expose a second service for trainer control and data.
+It is separate from the controller service above, so the Button State characteristic
+stays unchanged for devices that are both a controller and a trainer. Controllers that
+are not trainers do not implement it.
+
+| Characteristic           | UUID                                   | Properties                    | Message type | Spec |
+|--------------------------|----------------------------------------|-------------------------------|--------------|------|
+| Virtual Shifting Control | `d273f691-d548-419d-b9d1-fa0472345229` | Write, Write Without Response | `0x05`       | [VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-control-app-to-trainer) |
+| Virtual Shifting State   | `d273f692-d548-419d-b9d1-fa0472345229` | Read, Notify                  | `0x06`       | [VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-state-trainer-to-app) |
+| Ride State               | `d273f693-d548-419d-b9d1-fa0472345229` | Write Without Response        | `0x07`       | [VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#ride-state-app-to-trainer) |
+| Trainer Control          | `d273f694-d548-419d-b9d1-fa0472345229` | Write, Write Without Response | `0x08`       | [TRAINER.md](TRAINER.md#trainer-control-app-to-trainer) |
+| Trainer Data             | `d273f695-d548-419d-b9d1-fa0472345229` | Read, Notify                  | `0x09`       | [TRAINER.md](TRAINER.md#trainer-data-trainer-to-app) |
+| Trainer Status           | `d273f696-d548-419d-b9d1-fa0472345229` | Read, Notify                  | `0x0A`       | [TRAINER.md](TRAINER.md#trainer-status-trainer-to-app) |
+
+Each message type maps to its own characteristic. The message type byte is still
+the first byte of every value, so the same bytes can be sent over TCP, where all
+messages share one stream.
+
+Trainer Status is mandatory; everything else is announced by its capability bits.
+The trainer never answers a write directly: it notifies the matching state
+characteristic whenever something changes. Only one client controls a trainer at a
+time, see [Control Ownership](TRAINER.md#control-ownership).
+
+**Advertisement:** Trainers advertise the Trainer Service UUID. Devices offering both
+services SHOULD advertise the controller service UUID in the advertising packet and
+the Trainer Service UUID in the scan response, since two 128-bit UUIDs do not fit in
+one packet. Apps MUST discover services after connecting.
+
+---
+
 ## Standard BLE Services
 
 OpenBikeControl devices MUST implement the following standard BLE services:
@@ -269,6 +303,7 @@ Recommended BLE connection parameters for optimal performance:
    - Discover Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`)
    - Discover Haptic Feedback characteristic (`d273f682-d548-419d-b9d1-fa0472345229`)
    - Subscribe to Button State notifications for real-time button updates
+   - Optional: discover the Trainer Service (`d273f690-d548-419d-b9d1-fa0472345229`) and subscribe to Trainer Status to detect smart trainers and their capabilities (see [TRAINER.md](TRAINER.md))
 
 3. **Button Handling:**
    - Map button IDs to app-specific actions (see [Button Mapping](PROTOCOL.md#button-mapping))
@@ -313,5 +348,7 @@ Recommended BLE connection parameters for optimal performance:
 
 - [Main Protocol Documentation](PROTOCOL.md)
 - [mDNS Protocol Specification](MDNS.md)
+- [Virtual Shifting Extension](VIRTUAL_SHIFTING.md)
+- [Trainer Profile](TRAINER.md)
 - [Button Mapping](PROTOCOL.md#button-mapping)
 - [Certification Program](CERTIFICATION.md)
