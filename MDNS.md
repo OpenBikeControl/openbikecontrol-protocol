@@ -28,6 +28,11 @@ The TXT record fields mirror BLE advertisement data:
 - `manufacturer=<name>` - Device manufacturer
 - `model=<model>` - Device model
 
+All TXT values are UTF-8 text. For example, `version` is the one-character string
+`"1"` (byte `0x31`), not the raw byte `0x01`. BikeControl versions before
+[bikecontrol#406](https://github.com/OpenBikeControl/bikecontrol/pull/406) advertised
+`version` as the raw byte `0x01`; apps SHOULD treat that value as version 1.
+
 **Example:**
 ```
 Service: OpenBikeControl Remote._openbikecontrol._tcp.local.
