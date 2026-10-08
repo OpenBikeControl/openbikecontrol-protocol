@@ -21,7 +21,7 @@ Sometimes it's easier to understand the protocol by looking at a concrete exampl
 
 The TXT record fields mirror BLE advertisement data:
 
-- `version=1` - Highest protocol version the device supports (`1` or `2`). Devices advertising `version=2` support [framed TCP messages](#message-framing-version-2) and MUST still accept version 1 apps
+- `version=2` - Protocol version. Version 2 devices prefix every TCP message with its length, see [Message Framing](#message-framing)
 - `id=<unique-id>` - Unique device identifier (MAC address or serial)
 - `name=<device-name>` - Human-readable device name
 - `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities. Controllers list `d273f680-d548-419d-b9d1-fa0472345229`; smart trainers list the Trainer Service `d273f690-d548-419d-b9d1-fa0472345229` (see [TRAINER.md](TRAINER.md)); smart bikes list both
@@ -33,7 +33,7 @@ The TXT record fields mirror BLE advertisement data:
 Service: OpenBikeControl Remote._openbikecontrol._tcp.local.
 Port: 8080
 TXT:
-  version=1
+  version=2
   id=aabbccddeeff
   name=OpenBikeControl Remote
   service-uuids=d273f680-d548-419d-b9d1-fa0472345229
@@ -58,10 +58,9 @@ Once discovered via mDNS/Bonjour, apps connect to the device using TCP sockets f
 
 All messages use the same binary format as the BLE protocol for consistency and efficiency.
 
-In version 1, messages are written to the TCP stream back to back without a length,
-so a receiver cannot reliably tell where one message ends and the next begins when
-TCP delivers several writes in one read. Version 2 adds a length prefix; see
-[Message Framing (Version 2)](#message-framing-version-2).
+On TCP, every message is prefixed with its length so receivers can split the byte
+stream into messages; see [Message Framing](#message-framing). The message formats
+below describe the bytes inside a frame.
 
 ### Button State Message (Device to App)
 
@@ -320,8 +319,8 @@ Fixed length of 13 bytes. Field definitions, examples and behaviour are specifie
 **Message Type:** `0x0A`
 
 Mandatory for smart trainers and smart bikes. Capabilities, limits, control ownership
-and active mode. Sent right after the connection is established (after version
-negotiation, if any) and whenever any field changes. Because the `Control` field is
+and active mode. Sent right after the connection is established and whenever any field
+changes. Because the `Control` field is
 per client, the trainer sends it to every connected client when ownership changes.
 
 **Data Format:**
@@ -335,16 +334,14 @@ Fixed length of 15 bytes. Field definitions, examples and behaviour are specifie
 
 ---
 
-## Message Framing (Version 2)
-
-> **Status: Draft.** This section is a proposal and may change before version 2 is final.
+## Message Framing
 
 ### Why
 
 TCP is a byte stream, not a message stream. Two messages written separately can
-arrive in a single read, and one message can be split across two reads. Version 1
-has no length field, so a receiver that treats each read as one message will
-misparse merged messages:
+arrive in a single read, and one message can be split across two reads. Without a
+length field a receiver that treats each read as one message will misparse merged
+messages:
 
 ```
 Written:  [0x01, 0x1B, 0x85]  [0x01, 0x1B, 0x86]
@@ -358,14 +355,14 @@ Steering Angle (`0x1B`).
 
 ### Frame Format
 
-In version 2, every TCP message in both directions is prefixed with its length:
+Every TCP message in both directions is prefixed with its length:
 
 ```
 [Length_Hi] [Length_Lo] [Message_Type] [Payload...]
 ```
 
 - **Length** (2 bytes, big-endian): number of bytes that follow, i.e. Message_Type + Payload. MUST be at least 1 and at most 512.
-- **Message_Type** and **Payload**: unchanged from version 1.
+- **Message_Type** and **Payload**: the message as defined in [Data Format](#data-format).
 
 Example: a button state message `[0x01, 0x1B, 0x94]` is sent as
 `[0x00, 0x03, 0x01, 0x1B, 0x94]`.
@@ -378,46 +375,13 @@ connection.
 Framing applies to TCP only. BLE is unchanged: each notification or write is already
 exactly one message.
 
-### Negotiation
+### Compatibility
 
-Framing is opt-in per connection, so version 1 apps keep working with version 2 devices.
-
-**Protocol Version Message (Message Type `0xF0`), App to Device and Device to App:**
-
-```
-[0x00, 0x02, 0xF0, Version]
-```
-
-Always sent framed. `Version` is the requested (app) or accepted (device) protocol
-version, currently `0x02`.
-
-1. A version 2 app connecting to a device that advertises `version=2` MUST send the
-   Protocol Version message `[0x00, 0x02, 0xF0, 0x02]` as the first bytes on the connection.
-2. A version 2 device MUST NOT send anything on a new connection until it has received
-   the first bytes from the app, or until 500 ms have passed without the app sending
-   anything (button changes in this window MAY be queued).
-3. If the first byte received is `0x00`, the device reads the Protocol Version message,
-   replies with `[0x00, 0x02, 0xF0, 0x02]`, and uses framing for the rest of the
-   connection in both directions.
-4. Otherwise (the app sent a version 1 message first, or nothing within 500 ms) the
-   device uses version 1 framing for the rest of the connection.
-5. The app MUST NOT send any further messages until it has received the device's
-   Protocol Version reply. If no reply arrives within 2 seconds, the app SHOULD close
-   the connection and reconnect using version 1.
-
-The first byte of a framed message is `0x00` for all valid lengths up to 255 and at
-most `0x02` above that. `0x00` is never a valid version 1 Message_Type, so the device
-can tell the two apart from the first byte alone. Version 1 devices ignore the
-unknown leading bytes.
-
-### Version 1 Mitigations
-
-Until both sides support version 2:
-
-- Devices SHOULD disable Nagle's algorithm (`TCP_NODELAY`) and write each message
-  with a single call, which makes merged reads less likely but does not prevent them.
-- Devices SHOULD NOT stream values faster than needed (see the update rate for
-  Steering Angle).
+Framing is mandatory in protocol version 2 and is **not backwards compatible** with
+version 1, which wrote messages to the stream without a length. There is no
+negotiation: a version 2 app and a version 2 device frame everything from the first
+byte. Apps that still need to talk to `version=1` devices MUST select unframed
+parsing based on the TXT record, and device firmware SHOULD be updated to version 2.
 
 ---
 
@@ -436,9 +400,8 @@ Until both sides support version 2:
    - Handle binary message parsing and routing
 
 3. **Message Handling:**
-   - Read messages byte by byte from the TCP stream
-   - For version 2 connections, read the 2-byte length first and buffer until the full message has arrived (see [Message Framing](#message-framing-version-2))
-   - First byte indicates the message type
+   - Read the 2-byte length first and buffer until the full message has arrived (see [Message Framing](#message-framing))
+   - First byte of the message indicates the message type
    - Parse remaining bytes according to message type format
    - Button state messages (0x01) have variable length depending on number of buttons
    - Status messages (0x02) are always 3 bytes
@@ -478,7 +441,7 @@ Until both sides support version 2:
 3. **TCP Server:**
    - Listen on configured port for incoming TCP connections
    - Support multiple simultaneous connections
-   - Send button state messages as binary data
+   - Send button state messages as binary data, each prefixed with its length
    - Handle haptic feedback and app info commands from apps
 
 4. **Message Handling:**
@@ -490,6 +453,7 @@ Until both sides support version 2:
    - Smart trainers: optionally use Ride State (type 0x07) as the speed reference for inertia and gravity simulation
    - Smart trainers: send Trainer Status (type 0x0A) on connect and on change, stream Trainer Data (type 0x09), and accept Trainer Control (type 0x08) from the owning client only (see [TRAINER.md](TRAINER.md#control-ownership))
    - Use the same binary format as BLE for consistency
+   - Prefix every message with its 2-byte length (see [Message Framing](#message-framing))
 
 5. **Power Management:**
    - Consider WiFi power consumption

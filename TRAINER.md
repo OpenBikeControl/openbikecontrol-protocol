@@ -321,8 +321,8 @@ Total length: 15 bytes.
 **Trainer Behaviour:**
 
 - Trainers MUST send Trainer Status once when a client subscribes (BLE) or
-  right after the connection is established (TCP, after version negotiation if
-  any), and again whenever any field changes.
+  right after the connection is established (TCP), and again whenever any
+  field changes.
 - When ownership changes, Trainer Status MUST be sent to every connected client,
   because the `Control` value differs per client.
 
@@ -368,9 +368,9 @@ after connecting rather than relying on the advertisement alone.
 
 The Trainer Service UUID is listed in the `service-uuids` TXT record field, which
 is how apps discover trainers on the network. All trainer messages share the TCP
-connection with the controller messages. Trainers SHOULD support
-[version 2 framing](MDNS.md#message-framing-version-2), since Trainer Data and
-Ride State are continuous streams and version 1 cannot delimit merged messages.
+connection with the controller messages, each prefixed with its length as
+described in [Message Framing](MDNS.md#message-framing). This matters here more
+than for controllers, since Trainer Data and Ride State are continuous streams.
 
 ---
 

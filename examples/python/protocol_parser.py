@@ -85,9 +85,8 @@ MSG_TYPE_RIDE_STATE = 0x07
 MSG_TYPE_TRAINER_CONTROL = 0x08  # Trainer Profile (draft), see TRAINER.md
 MSG_TYPE_TRAINER_DATA = 0x09
 MSG_TYPE_TRAINER_STATUS = 0x0A
-MSG_TYPE_PROTOCOL_VERSION = 0xF0  # Version 2 (draft), TCP only
 
-# Version 2 (draft) TCP framing
+# TCP framing
 MAX_FRAMED_MESSAGE_LENGTH = 512
 
 
@@ -454,7 +453,7 @@ def parse_app_info(data: bytes) -> dict:
 
 def frame_message(message: bytes) -> bytes:
     """
-    Prefix a message with its 2-byte big-endian length (version 2 TCP framing).
+    Prefix a message with its 2-byte big-endian length (TCP framing).
 
     Args:
         message: Message bytes starting with the message type
@@ -467,14 +466,9 @@ def frame_message(message: bytes) -> bytes:
     return len(message).to_bytes(2, "big") + bytes(message)
 
 
-def encode_protocol_version(version: int = 2) -> bytes:
-    """Encode the framed Protocol Version message (version 2 negotiation)."""
-    return frame_message(bytes([MSG_TYPE_PROTOCOL_VERSION, version]))
-
-
 class FrameReader:
     """
-    Reassembles version 2 framed messages from a TCP byte stream.
+    Reassembles framed messages from a TCP byte stream.
 
     Feed it every chunk read from the socket; it returns the complete
     messages (without length prefix) and keeps partial ones buffered.

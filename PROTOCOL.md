@@ -58,8 +58,8 @@ single control-ownership rule over both BLE and the network.
 - Service Type: `_openbikecontrol._tcp.local.`
 - TCP endpoint: `<device-ip>:<port>`
 - Binary data format (identical to BLE)
-- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state), `0x08` (trainer control), `0x09` (trainer data), `0x0A` (trainer status), `0xF0` (protocol version, version 2 only)
-- Version 2 (draft): length-prefixed TCP messages, negotiated per connection
+- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state), `0x08` (trainer control), `0x09` (trainer data), `0x0A` (trainer status)
+- Every TCP message is prefixed with its 2-byte length
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---
@@ -400,12 +400,12 @@ Certified devices receive:
 
 ## Version History
 
-- **Version 2** (Draft)
-  - Length-prefixed message framing for TCP, negotiated per connection with the Protocol Version message (`0xF0`)
+- **Version 2** (Current)
+  - Mandatory length-prefixed message framing for TCP, not backwards compatible with version 1
+  - BLE unchanged
   - Trainer Profile (draft): Trainer Service with Trainer Control (`0x08`), Trainer Data (`0x09`), Trainer Status (`0x0A`) and control ownership across OpenBikeControl and FTMS
-  - Message types `0xF0`–`0xFF` reserved for transport-level messages
 
-- **Version 1** (Current)
+- **Version 1**
   - Initial protocol specification
   - BLE and mDNS transport definitions
   - Standard button mappings
