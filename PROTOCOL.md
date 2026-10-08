@@ -51,7 +51,8 @@ Both transports use the identical binary message format (including the message t
 - Service Type: `_openbikecontrol._tcp.local.`
 - TCP endpoint: `<device-ip>:<port>`
 - Binary data format (identical to BLE)
-- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info)
+- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info), `0x05` (protocol version, version 2 only)
+- Version 2 (draft): length-prefixed TCP messages, negotiated per connection
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---
@@ -317,6 +318,10 @@ Certified devices receive:
 ---
 
 ## Version History
+
+- **Version 2** (Draft)
+  - Length-prefixed message framing for TCP, negotiated per connection with the Protocol Version message (`0x05`)
+  - BLE unchanged
 
 - **Version 1** (Current)
   - Initial protocol specification

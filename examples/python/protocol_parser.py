@@ -78,6 +78,10 @@ MSG_TYPE_BUTTON_STATE = 0x01
 MSG_TYPE_DEVICE_STATUS = 0x02
 MSG_TYPE_HAPTIC_FEEDBACK = 0x03
 MSG_TYPE_APP_INFO = 0x04
+MSG_TYPE_PROTOCOL_VERSION = 0x05  # Version 2 (draft), TCP only
+
+# Version 2 (draft) TCP framing
+MAX_FRAMED_MESSAGE_LENGTH = 512
 
 
 def parse_button_state(data: bytes) -> list:
@@ -398,3 +402,48 @@ def parse_app_info(data: bytes) -> dict:
         "app_version": app_version,
         "supported_buttons": button_ids
     }
+
+
+def frame_message(message: bytes) -> bytes:
+    """
+    Prefix a message with its 2-byte big-endian length (version 2 TCP framing).
+
+    Args:
+        message: Message bytes starting with the message type
+
+    Returns:
+        Framed bytes: [Length_Hi, Length_Lo, Message_Type, Payload...]
+    """
+    if not 1 <= len(message) <= MAX_FRAMED_MESSAGE_LENGTH:
+        raise ValueError(f"Message length {len(message)} out of range")
+    return len(message).to_bytes(2, "big") + bytes(message)
+
+
+def encode_protocol_version(version: int = 2) -> bytes:
+    """Encode the framed Protocol Version message (version 2 negotiation)."""
+    return frame_message(bytes([MSG_TYPE_PROTOCOL_VERSION, version]))
+
+
+class FrameReader:
+    """
+    Reassembles version 2 framed messages from a TCP byte stream.
+
+    Feed it every chunk read from the socket; it returns the complete
+    messages (without length prefix) and keeps partial ones buffered.
+    """
+
+    def __init__(self):
+        self._buffer = bytearray()
+
+    def feed(self, data: bytes) -> list:
+        self._buffer.extend(data)
+        messages = []
+        while len(self._buffer) >= 2:
+            length = int.from_bytes(self._buffer[:2], "big")
+            if not 1 <= length <= MAX_FRAMED_MESSAGE_LENGTH:
+                raise ValueError(f"Invalid frame length {length}, close the connection")
+            if len(self._buffer) < 2 + length:
+                break
+            messages.append(bytes(self._buffer[2:2 + length]))
+            del self._buffer[:2 + length]
+        return messages
