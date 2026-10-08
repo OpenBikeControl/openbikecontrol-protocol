@@ -21,7 +21,7 @@ Sometimes it's easier to understand the protocol by looking at a concrete exampl
 
 The TXT record fields mirror BLE advertisement data:
 
-- `version=1` - Protocol version
+- `version=2` - Protocol version. Version 2 devices prefix every TCP message with its length, see [Message Framing](#message-framing)
 - `id=<unique-id>` - Unique device identifier (MAC address or serial)
 - `name=<device-name>` - Human-readable device name
 - `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities
@@ -33,7 +33,7 @@ The TXT record fields mirror BLE advertisement data:
 Service: OpenBikeControl Remote._openbikecontrol._tcp.local.
 Port: 8080
 TXT:
-  version=1
+  version=2
   id=aabbccddeeff
   name=OpenBikeControl Remote
   service-uuids=d273f680-d548-419d-b9d1-fa0472345229
@@ -57,6 +57,10 @@ Once discovered via mDNS/Bonjour, apps connect to the device using TCP sockets f
 ## Data Format
 
 All messages use the same binary format as the BLE protocol for consistency and efficiency.
+
+On TCP, every message is prefixed with its length so receivers can split the byte
+stream into messages; see [Message Framing](#message-framing). The message formats
+below describe the bytes inside a frame.
 
 ### Button State Message (Device to App)
 
@@ -219,6 +223,57 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 
 ---
 
+## Message Framing
+
+### Why
+
+TCP is a byte stream, not a message stream. Two messages written separately can
+arrive in a single read, and one message can be split across two reads. Without a
+length field a receiver that treats each read as one message will misparse merged
+messages:
+
+```
+Written:  [0x01, 0x1B, 0x85]  [0x01, 0x1B, 0x86]
+Read as:  [0x01, 0x1B, 0x85, 0x01, 0x1B, 0x86]
+Parsed:   0x1B = 0x85, 0x01 (Shift Up) = 0x1B, 0x86 = <dangling>
+```
+
+The middle pair is read as a Shift Up press. This rarely happens with occasional
+button presses, but becomes common with continuously streamed values such as the
+Steering Angle (`0x1B`).
+
+### Frame Format
+
+Every TCP message in both directions is prefixed with its length:
+
+```
+[Length_Hi] [Length_Lo] [Message_Type] [Payload...]
+```
+
+- **Length** (2 bytes, big-endian): number of bytes that follow, i.e. Message_Type + Payload. MUST be at least 1 and at most 512.
+- **Message_Type** and **Payload**: the message as defined in [Data Format](#data-format).
+
+Example: a button state message `[0x01, 0x1B, 0x94]` is sent as
+`[0x00, 0x03, 0x01, 0x1B, 0x94]`.
+
+Receivers MUST buffer incoming bytes and only process a message once all `Length`
+bytes have arrived. Receivers MUST skip (but still consume) messages with an unknown
+Message_Type. A receiver that reads a Length of 0 or above 512 MUST close the
+connection.
+
+Framing applies to TCP only. BLE is unchanged: each notification or write is already
+exactly one message.
+
+### Compatibility
+
+Framing is mandatory in protocol version 2 and is **not backwards compatible** with
+version 1, which wrote messages to the stream without a length. There is no
+negotiation: a version 2 app and a version 2 device frame everything from the first
+byte. Apps that still need to talk to `version=1` devices MUST select unframed
+parsing based on the TXT record, and device firmware SHOULD be updated to version 2.
+
+---
+
 ## Implementation Guidelines
 
 ### For App Developers
@@ -234,8 +289,8 @@ Sent by the app to inform the device about the app's identity and capabilities. 
    - Handle binary message parsing and routing
 
 3. **Message Handling:**
-   - Read messages byte by byte from the TCP stream
-   - First byte indicates the message type
+   - Read the 2-byte length first and buffer until the full message has arrived (see [Message Framing](#message-framing))
+   - First byte of the message indicates the message type
    - Parse remaining bytes according to message type format
    - Button state messages (0x01) have variable length depending on number of buttons
    - Status messages (0x02) are always 3 bytes
@@ -272,7 +327,7 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 3. **TCP Server:**
    - Listen on configured port for incoming TCP connections
    - Support multiple simultaneous connections
-   - Send button state messages as binary data
+   - Send button state messages as binary data, each prefixed with its length
    - Handle haptic feedback and app info commands from apps
 
 4. **Message Handling:**
@@ -281,6 +336,7 @@ Sent by the app to inform the device about the app's identity and capabilities. 
    - Process haptic feedback commands (type 0x03) immediately
    - Process app info messages (type 0x04) for device customization
    - Use the same binary format as BLE for consistency
+   - Prefix every message with its 2-byte length (see [Message Framing](#message-framing))
 
 5. **Power Management:**
    - Consider WiFi power consumption
