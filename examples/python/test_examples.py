@@ -184,7 +184,7 @@ def test_encode_button_state():
 
 
 def test_tcp_framing():
-    """Test version 2 TCP framing (draft)."""
+    """Test version 2 TCP framing."""
     print("Testing TCP framing...")
 
     assert frame_message(bytes([0x01, 0x1B, 0x94])) == bytes([0x00, 0x03, 0x01, 0x1B, 0x94])

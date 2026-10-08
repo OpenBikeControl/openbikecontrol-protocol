@@ -226,8 +226,6 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 
 ## Message Framing (Version 2)
 
-> **Status: Draft.** This section is a proposal and may change before version 2 is final.
-
 ### Why
 
 TCP is a byte stream, not a message stream. Two messages written separately can
