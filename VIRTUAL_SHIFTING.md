@@ -24,20 +24,22 @@ realistic when it happens inside the trainer's control loop, which is why the
 gear ratio is sent to the trainer rather than being converted into a resistance
 value by the app.
 
-### Relationship to FTMS
+### Relationship to FTMS and Trainer Control
 
-This extension deliberately does **not** duplicate anything that the Bluetooth
-SIG Fitness Machine Service (FTMS) already provides. A trainer implementing
-virtual shifting is expected to keep using FTMS for:
+The virtual shifting messages carry only what is specific to virtual shifting.
+The other simulation inputs a trainer needs come from one of two sources, and
+the trainer uses whichever the controlling app is writing:
 
-- Grade, wind speed, rolling resistance and wind resistance coefficient
-  (*Set Indoor Bike Simulation Parameters*)
-- Wheel circumference (*Set Wheel Circumference*)
-- Target power / ERG mode (*Set Target Power*)
-- Power, cadence and speed reporting (*Indoor Bike Data*)
-- Spin-down / calibration
+- Over BLE, from the Bluetooth SIG Fitness Machine Service (FTMS): *Set Indoor
+  Bike Simulation Parameters* for grade, wind, rolling resistance and wind
+  resistance coefficient, *Set Wheel Circumference*, *Set Target Power* for ERG
+  mode, *Indoor Bike Data* for power, cadence and speed, and spin-down.
+- Over BLE or the network, from the [Trainer Profile](TRAINER.md): Trainer
+  Control (`0x08`) for the same simulation and target values, Trainer Data
+  (`0x09`) for measurements, and Trainer Status (`0x0A`) for capabilities and
+  control ownership.
 
-What FTMS lacks, and what this extension adds, is:
+What neither of those carries, and what this extension adds, is:
 
 - The **simulated gear ratio** the trainer should apply
 - **Rider mass** and **bike mass**, needed for a realistic acceleration feel
@@ -45,6 +47,10 @@ What FTMS lacks, and what this extension adds, is:
   trainers that model a multi-chainring drivetrain themselves
 - The app's **simulated speed**, so the trainer can align its inertia and
   gravity simulation with what the rider sees on screen
+
+A trainer that implements only the virtual shifting messages plus Trainer Status
+relies on FTMS for everything else and therefore only supports virtual shifting
+over BLE.
 
 ---
 
@@ -78,7 +84,7 @@ State message:
    shifters (typical for smart bikes). It applies gear changes locally and reports
    the current gear and ratio to the app for display. The app does not send gear
    ratios in this mode; it still sends grade and other simulation parameters via
-   FTMS.
+   FTMS or Trainer Control.
 
 Apps MUST support model 1. Trainers MAY implement either or both.
 
@@ -119,8 +125,9 @@ Total length: 11 bytes.
 - **Message_Type** (1 byte): Always `0x05`
 - **Version** (1 byte): Format version, currently `0x01`
 - **Mode** (1 byte):
-  - `0x00` = Virtual shifting off. The trainer behaves as a plain FTMS trainer
-    and ignores the remaining fields.
+  - `0x00` = Virtual shifting off. The trainer simulates its physical gearing
+    as a plain FTMS or Trainer Control trainer would and ignores the remaining
+    fields.
   - `0x01` = Virtual shifting on, app-owned gearing. The trainer simulates
     `Gear_Ratio`.
   - `0x02-0xFF` = Reserved; trainers MUST treat these as `0x00`
@@ -163,9 +170,9 @@ Total length: 11 bytes.
 - Apps MAY resend the current state periodically (for example every 10 s) as a
   safeguard against a missed message. Trainers MUST treat an unchanged message
   as a no-op.
-- While the app has an FTMS target power active (ERG mode), it SHOULD send
-  `Mode = 0x00` or stop sending Control messages; the trainer ignores the gear
-  ratio in ERG mode anyway (see below).
+- While the app has a target power active (ERG mode, via FTMS or Trainer
+  Control), it SHOULD send `Mode = 0x00` or stop sending Control messages; the
+  trainer ignores the gear ratio in ERG mode anyway (see below).
 
 **Trainer Behaviour:**
 
@@ -175,8 +182,9 @@ Total length: 11 bytes.
 - If a requested ratio is outside the range the trainer can simulate, the
   trainer MUST clamp it to the nearest supported ratio and report the applied
   ratio with the *Clamped* flag in the State message.
-- While an FTMS target power is active, the trainer SHOULD ignore the gear
-  ratio and set the *ERG override* flag in the State message.
+- While a target power is active (via FTMS or Trainer Control), the trainer
+  SHOULD ignore the gear ratio and set the *ERG override* flag in the State
+  message.
 - A trainer using trainer-owned gearing MAY ignore `Gear_Ratio`, `Gear_Index`
   and `Gear_Count`, but SHOULD still honour `Mode` and the mass fields.
 - Trainers MUST NOT reply to a Control message directly. All feedback goes

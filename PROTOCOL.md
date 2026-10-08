@@ -346,7 +346,7 @@ This means: Shift Up pressed (0x01, 0x01), Increase Difficulty pressed (0x30, 0x
 5. **Virtual Shifting (optional):**
    - Detect smart trainers through the Trainer Service and the capability bits in Trainer Status (`0x0A`)
    - Send the simulated gear ratio on every shift via the Virtual Shifting Control message
-   - Keep using FTMS for grade, wind, rolling resistance, wheel circumference and ERG mode
+   - Send grade, wind, rolling resistance, wheel circumference and target power via FTMS (BLE) or Trainer Control (`0x08`, BLE or network)
    - Optionally stream the simulated speed via Ride State so the trainer's inertia matches the on-screen speed
    - See [VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md)
 
