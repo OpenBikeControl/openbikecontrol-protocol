@@ -39,7 +39,9 @@ Both transports use the identical binary message format (including the message t
 
 The core protocol covers input devices (controllers) talking to apps. The optional
 [Virtual Shifting Extension](VIRTUAL_SHIFTING.md) adds the app-to-trainer direction so
-that smart trainers can simulate the selected gear.
+that smart trainers can simulate the selected gear, and the draft
+[Trainer Profile](TRAINER.md) completes it with trainer control, trainer data and a
+single control-ownership rule over both BLE and the network.
 
 ### Quick Reference
 
@@ -48,17 +50,15 @@ that smart trainers can simulate the selected gear.
 - Button State Characteristic (Read/Notify): `d273f681-d548-419d-b9d1-fa0472345229`
 - Haptic Feedback Characteristic (Write): `d273f682-d548-419d-b9d1-fa0472345229`
 - App Information Characteristic (Write): `d273f683-d548-419d-b9d1-fa0472345229`
-- Virtual Shifting Control Characteristic (Write, trainers only): `d273f684-d548-419d-b9d1-fa0472345229`
-- Virtual Shifting State Characteristic (Read/Notify, trainers only): `d273f685-d548-419d-b9d1-fa0472345229`
-- Ride State Characteristic (Write Without Response, trainers only): `d273f686-d548-419d-b9d1-fa0472345229`
-- Message types: `0x01` (button state), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state)
+- Trainer Service UUID (smart trainers and smart bikes): `d273f690-d548-419d-b9d1-fa0472345229`, characteristics `d273f691`–`d273f696` (see [TRAINER.md](TRAINER.md))
+- Message types: `0x01` (button state), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state), `0x08` (trainer control), `0x09` (trainer data), `0x0A` (trainer status)
 - See [BLE.md](BLE.md) for complete specification
 
 **mDNS Protocol:**
 - Service Type: `_openbikecontrol._tcp.local.`
 - TCP endpoint: `<device-ip>:<port>`
 - Binary data format (identical to BLE)
-- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state), `0xF0` (protocol version, version 2 only)
+- Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info), `0x05` (virtual shifting control), `0x06` (virtual shifting state), `0x07` (ride state), `0x08` (trainer control), `0x09` (trainer data), `0x0A` (trainer status), `0xF0` (protocol version, version 2 only)
 - Version 2 (draft): length-prefixed TCP messages, negotiated per connection
 - See [MDNS.md](MDNS.md) for complete specification
 
@@ -344,7 +344,7 @@ This means: Shift Up pressed (0x01, 0x01), Increase Difficulty pressed (0x30, 0x
    - Allow users to assign devices to specific action categories
 
 5. **Virtual Shifting (optional):**
-   - Detect smart trainers that expose the Virtual Shifting State characteristic or send a `0x06` message on connect
+   - Detect smart trainers through the Trainer Service and the capability bits in Trainer Status (`0x0A`)
    - Send the simulated gear ratio on every shift via the Virtual Shifting Control message
    - Keep using FTMS for grade, wind, rolling resistance, wheel circumference and ERG mode
    - Optionally stream the simulated speed via Ride State so the trainer's inertia matches the on-screen speed
@@ -377,11 +377,12 @@ This means: Shift Up pressed (0x01, 0x01), Increase Difficulty pressed (0x30, 0x
 
 ### For Smart Trainer Manufacturers
 
-- Implement the OpenBikeControl service alongside FTMS and add the two Virtual Shifting characteristics
+- Implement the Trainer Service alongside FTMS; Trainer Status is mandatory, everything else is announced by capability bits
+- Enforce the single control-ownership rule across OpenBikeControl and FTMS clients
 - Simulate the received gear ratio inside the trainer's control loop, using cadence to derive the simulated bike speed
 - Report the gear in use through the Virtual Shifting State message, never by answering a write directly
 - Smart bikes with built-in shifters can additionally act as a controller by sending Button State messages
-- See [VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md)
+- See [VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md) and [TRAINER.md](TRAINER.md)
 
 ---
 
@@ -401,7 +402,8 @@ Certified devices receive:
 
 - **Version 2** (Draft)
   - Length-prefixed message framing for TCP, negotiated per connection with the Protocol Version message (`0xF0`)
-  - BLE unchanged
+  - Trainer Profile (draft): Trainer Service with Trainer Control (`0x08`), Trainer Data (`0x09`), Trainer Status (`0x0A`) and control ownership across OpenBikeControl and FTMS
+  - Message types `0xF0`–`0xFF` reserved for transport-level messages
 
 - **Version 1** (Current)
   - Initial protocol specification

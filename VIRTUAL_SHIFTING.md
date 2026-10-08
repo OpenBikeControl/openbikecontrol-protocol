@@ -84,6 +84,16 @@ Apps MUST support model 1. Trainers MAY implement either or both.
 
 ---
 
+## Control ownership
+
+Only one client may control a trainer at a time. Virtual Shifting Control and Ride
+State are subject to the ownership rule in
+[TRAINER.md](TRAINER.md#control-ownership): the first client to enable `Mode`
+becomes the owner, writes from other clients are ignored, and Trainer Status tells
+each client whether it is the owner.
+
+---
+
 ## Byte order
 
 All multi-byte fields in this extension are **little-endian**, matching FTMS, so
@@ -242,8 +252,7 @@ for apps that only display a single gear number.
 **Trainer Behaviour:**
 
 - Trainers MUST send a State message once after the connection is established
-  (BLE: when the app subscribes; TCP: right after the socket is accepted). This
-  is how apps discover that the trainer supports virtual shifting.
+  (BLE: when the app subscribes; TCP: right after the socket is accepted).
 - Trainers MUST send a State message whenever any field changes.
 - Trainers MAY additionally send the State message periodically (at most once
   per second) as a keep-alive for apps.
@@ -323,22 +332,25 @@ Total length: 5 bytes.
 
 ### BLE
 
-Two additional characteristics on the OpenBikeControl service
-`d273f680-d548-419d-b9d1-fa0472345229`:
+The three messages are characteristics of the **Trainer Service**
+`d273f690-d548-419d-b9d1-fa0472345229`, defined in [TRAINER.md](TRAINER.md#ble-trainer-service):
 
-| Characteristic           | UUID                                   | Properties                   | Message type |
-|--------------------------|----------------------------------------|------------------------------|--------------|
-| Virtual Shifting Control | `d273f684-d548-419d-b9d1-fa0472345229` | Write, Write Without Response | `0x05`       |
-| Virtual Shifting State   | `d273f685-d548-419d-b9d1-fa0472345229` | Read, Notify                 | `0x06`       |
-| Ride State               | `d273f686-d548-419d-b9d1-fa0472345229` | Write Without Response       | `0x07`       |
+| Characteristic           | UUID                                   | Properties                    | Message type |
+|--------------------------|----------------------------------------|-------------------------------|--------------|
+| Virtual Shifting Control | `d273f691-d548-419d-b9d1-fa0472345229` | Write, Write Without Response | `0x05`       |
+| Virtual Shifting State   | `d273f692-d548-419d-b9d1-fa0472345229` | Read, Notify                  | `0x06`       |
+| Ride State               | `d273f693-d548-419d-b9d1-fa0472345229` | Write Without Response        | `0x07`       |
 
-Apps detect support by discovering the State characteristic. See
-[BLE.md](BLE.md#4-virtual-shifting-control-characteristic-write) for details.
+A trainer that implements only this extension exposes these characteristics plus
+the mandatory Trainer Status characteristic (`0x0A`), which carries the
+capability bits apps use to detect virtual shifting support.
 
 ### mDNS / TCP
 
 Message types `0x05`, `0x06` and `0x07` are exchanged on the same TCP connection as
-all other messages. All are fixed-length (11, 11 and 5 bytes). See
+all other messages. All are fixed-length (11, 11 and 5 bytes). Apps discover support
+through the Trainer Service UUID in the `service-uuids` TXT record and the
+capability bits in Trainer Status. See
 [MDNS.md](MDNS.md#virtual-shifting-control-app-to-trainer) for details.
 
 ---
@@ -361,6 +373,7 @@ flag in its State messages so the app does not also apply its own gear table.
 ## See Also
 
 - [Main Protocol Documentation](PROTOCOL.md)
+- [Trainer Profile](TRAINER.md)
 - [BLE Protocol Specification](BLE.md)
 - [mDNS Protocol Specification](MDNS.md)
 - [Button Mapping](PROTOCOL.md#button-mapping)

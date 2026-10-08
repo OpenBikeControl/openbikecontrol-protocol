@@ -24,7 +24,7 @@ The TXT record fields mirror BLE advertisement data:
 - `version=1` - Highest protocol version the device supports (`1` or `2`). Devices advertising `version=2` support [framed TCP messages](#message-framing-version-2) and MUST still accept version 1 apps
 - `id=<unique-id>` - Unique device identifier (MAC address or serial)
 - `name=<device-name>` - Human-readable device name
-- `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities
+- `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities. Controllers list `d273f680-d548-419d-b9d1-fa0472345229`; smart trainers list the Trainer Service `d273f690-d548-419d-b9d1-fa0472345229` (see [TRAINER.md](TRAINER.md)); smart bikes list both
 - `manufacturer=<name>` - Device manufacturer
 - `model=<model>` - Device model
 
@@ -279,6 +279,62 @@ Fixed length of 5 bytes. Field definitions, examples and behaviour are specified
 
 ---
 
+### Trainer Control (App to Trainer)
+
+**Message Type:** `0x08`
+
+Optional, for smart trainers and smart bikes. Sets mode (idle, simulation, target
+power, target resistance) and the simulation or target values.
+
+**Data Format:**
+
+```
+[0x08] [Version] [Mode] [Target_Power_L] [Target_Power_H] [Target_Resistance_L] [Target_Resistance_H] [Grade_L] [Grade_H] [Wind_L] [Wind_H] [CRR_L] [CRR_H] [CW_L] [CW_H] [Wheel_Circ_L] [Wheel_Circ_H]
+```
+
+Fixed length of 17 bytes. Field definitions, examples and behaviour are specified in
+[TRAINER.md](TRAINER.md#trainer-control-app-to-trainer).
+
+---
+
+### Trainer Data (Trainer to App)
+
+**Message Type:** `0x09`
+
+Optional, for smart trainers and smart bikes. Power, cadence, speed, applied resistance
+and grade, sent at 1–4 Hz to every connected client.
+
+**Data Format:**
+
+```
+[0x09] [Version] [Flags] [Power_L] [Power_H] [Cadence_L] [Cadence_H] [Speed_L] [Speed_H] [Resistance_L] [Resistance_H] [Grade_L] [Grade_H]
+```
+
+Fixed length of 13 bytes. Field definitions, examples and behaviour are specified in
+[TRAINER.md](TRAINER.md#trainer-data-trainer-to-app).
+
+---
+
+### Trainer Status (Trainer to App)
+
+**Message Type:** `0x0A`
+
+Mandatory for smart trainers and smart bikes. Capabilities, limits, control ownership
+and active mode. Sent right after the connection is established (after version
+negotiation, if any) and whenever any field changes. Because the `Control` field is
+per client, the trainer sends it to every connected client when ownership changes.
+
+**Data Format:**
+
+```
+[0x0A] [Version] [Control] [Mode] [Capabilities_L] [Capabilities_H] [Max_Power_L] [Max_Power_H] [Max_Resistance_L] [Max_Resistance_H] [Max_Grade_L] [Max_Grade_H] [Min_Grade_L] [Min_Grade_H] [Calibration]
+```
+
+Fixed length of 15 bytes. Field definitions, examples and behaviour are specified in
+[TRAINER.md](TRAINER.md#trainer-status-trainer-to-app).
+
+---
+
 ## Message Framing (Version 2)
 
 > **Status: Draft.** This section is a proposal and may change before version 2 is final.
@@ -390,6 +446,7 @@ Until both sides support version 2:
    - App info messages (0x04) have variable length
    - Virtual shifting messages (0x05, 0x06) are always 11 bytes
    - Ride state messages (0x07) are always 5 bytes
+   - Trainer control (0x08), data (0x09) and status (0x0A) are 17, 13 and 15 bytes
 
 4. **Button Handling:**
    - Listen for button state messages (type 0x01)
@@ -431,6 +488,7 @@ Until both sides support version 2:
    - Process app info messages (type 0x04) for device customization
    - Smart trainers: process Virtual Shifting Control (type 0x05) and send Virtual Shifting State (type 0x06) on connect and on change
    - Smart trainers: optionally use Ride State (type 0x07) as the speed reference for inertia and gravity simulation
+   - Smart trainers: send Trainer Status (type 0x0A) on connect and on change, stream Trainer Data (type 0x09), and accept Trainer Control (type 0x08) from the owning client only (see [TRAINER.md](TRAINER.md#control-ownership))
    - Use the same binary format as BLE for consistency
 
 5. **Power Management:**
@@ -459,5 +517,6 @@ Until both sides support version 2:
 - [Main Protocol Documentation](PROTOCOL.md)
 - [BLE Protocol Specification](BLE.md)
 - [Virtual Shifting Extension](VIRTUAL_SHIFTING.md)
+- [Trainer Profile](TRAINER.md)
 - [Button Mapping](PROTOCOL.md#button-mapping)
 - [Certification Program](CERTIFICATION.md)
