@@ -205,6 +205,8 @@ Both examples support the full OpenBikeControl button mapping:
 - 0x17: Home
 - 0x18: Steer Left
 - 0x19: Steer Right
+- 0x1A: Brake (analog value = strength)
+- 0x1B: Steering Angle (analog value = signed angle, 0x80 = center)
 
 ### Social/Emotes (0x20-0x2F)
 - 0x20: Emote (use analog value 0x02-0x1F for app-specific emotes)

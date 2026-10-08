@@ -27,6 +27,7 @@ BUTTON_NAMES = {
     0x18: "Steer Left",
     0x19: "Steer Right",
     0x1A: "Brake",
+    0x1B: "Steering Angle",
     # Social/Emotes (0x20-0x2F)
     0x20: "Emote",
     0x21: "Push to Talk",
@@ -135,6 +136,35 @@ def encode_button_state(buttons: list) -> bytes:
     return bytes(data)
 
 
+def encode_steering_angle(angle_deg: float) -> int:
+    """
+    Encode a calibrated steering angle for button 0x1B.
+
+    Args:
+        angle_deg: Angle in degrees, positive = right, negative = left
+
+    Returns:
+        State byte (0x02-0xFE), clamped to +/-63 degrees
+    """
+    value = 0x80 + round(angle_deg * 2)
+    return max(0x02, min(0xFE, value))
+
+
+def decode_steering_angle(state: int):
+    """
+    Decode a 0x1B state byte to degrees.
+
+    Args:
+        state: State byte
+
+    Returns:
+        Angle in degrees (positive = right), or None if unavailable/no-op
+    """
+    if state < 0x02 or state > 0xFE:
+        return None
+    return (state - 0x80) * 0.5
+
+
 def format_button_state(button_id: int, state: int) -> str:
     """
     Format button state for display.
@@ -163,6 +193,18 @@ def format_button_state(button_id: int, state: int) -> str:
         if state == 1:
             return f"{button_name}: FULL (100%)"
         return f"{button_name}: {min(state - 1, 200)}%"
+
+    # Special handling for Steering Angle (0x1B): signed 0.5 degree steps centered on 0x80
+    if button_id == 0x1B:
+        if state == 0:
+            return f"{button_name}: UNAVAILABLE"
+        if state == 1 or state == 0xFF:
+            return f"{button_name}: NO-OP (reserved 0x{state:02X})"
+        angle = decode_steering_angle(state)
+        if angle == 0:
+            return f"{button_name}: CENTER (0.0°)"
+        direction = "RIGHT" if angle > 0 else "LEFT"
+        return f"{button_name}: {direction} {abs(angle):.1f}°"
 
     # Special handling for Cruise Control button (0x3C): value x 5 watts, not a percentage
     if button_id == 0x3C:

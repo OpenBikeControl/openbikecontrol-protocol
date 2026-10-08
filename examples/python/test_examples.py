@@ -26,6 +26,8 @@ from protocol_parser import (
     frame_message,
     encode_protocol_version,
     FrameReader,
+    encode_steering_angle,
+    decode_steering_angle,
     BUTTON_NAMES,
     MSG_TYPE_BUTTON_STATE,
     MSG_TYPE_DEVICE_STATUS,
@@ -108,6 +110,22 @@ def test_format_button_state():
 
     result = format_button_state(0x1A, 0xFF)
     assert "Brake" in result and "200%" in result, f"Unexpected format: {result}"
+
+    # Steering angle is signed 0.5 degree steps centered on 0x80, positive = right
+    result = format_button_state(0x1B, 0x94)
+    assert "Steering Angle" in result and "RIGHT 10.0°" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x1B, 0x77)
+    assert "LEFT 4.5°" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x1B, 0x80)
+    assert "CENTER" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x1B, 0x00)
+    assert "UNAVAILABLE" in result, f"Unexpected format: {result}"
+
+    result = format_button_state(0x1B, 0x01)
+    assert "NO-OP" in result, f"Unexpected format: {result}"
 
     # Cruise control target power is value x 5 watts
     result = format_button_state(0x3C, 0x64)
@@ -192,6 +210,29 @@ def test_tcp_framing():
             pass
 
     print("  ✓ All TCP framing tests passed")
+
+
+def test_steering_angle():
+    """Test steering angle encoding and decoding."""
+    print("Testing steering angle encoding...")
+
+    assert encode_steering_angle(0) == 0x80
+    assert encode_steering_angle(10) == 0x94
+    assert encode_steering_angle(-4.5) == 0x77
+    assert encode_steering_angle(63) == 0xFE
+    assert encode_steering_angle(90) == 0xFE, "Angles beyond +63 must clamp"
+    assert encode_steering_angle(-90) == 0x02, "Angles beyond -63 must clamp"
+
+    assert decode_steering_angle(0x94) == 10.0
+    assert decode_steering_angle(0x02) == -63.0
+    assert decode_steering_angle(0x00) is None
+    assert decode_steering_angle(0x01) is None
+    assert decode_steering_angle(0xFF) is None
+
+    for angle in (-63, -12.5, -0.5, 0, 0.5, 12.5, 63):
+        assert decode_steering_angle(encode_steering_angle(angle)) == angle
+
+    print("  ✓ All steering angle tests passed")
 
 
 def test_device_status():
@@ -450,6 +491,7 @@ def main():
         test_mdns_format_consistency()
         test_encode_button_state()
         test_tcp_framing()
+        test_steering_angle()
         test_device_status()
         test_haptic_feedback()
         test_app_info_encoding()
