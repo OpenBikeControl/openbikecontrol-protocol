@@ -20,6 +20,8 @@ OpenBikeControl provides a unified, open protocol that:
 
 Continue along at [PROTOCOL.md](PROTOCOL.md).
 
+Smart trainer manufacturers: the optional [Virtual Shifting Extension](VIRTUAL_SHIFTING.md) describes how a trainer receives the simulated gear ratio from an app and reports the gear in use.
+
 ## Hardware
 OpenBikeControl is now built into shipping hardware.
 
