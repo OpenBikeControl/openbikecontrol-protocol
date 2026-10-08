@@ -24,7 +24,6 @@ from protocol_parser import (
     parse_app_info,
     encode_app_info,
     frame_message,
-    encode_protocol_version,
     FrameReader,
     encode_steering_angle,
     decode_steering_angle,
@@ -184,11 +183,10 @@ def test_encode_button_state():
 
 
 def test_tcp_framing():
-    """Test version 2 TCP framing."""
+    """Test TCP framing."""
     print("Testing TCP framing...")
 
     assert frame_message(bytes([0x01, 0x1B, 0x94])) == bytes([0x00, 0x03, 0x01, 0x1B, 0x94])
-    assert encode_protocol_version() == bytes([0x00, 0x02, 0x05, 0x02])
 
     # Two messages merged into one read are split correctly
     reader = FrameReader()
