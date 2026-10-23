@@ -21,10 +21,10 @@ Sometimes it's easier to understand the protocol by looking at a concrete exampl
 
 The TXT record fields mirror BLE advertisement data:
 
-- `version=1` - Protocol version
+- `version=2` - Protocol version. Version 2 devices prefix every TCP message with its length, see [Message Framing](#message-framing)
 - `id=<unique-id>` - Unique device identifier (MAC address or serial)
 - `name=<device-name>` - Human-readable device name
-- `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities
+- `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities. Controllers list `d273f680-d548-419d-b9d1-fa0472345229`; smart trainers list the Trainer Service `d273f690-d548-419d-b9d1-fa0472345229` (see [TRAINER.md](TRAINER.md)); smart bikes list both
 - `manufacturer=<name>` - Device manufacturer
 - `model=<model>` - Device model
 
@@ -33,7 +33,7 @@ The TXT record fields mirror BLE advertisement data:
 Service: OpenBikeControl Remote._openbikecontrol._tcp.local.
 Port: 8080
 TXT:
-  version=1
+  version=2
   id=aabbccddeeff
   name=OpenBikeControl Remote
   service-uuids=d273f680-d548-419d-b9d1-fa0472345229
@@ -57,6 +57,10 @@ Once discovered via mDNS/Bonjour, apps connect to the device using TCP sockets f
 ## Data Format
 
 All messages use the same binary format as the BLE protocol for consistency and efficiency.
+
+On TCP, every message is prefixed with its length so receivers can split the byte
+stream into messages; see [Message Framing](#message-framing). The message formats
+below describe the bytes inside a frame.
 
 ### Button State Message (Device to App)
 
@@ -219,6 +223,168 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 
 ---
 
+### Virtual Shifting Control (App to Trainer)
+
+**Message Type:** `0x05`
+
+Optional, for smart trainers and smart bikes. Sent by the app to set the simulated gear
+ratio, rider mass and bike mass.
+
+**Data Format:**
+
+```
+[0x05] [Version] [Mode] [Gear_Ratio_L] [Gear_Ratio_H] [Rider_Mass_L] [Rider_Mass_H] [Bike_Mass_L] [Bike_Mass_H] [Gear_Index] [Gear_Count]
+```
+
+Fixed length of 11 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-control-app-to-trainer).
+
+---
+
+### Virtual Shifting State (Trainer to App)
+
+**Message Type:** `0x06`
+
+Optional, for smart trainers and smart bikes. Sent by the trainer once right after the TCP
+connection is accepted (so the app can detect support) and whenever its state changes.
+
+**Data Format:**
+
+```
+[0x06] [Version] [Flags] [Gear_Ratio_L] [Gear_Ratio_H] [Gear_Index] [Gear_Count] [Front_Index] [Front_Count] [Rear_Index] [Rear_Count]
+```
+
+Fixed length of 11 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-state-trainer-to-app).
+
+---
+
+### Ride State (App to Trainer)
+
+**Message Type:** `0x07`
+
+Optional, for smart trainers and smart bikes. Sent by the app at 1–4 Hz with the
+simulated bike speed so the trainer can align its inertia and gravity simulation with the
+on-screen speed.
+
+**Data Format:**
+
+```
+[0x07] [Version] [Speed_L] [Speed_H] [Reserved]
+```
+
+Fixed length of 5 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#ride-state-app-to-trainer).
+
+---
+
+### Trainer Control (App to Trainer)
+
+**Message Type:** `0x08`
+
+Optional, for smart trainers and smart bikes. Sets mode (idle, simulation, target
+power, target resistance) and the simulation or target values.
+
+**Data Format:**
+
+```
+[0x08] [Version] [Mode] [Target_Power_L] [Target_Power_H] [Target_Resistance_L] [Target_Resistance_H] [Grade_L] [Grade_H] [Wind_L] [Wind_H] [CRR_L] [CRR_H] [CW_L] [CW_H] [Wheel_Circ_L] [Wheel_Circ_H]
+```
+
+Fixed length of 17 bytes. Field definitions, examples and behaviour are specified in
+[TRAINER.md](TRAINER.md#trainer-control-app-to-trainer).
+
+---
+
+### Trainer Data (Trainer to App)
+
+**Message Type:** `0x09`
+
+Optional, for smart trainers and smart bikes. Power, cadence, speed, applied resistance
+and grade, sent at 1–4 Hz to every connected client.
+
+**Data Format:**
+
+```
+[0x09] [Version] [Flags] [Power_L] [Power_H] [Cadence_L] [Cadence_H] [Speed_L] [Speed_H] [Resistance_L] [Resistance_H] [Grade_L] [Grade_H]
+```
+
+Fixed length of 13 bytes. Field definitions, examples and behaviour are specified in
+[TRAINER.md](TRAINER.md#trainer-data-trainer-to-app).
+
+---
+
+### Trainer Status (Trainer to App)
+
+**Message Type:** `0x0A`
+
+Mandatory for smart trainers and smart bikes. Capabilities, limits, control ownership
+and active mode. Sent right after the connection is established and whenever any field
+changes. Because the `Control` field is
+per client, the trainer sends it to every connected client when ownership changes.
+
+**Data Format:**
+
+```
+[0x0A] [Version] [Control] [Mode] [Capabilities_L] [Capabilities_H] [Max_Power_L] [Max_Power_H] [Max_Resistance_L] [Max_Resistance_H] [Max_Grade_L] [Max_Grade_H] [Min_Grade_L] [Min_Grade_H] [Calibration]
+```
+
+Fixed length of 15 bytes. Field definitions, examples and behaviour are specified in
+[TRAINER.md](TRAINER.md#trainer-status-trainer-to-app).
+
+---
+
+## Message Framing
+
+### Why
+
+TCP is a byte stream, not a message stream. Two messages written separately can
+arrive in a single read, and one message can be split across two reads. Without a
+length field a receiver that treats each read as one message will misparse merged
+messages:
+
+```
+Written:  [0x01, 0x1B, 0x85]  [0x01, 0x1B, 0x86]
+Read as:  [0x01, 0x1B, 0x85, 0x01, 0x1B, 0x86]
+Parsed:   0x1B = 0x85, 0x01 (Shift Up) = 0x1B, 0x86 = <dangling>
+```
+
+The middle pair is read as a Shift Up press. This rarely happens with occasional
+button presses, but becomes common with continuously streamed values such as the
+Steering Angle (`0x1B`).
+
+### Frame Format
+
+Every TCP message in both directions is prefixed with its length:
+
+```
+[Length_Hi] [Length_Lo] [Message_Type] [Payload...]
+```
+
+- **Length** (2 bytes, big-endian): number of bytes that follow, i.e. Message_Type + Payload. MUST be at least 1 and at most 512.
+- **Message_Type** and **Payload**: the message as defined in [Data Format](#data-format).
+
+Example: a button state message `[0x01, 0x1B, 0x94]` is sent as
+`[0x00, 0x03, 0x01, 0x1B, 0x94]`.
+
+Receivers MUST buffer incoming bytes and only process a message once all `Length`
+bytes have arrived. Receivers MUST skip (but still consume) messages with an unknown
+Message_Type. A receiver that reads a Length of 0 or above 512 MUST close the
+connection.
+
+Framing applies to TCP only. BLE is unchanged: each notification or write is already
+exactly one message.
+
+### Compatibility
+
+Framing is mandatory in protocol version 2 and is **not backwards compatible** with
+version 1, which wrote messages to the stream without a length. There is no
+negotiation: a version 2 app and a version 2 device frame everything from the first
+byte. Apps that still need to talk to `version=1` devices MUST select unframed
+parsing based on the TXT record, and device firmware SHOULD be updated to version 2.
+
+---
+
 ## Implementation Guidelines
 
 ### For App Developers
@@ -234,13 +400,16 @@ Sent by the app to inform the device about the app's identity and capabilities. 
    - Handle binary message parsing and routing
 
 3. **Message Handling:**
-   - Read messages byte by byte from the TCP stream
-   - First byte indicates the message type
+   - Read the 2-byte length first and buffer until the full message has arrived (see [Message Framing](#message-framing))
+   - First byte of the message indicates the message type
    - Parse remaining bytes according to message type format
    - Button state messages (0x01) have variable length depending on number of buttons
    - Status messages (0x02) are always 3 bytes
    - Haptic feedback commands (0x03) are always 4 bytes
    - App info messages (0x04) have variable length
+   - Virtual shifting messages (0x05, 0x06) are always 11 bytes
+   - Ride state messages (0x07) are always 5 bytes
+   - Trainer control (0x08), data (0x09) and status (0x0A) are 17, 13 and 15 bytes
 
 4. **Button Handling:**
    - Listen for button state messages (type 0x01)
@@ -272,7 +441,7 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 3. **TCP Server:**
    - Listen on configured port for incoming TCP connections
    - Support multiple simultaneous connections
-   - Send button state messages as binary data
+   - Send button state messages as binary data, each prefixed with its length
    - Handle haptic feedback and app info commands from apps
 
 4. **Message Handling:**
@@ -280,7 +449,11 @@ Sent by the app to inform the device about the app's identity and capabilities. 
    - Send periodic device status updates (type 0x02) every 30-60 seconds
    - Process haptic feedback commands (type 0x03) immediately
    - Process app info messages (type 0x04) for device customization
+   - Smart trainers: process Virtual Shifting Control (type 0x05) and send Virtual Shifting State (type 0x06) on connect and on change
+   - Smart trainers: optionally use Ride State (type 0x07) as the speed reference for inertia and gravity simulation
+   - Smart trainers: send Trainer Status (type 0x0A) on connect and on change, stream Trainer Data (type 0x09), and accept Trainer Control (type 0x08) from the owning client only (see [TRAINER.md](TRAINER.md#control-ownership))
    - Use the same binary format as BLE for consistency
+   - Prefix every message with its 2-byte length (see [Message Framing](#message-framing))
 
 5. **Power Management:**
    - Consider WiFi power consumption
@@ -307,5 +480,7 @@ Sent by the app to inform the device about the app's identity and capabilities. 
 
 - [Main Protocol Documentation](PROTOCOL.md)
 - [BLE Protocol Specification](BLE.md)
+- [Virtual Shifting Extension](VIRTUAL_SHIFTING.md)
+- [Trainer Profile](TRAINER.md)
 - [Button Mapping](PROTOCOL.md#button-mapping)
 - [Certification Program](CERTIFICATION.md)
