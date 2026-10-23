@@ -31,8 +31,7 @@ Read more in the announcement: [The Stages SB200 is the first hardware with Open
 ## Trainer apps
 These are the trainer apps that implement the OpenBikeControl protocol, or plan to, allowing users to control them using compatible BLE controllers or network-based input devices.
 
-- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, Biketerra (Bluetooth), Ride Cave (Bluetooth)
-- **Planned:** icTrainer
+- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth)
 
 ### MyWhoosh
 
@@ -52,7 +51,7 @@ Status: **Implemented**
 
 ### icTrainer
 
-Status: **Planned**
+Status: **Implemented**
 
 ![icTrainer logo](implementations/ictrainer.png)
 
