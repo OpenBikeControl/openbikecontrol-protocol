@@ -460,6 +460,7 @@ def test_fitness_data():
         "source_id": 1, "measurement_id": 1, "flags": 1,
         "sequence": 7, "value": 250,
     }
+    assert encode_fitness_measurement(1, 1, 1, 8, 0x1234)[5:] == bytes([0x34, 0x12])
     print("  ✓ Fitness data encoding and decoding tests passed")
 
 
