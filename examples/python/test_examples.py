@@ -29,7 +29,10 @@ from protocol_parser import (
     MSG_TYPE_BUTTON_STATE,
     MSG_TYPE_DEVICE_STATUS,
     MSG_TYPE_HAPTIC_FEEDBACK,
-    MSG_TYPE_APP_INFO
+    MSG_TYPE_APP_INFO,
+    encode_fitness_capabilities, parse_fitness_capabilities,
+    encode_source_lifecycle, parse_source_lifecycle,
+    encode_fitness_measurement, parse_fitness_measurement
 )
 
 
@@ -445,6 +448,21 @@ def test_app_info_encoding():
     print("  ✓ App info encoding and decoding tests passed")
 
 
+def test_fitness_data():
+    print("Testing fitness data encoding and decoding...")
+    sources = [(1, 1, [1, 2, 3]), (2, 2, [4])]
+    encoded = encode_fitness_capabilities(sources)
+    assert parse_fitness_capabilities(encoded) == sources
+    lifecycle = encode_source_lifecycle(1, 2)
+    assert parse_source_lifecycle(lifecycle) == {"source_id": 1, "state": 2}
+    measurement = encode_fitness_measurement(1, 1, 1, 7, 250)
+    assert parse_fitness_measurement(measurement) == {
+        "source_id": 1, "measurement_id": 1, "flags": 1,
+        "sequence": 7, "value": 250,
+    }
+    print("  ✓ Fitness data encoding and decoding tests passed")
+
+
 def main():
     """Run all tests."""
     print("=" * 60)
@@ -462,6 +480,7 @@ def main():
         test_device_status()
         test_haptic_feedback()
         test_app_info_encoding()
+        test_fitness_data()
         test_mock_device_zeroconf()
         test_mock_device_ble()
         
