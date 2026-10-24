@@ -22,7 +22,8 @@ The initial measurement IDs are:
 | `0x03` | Speed | unsigned 16-bit 0.01 km/h |
 | `0x04` | Heart rate | unsigned 8-bit BPM |
 
-All multi-byte integers are big-endian. Reserved measurement IDs MUST be
+All multi-byte integers are little-endian, matching the Trainer Profile and
+FTMS. Reserved measurement IDs MUST be
 ignored by receivers.
 
 ## Message types
@@ -30,10 +31,13 @@ ignored by receivers.
 The messages below use the existing message-type prefix and are valid over BLE
 and TCP. TCP messages are still wrapped in the version 2 length prefix.
 
-### Capability advertisement (`0x0B`)
+Message types `0x0B` and `0x0C` are reserved by the Trainer Profile for
+calibration. This extension therefore uses `0x0D`–`0x0F`.
+
+### Capability advertisement (`0x0D`)
 
 ```
-[0x0B, Version, Source_Count, Source...]
+[0x0D, Version, Source_Count, Source...]
 Source = [Source_ID, Source_Type, Measurement_Count, Measurement_ID...]
 ```
 
@@ -43,20 +47,20 @@ Source = [Source_ID, Source_Type, Measurement_Count, Measurement_ID...]
 advertise more than one measurement. A count of zero means no sources are
 available.
 
-### Source lifecycle (`0x0C`)
+### Source lifecycle (`0x0E`)
 
 ```
-[0x0C, Source_ID, State]
+[0x0E, Source_ID, State]
 ```
 
 `State` is `0x01` connected, `0x02` disconnected, or `0x03` temporarily
 unavailable. A disconnected source MUST stop producing measurements. A bridge
 MUST send a lifecycle message when a source changes state.
 
-### Measurement (`0x0D`)
+### Measurement (`0x0F`)
 
 ```
-[0x0D, Source_ID, Measurement_ID, Flags, Sequence, Value...]
+[0x0F, Source_ID, Measurement_ID, Flags, Sequence, Value...]
 ```
 
 `Sequence` wraps at 255 and is scoped to the source. `Flags` is `0x01` valid,

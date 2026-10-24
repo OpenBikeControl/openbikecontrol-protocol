@@ -79,9 +79,9 @@ MSG_TYPE_BUTTON_STATE = 0x01
 MSG_TYPE_DEVICE_STATUS = 0x02
 MSG_TYPE_HAPTIC_FEEDBACK = 0x03
 MSG_TYPE_APP_INFO = 0x04
-MSG_TYPE_FITNESS_CAPABILITIES = 0x0B
-MSG_TYPE_SOURCE_LIFECYCLE = 0x0C
-MSG_TYPE_FITNESS_MEASUREMENT = 0x0D
+MSG_TYPE_FITNESS_CAPABILITIES = 0x0D
+MSG_TYPE_SOURCE_LIFECYCLE = 0x0E
+MSG_TYPE_FITNESS_MEASUREMENT = 0x0F
 
 MEASUREMENT_WIDTHS = {0x01: 2, 0x02: 2, 0x03: 2, 0x04: 1}
 
@@ -499,7 +499,7 @@ def encode_fitness_measurement(source_id: int, measurement_id: int, flags: int,
     if not 0 <= value < 1 << (8 * width):
         raise ValueError("measurement value does not fit its encoding")
     return bytes([MSG_TYPE_FITNESS_MEASUREMENT, source_id, measurement_id,
-                  flags, sequence]) + value.to_bytes(width, "big")
+                  flags, sequence]) + value.to_bytes(width, "little")
 
 
 def parse_fitness_measurement(data: bytes) -> dict:
@@ -511,4 +511,4 @@ def parse_fitness_measurement(data: bytes) -> dict:
         raise ValueError("invalid fitness measurement payload")
     return {"source_id": source_id, "measurement_id": measurement_id,
             "flags": flags, "sequence": sequence,
-            "value": int.from_bytes(data[5:], "big")}
+            "value": int.from_bytes(data[5:], "little")}

@@ -49,7 +49,7 @@ the same connection.
 - Haptic Feedback Characteristic (Write): `d273f682-d548-419d-b9d1-fa0472345229`
 - App Information Characteristic (Write): `d273f683-d548-419d-b9d1-fa0472345229`
 - Message types: `0x01` (button state), `0x03` (haptic feedback), `0x04` (app info)
-- Optional fitness data: `0x0B` (capabilities), `0x0C` (source lifecycle), `0x0D` (measurement); see [FITNESS_DATA.md](FITNESS_DATA.md)
+- Optional fitness data: `0x0D` (capabilities), `0x0E` (source lifecycle), `0x0F` (measurement); see [FITNESS_DATA.md](FITNESS_DATA.md)
 - See [BLE.md](BLE.md) for complete specification
 
 **mDNS Protocol:**
@@ -57,7 +57,7 @@ the same connection.
 - TCP endpoint: `<device-ip>:<port>`
 - Binary data format (identical to BLE)
 - Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info)
-- Optional fitness data: `0x0B` (capabilities), `0x0C` (source lifecycle), `0x0D` (measurement); see [FITNESS_DATA.md](FITNESS_DATA.md)
+- Optional fitness data: `0x0D` (capabilities), `0x0E` (source lifecycle), `0x0F` (measurement); see [FITNESS_DATA.md](FITNESS_DATA.md)
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---
