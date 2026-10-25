@@ -13,6 +13,29 @@ sensor data on the same BLE characteristic or TCP connection. Implementations
 MUST treat each source independently and MUST NOT merge two sources into one
 value without marking the result as derived.
 
+Trainer measurements have one home per session. When the Trainer Profile is
+active, the bridge MUST report the trainer's power, cadence, and speed through
+Trainer Data and MUST NOT repeat them here. Source type `0x01` (trainer) is for
+bridges that relay a trainer's measurements without implementing the Trainer
+Profile, for example a read-only relay to a computer without Bluetooth.
+
+### Relation to standard-profile bridging
+
+A bridge can already re-expose sensors as one standard trainer device, picking
+one source per signal (for example over FTMS or Direct Connect). This extension
+does not replace that. It is for applications that want what such a bridge
+hides:
+
+- which source produced each value, and whether it is stale or derived;
+- several sources for the same measurement at once, leaving the choice to the
+  application;
+- sensor data on the OpenBikeControl connection the application already uses
+  for controller input, without adding an FTMS or Direct Connect stack.
+
+Measurements are typed values, never raw BLE or ANT+ payloads, so applications
+do not need to know the upstream sensor protocol. New measurements are added by
+assigning new IDs.
+
 The initial measurement IDs are:
 
 | ID | Measurement | Unit and encoding |
@@ -77,7 +100,7 @@ measurement whose source is unknown or whose payload is truncated.
 
 Network bridges advertise `_openbikecontrol._tcp.local.` as usual. They SHOULD
 include `fitness-data=1` in the mDNS TXT records. The complete source inventory
-is sent with `0x0B` after the connection is established; TXT records are only a
+is sent with `0x0D` after the connection is established; TXT records are only a
 filter for discovery and are not a substitute for capability negotiation.
 
 BLE implementations MAY expose the extension through the existing OpenBikeControl
