@@ -37,6 +37,10 @@ OpenBikeControl uses two transport mechanisms:
 
 Both transports use the identical binary message format (including the message type prefix byte), ensuring consistency across connection types.
 
+The optional [Fitness Data and Sensor Bridging extension](FITNESS_DATA.md)
+allows a bridge to expose trainer and independent sensor measurements through
+the same connection.
+
 ### Quick Reference
 
 **BLE Protocol:**
@@ -45,6 +49,7 @@ Both transports use the identical binary message format (including the message t
 - Haptic Feedback Characteristic (Write): `d273f682-d548-419d-b9d1-fa0472345229`
 - App Information Characteristic (Write): `d273f683-d548-419d-b9d1-fa0472345229`
 - Message types: `0x01` (button state), `0x03` (haptic feedback), `0x04` (app info)
+- Optional fitness data: `0x0D` (capabilities), `0x0E` (source lifecycle), `0x0F` (measurement); see [FITNESS_DATA.md](FITNESS_DATA.md)
 - See [BLE.md](BLE.md) for complete specification
 
 **mDNS Protocol:**
@@ -52,6 +57,7 @@ Both transports use the identical binary message format (including the message t
 - TCP endpoint: `<device-ip>:<port>`
 - Binary data format (identical to BLE)
 - Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info)
+- Optional fitness data: `0x0D` (capabilities), `0x0E` (source lifecycle), `0x0F` (measurement); see [FITNESS_DATA.md](FITNESS_DATA.md)
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---

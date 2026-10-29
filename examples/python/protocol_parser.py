@@ -79,6 +79,11 @@ MSG_TYPE_BUTTON_STATE = 0x01
 MSG_TYPE_DEVICE_STATUS = 0x02
 MSG_TYPE_HAPTIC_FEEDBACK = 0x03
 MSG_TYPE_APP_INFO = 0x04
+MSG_TYPE_FITNESS_CAPABILITIES = 0x0D
+MSG_TYPE_SOURCE_LIFECYCLE = 0x0E
+MSG_TYPE_FITNESS_MEASUREMENT = 0x0F
+
+MEASUREMENT_WIDTHS = {0x01: 2, 0x02: 2, 0x03: 2, 0x04: 1}
 
 
 def parse_button_state(data: bytes) -> list:
@@ -440,3 +445,70 @@ def parse_app_info(data: bytes) -> dict:
         "app_version": app_version,
         "supported_buttons": button_ids
     }
+
+
+def encode_fitness_capabilities(sources: list) -> bytes:
+    """Encode sources as ``[(source_id, source_type, [measurement_ids])]``."""
+    if len(sources) > 255:
+        raise ValueError("too many fitness data sources")
+    data = bytearray([MSG_TYPE_FITNESS_CAPABILITIES, 0x01, len(sources)])
+    for source_id, source_type, measurements in sources:
+        if not 0 <= source_id <= 255 or not 0 <= source_type <= 255:
+            raise ValueError("source fields must fit in one byte")
+        if len(measurements) > 255:
+            raise ValueError("too many measurements for source")
+        data.extend([source_id, source_type, len(measurements), *measurements])
+    return bytes(data)
+
+
+def parse_fitness_capabilities(data: bytes) -> list:
+    if len(data) < 3 or data[0] != MSG_TYPE_FITNESS_CAPABILITIES or data[1] != 0x01:
+        raise ValueError("invalid fitness capabilities message")
+    idx, sources = 3, []
+    for _ in range(data[2]):
+        if idx + 3 > len(data):
+            raise ValueError("truncated fitness source")
+        source_id, source_type, count = data[idx:idx + 3]
+        idx += 3
+        if idx + count > len(data):
+            raise ValueError("truncated source measurements")
+        sources.append((source_id, source_type, list(data[idx:idx + count])))
+        idx += count
+    if idx != len(data):
+        raise ValueError("trailing bytes in fitness capabilities message")
+    return sources
+
+
+def encode_source_lifecycle(source_id: int, state: int) -> bytes:
+    if not 0 <= source_id <= 255 or state not in (1, 2, 3):
+        raise ValueError("invalid source lifecycle")
+    return bytes([MSG_TYPE_SOURCE_LIFECYCLE, source_id, state])
+
+
+def parse_source_lifecycle(data: bytes) -> dict:
+    if len(data) != 3 or data[0] != MSG_TYPE_SOURCE_LIFECYCLE or data[2] not in (1, 2, 3):
+        raise ValueError("invalid source lifecycle message")
+    return {"source_id": data[1], "state": data[2]}
+
+
+def encode_fitness_measurement(source_id: int, measurement_id: int, flags: int,
+                               sequence: int, value: int) -> bytes:
+    width = MEASUREMENT_WIDTHS.get(measurement_id)
+    if width is None or not all(0 <= x <= 255 for x in (source_id, flags, sequence)):
+        raise ValueError("invalid fitness measurement fields")
+    if not 0 <= value < 1 << (8 * width):
+        raise ValueError("measurement value does not fit its encoding")
+    return bytes([MSG_TYPE_FITNESS_MEASUREMENT, source_id, measurement_id,
+                  flags, sequence]) + value.to_bytes(width, "little")
+
+
+def parse_fitness_measurement(data: bytes) -> dict:
+    if len(data) < 6 or data[0] != MSG_TYPE_FITNESS_MEASUREMENT:
+        raise ValueError("invalid fitness measurement message")
+    source_id, measurement_id, flags, sequence = data[1:5]
+    width = MEASUREMENT_WIDTHS.get(measurement_id)
+    if width is None or len(data) != 5 + width:
+        raise ValueError("invalid fitness measurement payload")
+    return {"source_id": source_id, "measurement_id": measurement_id,
+            "flags": flags, "sequence": sequence,
+            "value": int.from_bytes(data[5:], "little")}
