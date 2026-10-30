@@ -40,7 +40,9 @@ from protocol_parser import (
     parse_haptic_feedback,
     parse_app_info,
     MSG_TYPE_HAPTIC_FEEDBACK,
-    MSG_TYPE_APP_INFO
+    MSG_TYPE_APP_INFO,
+    frame_message,
+    FrameReader,
 )
 
 
@@ -66,46 +68,6 @@ def format_button_list(button_ids: list, limit: int = 10) -> str:
     if len(button_ids) > limit:
         displayed_buttons += f", ... ({len(button_ids) - limit} more)"
     return displayed_buttons
-
-
-async def read_exactly_or_none(reader: asyncio.StreamReader, size: int):
-    """Read exactly size bytes, returning None if the stream closes first."""
-    try:
-        return await reader.readexactly(size)
-    except asyncio.IncompleteReadError:
-        return None
-
-
-async def read_app_info_message(reader: asyncio.StreamReader, msg_type_data: bytes):
-    """Read a complete app-info message from the TCP stream."""
-    header = await read_exactly_or_none(reader, 2)  # version, app_id_len
-    if header is None:
-        return None
-
-    app_id_len = header[1]
-    app_id = await read_exactly_or_none(reader, app_id_len)
-    if app_id is None:
-        return None
-
-    app_version_len_data = await read_exactly_or_none(reader, 1)
-    if app_version_len_data is None:
-        return None
-    app_version_len = app_version_len_data[0]
-
-    app_version = await read_exactly_or_none(reader, app_version_len)
-    if app_version is None:
-        return None
-
-    button_count_data = await read_exactly_or_none(reader, 1)
-    if button_count_data is None:
-        return None
-    button_count = button_count_data[0]
-
-    button_ids = await read_exactly_or_none(reader, button_count)
-    if button_ids is None:
-        return None
-
-    return msg_type_data + header + app_id + app_version_len_data + app_version + button_count_data + button_ids
 
 
 class MockDevice:
@@ -153,7 +115,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     try:
         # Send initial status
-        writer.write(device.get_status_message())
+        writer.write(frame_message(device.get_status_message()))
         await writer.drain()
 
         async def simulate_buttons():
@@ -178,7 +140,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 button_label = describe_button(button_id)
 
                 # Send press
-                writer.write(press_msg)
+                writer.write(frame_message(press_msg))
                 await writer.drain()
                 print(f"  → Sent button press: {button_label}")
 
@@ -186,7 +148,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
                 await asyncio.sleep(0.1)
 
                 # Send release
-                writer.write(release_msg)
+                writer.write(frame_message(release_msg))
                 await writer.drain()
                 print(f"  → Sent button release: {button_label}")
 
@@ -196,59 +158,47 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
         # Start button simulation
         button_task = asyncio.create_task(simulate_buttons())
 
-        # Handle incoming messages
+        # Handle incoming messages (every TCP message is length-prefixed)
+        frames = FrameReader()
         while True:
-            # Read message type byte
-            msg_type_data = await reader.read(1)
-            if not msg_type_data:
+            chunk = await reader.read(512)
+            if not chunk:
                 break  # Connection closed
 
-            msg_type = msg_type_data[0]
+            for message in frames.feed(chunk):
+                msg_type = message[0]
 
-            if msg_type == MSG_TYPE_HAPTIC_FEEDBACK:
-                # Haptic feedback message - fixed 3 more bytes
-                haptic_data = await read_exactly_or_none(reader, 3)
-                if haptic_data is None:
-                    break
-                if len(haptic_data) < 3:
-                    break
+                if msg_type == MSG_TYPE_HAPTIC_FEEDBACK:
+                    try:
+                        haptic_info = parse_haptic_feedback(message)
+                        pattern = haptic_info["pattern"]
+                        print(f"  ← Received haptic feedback: {pattern}")
+                    except Exception as e:
+                        print(f"  ⚠ Failed to parse haptic feedback: {e}")
 
-                full_message = msg_type_data + haptic_data
-                try:
-                    haptic_info = parse_haptic_feedback(full_message)
-                    pattern = haptic_info["pattern"]
-                    print(f"  ← Received haptic feedback: {pattern}")
-                except Exception as e:
-                    print(f"  ⚠ Failed to parse haptic feedback: {e}")
+                elif msg_type == MSG_TYPE_APP_INFO:
+                    try:
+                        app_info = parse_app_info(message)
+                        app_id = app_info["app_id"]
+                        app_version = app_info["app_version"]
+                        advertised_buttons = app_info["supported_buttons"]
+                        supported_buttons, supports_all_buttons = normalize_supported_buttons(advertised_buttons)
 
-            elif msg_type == MSG_TYPE_APP_INFO:
-                full_message = await read_app_info_message(reader, msg_type_data)
-                if full_message is None:
-                    break
+                        print(f"  ← Received app info:")
+                        print(f"     App ID: {app_id}")
+                        print(f"     Version: {app_version}")
+                        if supports_all_buttons:
+                            print(f"     Supported buttons: all known button types ({len(supported_buttons)} total)")
+                        else:
+                            print(f"     Supported buttons: {len(supported_buttons)} advertised type(s)")
+                        if supported_buttons:
+                            print(f"     Button IDs: {format_button_list(supported_buttons)}")
+                    except Exception as e:
+                        print(f"  ⚠ Failed to parse app info: {e}")
 
-                try:
-                    app_info = parse_app_info(full_message)
-                    app_id = app_info["app_id"]
-                    app_version = app_info["app_version"]
-                    advertised_buttons = app_info["supported_buttons"]
-                    supported_buttons, supports_all_buttons = normalize_supported_buttons(advertised_buttons)
-
-                    print(f"  ← Received app info:")
-                    print(f"     App ID: {app_id}")
-                    print(f"     Version: {app_version}")
-                    if supports_all_buttons:
-                        print(f"     Supported buttons: all known button types ({len(supported_buttons)} total)")
-                    else:
-                        print(f"     Supported buttons: {len(supported_buttons)} advertised type(s)")
-                    if supported_buttons:
-                        print(f"     Button IDs: {format_button_list(supported_buttons)}")
-                except Exception as e:
-                    print(f"  ⚠ Failed to parse app info: {e}")
-
-            else:
-                print(f"  ← Received unknown message type: 0x{msg_type:02X}")
-                # Skip unknown message
-                await reader.read(64)
+                else:
+                    # Unknown message type: the frame is already consumed, nothing to skip
+                    print(f"  ← Received unknown message type: 0x{msg_type:02X}")
 
     except asyncio.CancelledError:
         pass
