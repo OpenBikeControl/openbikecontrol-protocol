@@ -207,6 +207,88 @@ The maximum size of this characteristic depends on MTU, but should aim to fit wi
 
 ---
 
+### 4. Virtual Shifting Control Characteristic (WRITE)
+
+**UUID:** `d273f684-d548-419d-b9d1-fa0472345229`
+
+**Properties:** Write, Write Without Response
+
+**Description:** Optional. Implemented by smart trainers and smart bikes. Receives the
+simulated gear ratio, rider mass and bike mass from the app. Controllers that are not
+trainers do not implement this characteristic.
+
+**Data Format:**
+
+```
+[0x05] [Version] [Mode] [Gear_Ratio_L] [Gear_Ratio_H] [Rider_Mass_L] [Rider_Mass_H] [Bike_Mass_L] [Bike_Mass_H] [Gear_Index] [Gear_Count]
+```
+
+Fixed length of 11 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-control-app-to-trainer).
+
+**Write Behaviour:**
+
+- Apps send this on every gear change and whenever rider or bike mass changes
+- "Write Without Response" is preferred for latency; the trainer never answers a write
+  directly, it reports the resulting state through the State characteristic instead
+- On disconnect the trainer reverts to virtual shifting off
+
+---
+
+### 5. Virtual Shifting State Characteristic (READ/NOTIFY)
+
+**UUID:** `d273f685-d548-419d-b9d1-fa0472345229`
+
+**Properties:** Read, Notify
+
+**Description:** Optional. Implemented by smart trainers and smart bikes. Reports the gear
+ratio currently simulated, the current gear, and status flags. Apps detect virtual
+shifting support by discovering this characteristic.
+
+**Data Format:**
+
+```
+[0x06] [Version] [Flags] [Gear_Ratio_L] [Gear_Ratio_H] [Gear_Index] [Gear_Count] [Front_Index] [Front_Count] [Rear_Index] [Rear_Count]
+```
+
+Fixed length of 11 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#virtual-shifting-state-trainer-to-app).
+
+**Notification Behaviour:**
+
+- The trainer sends one notification as soon as the app subscribes
+- Further notifications are sent whenever any field changes
+- The trainer MAY also notify periodically, at most once per second
+
+---
+
+### 6. Ride State Characteristic (WRITE WITHOUT RESPONSE)
+
+**UUID:** `d273f686-d548-419d-b9d1-fa0472345229`
+
+**Properties:** Write Without Response
+
+**Description:** Optional. Implemented by smart trainers and smart bikes. Receives the
+app's simulated speed at 1–4 Hz so the trainer can align its inertia and gravity
+simulation with what the rider sees on screen.
+
+**Data Format:**
+
+```
+[0x07] [Version] [Speed_L] [Speed_H] [Reserved]
+```
+
+Fixed length of 5 bytes. Field definitions, examples and behaviour are specified in
+[VIRTUAL_SHIFTING.md](VIRTUAL_SHIFTING.md#ride-state-app-to-trainer).
+
+**Write Behaviour:**
+
+- Only "Write Without Response" is used; the stream is periodic and a lost sample is
+  replaced by the next one
+- Trainers MAY ignore this characteristic and derive speed from cadence and gear ratio
+
+---
+
 ## Standard BLE Services
 
 OpenBikeControl devices MUST implement the following standard BLE services:
@@ -269,6 +351,7 @@ Recommended BLE connection parameters for optimal performance:
    - Discover Button State characteristic (`d273f681-d548-419d-b9d1-fa0472345229`)
    - Discover Haptic Feedback characteristic (`d273f682-d548-419d-b9d1-fa0472345229`)
    - Subscribe to Button State notifications for real-time button updates
+   - Optional: discover the Virtual Shifting State characteristic (`d273f685-d548-419d-b9d1-fa0472345229`) to detect smart trainers that support [virtual shifting](VIRTUAL_SHIFTING.md)
 
 3. **Button Handling:**
    - Map button IDs to app-specific actions (see [Button Mapping](PROTOCOL.md#button-mapping))
@@ -313,5 +396,6 @@ Recommended BLE connection parameters for optimal performance:
 
 - [Main Protocol Documentation](PROTOCOL.md)
 - [mDNS Protocol Specification](MDNS.md)
+- [Virtual Shifting Extension](VIRTUAL_SHIFTING.md)
 - [Button Mapping](PROTOCOL.md#button-mapping)
 - [Certification Program](CERTIFICATION.md)
