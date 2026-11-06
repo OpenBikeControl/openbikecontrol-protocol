@@ -20,6 +20,10 @@ OpenBikeControl provides a unified, open protocol that:
 
 Continue along at [PROTOCOL.md](PROTOCOL.md).
 
+Optional profiles include [fitness data and sensor bridging](FITNESS_DATA.md),
+which lets a bridge forward trainer, heart-rate, cadence, speed, and power
+measurements through one OpenBikeControl connection.
+
 ## Hardware
 OpenBikeControl is now built into shipping hardware.
 
