@@ -52,6 +52,7 @@ Both transports use the identical binary message format (including the message t
 - TCP endpoint: `<device-ip>:<port>`
 - Binary data format (identical to BLE)
 - Message types: `0x01` (button state), `0x02` (device status), `0x03` (haptic feedback), `0x04` (app info)
+- Every TCP message is prefixed with its 2-byte length
 - See [MDNS.md](MDNS.md) for complete specification
 
 ---
@@ -371,7 +372,11 @@ Certified devices receive:
 
 ## Version History
 
-- **Version 1** (Current)
+- **Version 2** (Current)
+  - Mandatory length-prefixed message framing for TCP, not backwards compatible with version 1
+  - BLE unchanged
+
+- **Version 1**
   - Initial protocol specification
   - BLE and mDNS transport definitions
   - Standard button mappings

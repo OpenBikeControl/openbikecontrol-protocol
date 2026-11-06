@@ -35,7 +35,9 @@ from protocol_parser import (
     MSG_TYPE_DEVICE_STATUS,
     MSG_TYPE_HAPTIC_FEEDBACK,
     MSG_TYPE_APP_INFO,
-    BUTTON_NAMES
+    BUTTON_NAMES,
+    frame_message,
+    FrameReader,
 )
 
 # OpenBikeControl mDNS service type
@@ -122,7 +124,7 @@ async def send_haptic_feedback(writer: asyncio.StreamWriter, pattern: str = "sho
     message = encode_haptic_feedback(pattern, duration, intensity)
     
     try:
-        writer.write(message)
+        writer.write(frame_message(message))
         await writer.drain()
         print(f"  → Sent haptic feedback: {pattern}")
     except Exception as e:
@@ -155,7 +157,7 @@ async def send_app_info(writer: asyncio.StreamWriter, app_id: str = "example-tra
     message = encode_app_info(app_id, app_version, supported_buttons)
     
     try:
-        writer.write(message)
+        writer.write(frame_message(message))
         await writer.drain()
         print(f"  → Sent app info: {app_id} v{app_version} (supports {len(supported_buttons)} button types)")
     except Exception as e:
@@ -196,40 +198,27 @@ async def read_tcp_messages(reader: asyncio.StreamReader, writer: asyncio.Stream
         writer: StreamWriter for TCP connection
     """
     try:
+        # Every TCP message is length-prefixed; FrameReader splits merged reads
+        # and buffers partial ones
+        frames = FrameReader()
         while True:
-            # Read message type byte
-            msg_type_data = await reader.read(1)
-            if not msg_type_data:
+            chunk = await reader.read(512)
+            if not chunk:
                 break  # Connection closed
-            
-            msg_type = msg_type_data[0]
-            
-            if msg_type == MSG_TYPE_BUTTON_STATE:
-                # Button state message - variable length
-                # Read pairs of (button_id, state) until we get a new message type
-                # For simplicity, we'll read in small chunks and parse
-                chunk = await reader.read(128)  # Read up to 128 bytes
-                if not chunk:
-                    break
-                
-                # Reconstruct full message with message type
-                full_message = msg_type_data + chunk
-                await handle_button_state_message(full_message, writer)
-            
-            elif msg_type == MSG_TYPE_DEVICE_STATUS:
-                # Device status message - fixed 2 more bytes
-                status_data = await reader.read(2)
-                if len(status_data) < 2:
-                    break
-                
-                full_message = msg_type_data + status_data
-                await handle_device_status_message(full_message)
-            
-            else:
-                print(f"\n⚠ Unknown message type: 0x{msg_type:02X}")
-                # Skip unknown message - try to continue
-                await reader.read(64)  # Read and discard some bytes
-    
+
+            for message in frames.feed(chunk):
+                msg_type = message[0]
+
+                if msg_type == MSG_TYPE_BUTTON_STATE:
+                    await handle_button_state_message(message, writer)
+
+                elif msg_type == MSG_TYPE_DEVICE_STATUS:
+                    await handle_device_status_message(message)
+
+                else:
+                    # Unknown message type: the frame is already consumed, nothing to skip
+                    print(f"\n⚠ Unknown message type: 0x{msg_type:02X}")
+
     except asyncio.CancelledError:
         raise
     except Exception as e:

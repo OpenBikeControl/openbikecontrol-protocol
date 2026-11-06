@@ -23,6 +23,8 @@ from protocol_parser import (
     encode_haptic_feedback,
     parse_app_info,
     encode_app_info,
+    frame_message,
+    FrameReader,
     encode_steering_angle,
     decode_steering_angle,
     BUTTON_NAMES,
@@ -178,6 +180,34 @@ def test_encode_button_state():
     assert result == bytes([MSG_TYPE_BUTTON_STATE, 0x01, 0x01, 0x02, 0x00]), f"Expected [0x01, 0x01, 0x01, 0x02, 0x00], got {result}"
     
     print("  ✓ All encode_button_state tests passed")
+
+
+def test_tcp_framing():
+    """Test TCP framing."""
+    print("Testing TCP framing...")
+
+    assert frame_message(bytes([0x01, 0x1B, 0x94])) == bytes([0x00, 0x03, 0x01, 0x1B, 0x94])
+
+    # Two messages merged into one read are split correctly
+    reader = FrameReader()
+    merged = frame_message(bytes([0x01, 0x1B, 0x85])) + frame_message(bytes([0x01, 0x1B, 0x86]))
+    assert reader.feed(merged) == [bytes([0x01, 0x1B, 0x85]), bytes([0x01, 0x1B, 0x86])]
+
+    # A message split across reads is buffered until complete
+    reader = FrameReader()
+    framed = frame_message(bytes([0x02, 0x55, 0x01]))
+    assert reader.feed(framed[:3]) == []
+    assert reader.feed(framed[3:]) == [bytes([0x02, 0x55, 0x01])]
+
+    # Invalid lengths are rejected
+    for bad in (bytes([0x00, 0x00]), bytes([0x02, 0x01])):
+        try:
+            FrameReader().feed(bad)
+            assert False, f"Expected rejection of {bad.hex()}"
+        except ValueError:
+            pass
+
+    print("  ✓ All TCP framing tests passed")
 
 
 def test_steering_angle():
@@ -458,6 +488,7 @@ def main():
         test_button_names()
         test_mdns_format_consistency()
         test_encode_button_state()
+        test_tcp_framing()
         test_steering_angle()
         test_device_status()
         test_haptic_feedback()
