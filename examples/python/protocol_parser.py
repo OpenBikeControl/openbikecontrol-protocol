@@ -39,11 +39,18 @@ BUTTON_NAMES = {
     0x33: "Pause",
     0x34: "Resume",
     0x35: "Lap",
+    0x36: "Previous Interval",
+    0x37: "U-Turn",
+    0x38: "Change Mode",
+    0x39: "Take a break",
+    0x3A: "Join another rider",
+    0x3B: "Change route",
     0x3C: "Cruise Control",
     # View Controls (0x40-0x4F)
     0x40: "Camera View",
     0x44: "HUD Toggle",
     0x45: "Map Toggle",
+    0x46: "Spectate rider",
     # Power-ups (0x50-0x5F)
     0x50: "Power-up 1",
     0x51: "Power-up 2",
