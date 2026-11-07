@@ -31,7 +31,7 @@ Read more in the announcement: [The Stages SB200 is the first hardware with Open
 ## Trainer apps
 These are the trainer apps that implement the OpenBikeControl protocol, or plan to, allowing users to control them using compatible BLE controllers or network-based input devices.
 
-- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth)
+- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth), VeloPopuli (Bluetooth), Vieta (mDNS, Bluetooth), DirtWatts (Bluetooth), WattLog.pro (Bluetooth)
 
 ### MyWhoosh
 
@@ -128,6 +128,38 @@ Status: **Implemented** (Bluetooth)
 ![Pedalparty logo](implementations/pedalparty.png)
 
 [https://pedalparty.cc/](https://pedalparty.cc/)
+
+### VeloPopuli
+
+Status: **Implemented** (Bluetooth)
+
+![VeloPopuli logo](implementations/velopopuli.png)
+
+[https://velopopuli.com](https://velopopuli.com)
+
+### Vieta
+
+Status: **Implemented** (mDNS, Bluetooth)
+
+![Vieta logo](implementations/vieta.png)
+
+[https://vieta.cc/](https://vieta.cc/)
+
+### DirtWatts
+
+Status: **Implemented** (Bluetooth)
+
+![DirtWatts logo](implementations/dirtwatts.png)
+
+[https://dirtwatts.com/](https://dirtwatts.com/)
+
+### WattLog.pro
+
+Status: **Implemented** (Bluetooth)
+
+![WattLog.pro logo](implementations/wattlog.png)
+
+[https://wattlog.pro](https://wattlog.pro)
 
 # Implementations
 
