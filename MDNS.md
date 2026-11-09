@@ -27,6 +27,7 @@ The TXT record fields mirror BLE advertisement data:
 - `service-uuids=<uuid-list>` - Comma-separated list of service UUIDs, showcasing the hardwares' capabilities
 - `manufacturer=<name>` - Device manufacturer
 - `model=<model>` - Device model
+- `fitness-data=1` - Optional fitness data and sensor bridging support
 
 **Example:**
 ```
