@@ -31,7 +31,7 @@ Read more in the announcement: [The Stages SB200 is the first hardware with Open
 ## Trainer apps
 These are the trainer apps that implement the OpenBikeControl protocol, or plan to, allowing users to control them using compatible BLE controllers or network-based input devices.
 
-- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth), VeloPopuli (Bluetooth), Vieta (mDNS, Bluetooth), DirtWatts (Bluetooth), WattLog.pro (Bluetooth), REZVIVO (Bluetooth), OpenRadlr (Bluetooth), zwoTrainer (Bluetooth), Incyclist (mDNS, Bluetooth)
+- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth), VeloPopuli (Bluetooth), Vieta (mDNS, Bluetooth), DirtWatts (Bluetooth), WattLog.pro (Bluetooth), REZVIVO (Bluetooth), OpenRadlr (Bluetooth), zwoTrainer (Bluetooth), Incyclist (mDNS, Bluetooth), Tour du Pain (Bluetooth)
 
 ### MyWhoosh
 
@@ -192,6 +192,14 @@ Status: **Implemented** (mDNS, Bluetooth)
 ![Incyclist logo](implementations/incyclist.png)
 
 [https://incyclist.com/](https://incyclist.com/)
+
+### Tour du Pain
+
+Status: **Implemented** (Bluetooth)
+
+![Tour du Pain logo](implementations/tour-du-pain.png)
+
+[https://tourdupain.app/](https://tourdupain.app/)
 
 # Implementations
 
