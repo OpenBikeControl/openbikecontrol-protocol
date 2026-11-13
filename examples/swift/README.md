@@ -42,9 +42,11 @@ import OpenBikeControl
 let service = CBUUID(string: OpenBikeControl.serviceUUIDString)
 
 // Right after connecting, tell the device who you are and which actions you handle.
+// Keep the IDs in ascending order; a Stages SB200 dropped buttons from an unsorted list.
 let info = OpenBikeControl.AppInformation(appID: "my-app", appVersion: "1.0.0",
                                           buttons: [.gearSet, .chainringSet, .cassetteSet,
-                                                    .pause, .resume, .lap, .increaseDifficulty, .decreaseDifficulty])
+                                                    .increaseDifficulty, .decreaseDifficulty,
+                                                    .pause, .resume, .lap])
 peripheral.writeValue(info.encoded, for: appInformationCharacteristic, type: .withResponse)
 
 // Every Button State notification is a list of ID/value pairs.

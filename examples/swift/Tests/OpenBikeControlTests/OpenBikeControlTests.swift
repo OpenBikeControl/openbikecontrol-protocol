@@ -196,13 +196,13 @@ final class OpenBikeControlTests: XCTestCase {
     }
 
     func testReferenceAppToDeviceVectors() {
-        // encode_app_info("swift-example", "1.0.0", [0x03,0x04,0x05,0x33,0x34,0x35,0x32,0x36,0x30,0x31])
+        // encode_app_info("swift-example", "1.0.0", [0x03,0x04,0x05,0x30,0x31,0x32,0x33,0x34,0x35,0x36])
         let info = OpenBikeControl.AppInformation(appID: "swift-example", appVersion: "1.0.0", buttons: [
             .gearSet, .chainringSet, .cassetteSet,
-            .pause, .resume, .lap, .skipInterval, .previousInterval,
             .increaseDifficulty, .decreaseDifficulty,
+            .skipInterval, .pause, .resume, .lap, .previousInterval,
         ])
-        XCTAssertEqual(hex(info.encoded), "04010d73776966742d6578616d706c6505312e302e300a03040533343532363031")
+        XCTAssertEqual(hex(info.encoded), "04010d73776966742d6578616d706c6505312e302e300a03040530313233343536")
         XCTAssertEqual(OpenBikeControl.AppInformation.parse(info.encoded), info)
         // encode_haptic_feedback(pattern, duration /10 ms, intensity)
         XCTAssertEqual(hex(OpenBikeControl.hapticFeedback(pattern: .short)), "03010000")

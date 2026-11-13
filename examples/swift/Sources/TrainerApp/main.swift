@@ -33,10 +33,13 @@ final class TrainerApp: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     // mapping. We leave gearing to the bike and display what it reports, so the
     // gear-set IDs are declared and Shift Up / Shift Down are not. An app that
     // implements virtual shifting itself would declare .shiftUp and .shiftDown too.
+    // Listed in ascending ID order: a Stages SB200 delivered only some of its
+    // buttons when the same IDs were sent unsorted.
     static let declaredButtons: [OpenBikeControl.Button] = [
-        .gearSet, .chainringSet, .cassetteSet,
-        .pause, .resume, .lap, .skipInterval, .previousInterval,
-        .increaseDifficulty, .decreaseDifficulty,
+        .gearSet, .chainringSet, .cassetteSet,              // 0x03–0x05
+        .increaseDifficulty, .decreaseDifficulty,           // 0x30, 0x31
+        .skipInterval, .pause, .resume, .lap,               // 0x32–0x35
+        .previousInterval,                                  // 0x36
     ]
 
     let serviceUUID        = CBUUID(string: OpenBikeControl.serviceUUIDString)
