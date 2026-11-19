@@ -31,7 +31,7 @@ Read more in the announcement: [The Stages SB200 is the first hardware with Open
 ## Trainer apps
 These are the trainer apps that implement the OpenBikeControl protocol, or plan to, allowing users to control them using compatible BLE controllers or network-based input devices.
 
-- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth), VeloPopuli (Bluetooth), Vieta (mDNS, Bluetooth), DirtWatts (Bluetooth), WattLog.pro (Bluetooth), REZVIVO (Bluetooth), OpenRadlr (Bluetooth), zwoTrainer (Bluetooth), Incyclist (mDNS, Bluetooth), Tour du Pain (Bluetooth), Rampida (Bluetooth)
+- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth), VeloPopuli (Bluetooth), Vieta (mDNS, Bluetooth), DirtWatts (Bluetooth), WattLog.pro (Bluetooth), REZVIVO (Bluetooth), OpenRadlr (Bluetooth), zwoTrainer (Bluetooth), Incyclist (mDNS, Bluetooth), Tour du Pain (Bluetooth), Rampida (Bluetooth), suffer.online (Bluetooth)
 
 ### MyWhoosh
 
@@ -208,6 +208,14 @@ Status: **Implemented** (Bluetooth)
 ![Rampida logo](implementations/rampida.png)
 
 [https://rampida.com/](https://rampida.com/)
+
+### suffer.online
+
+Status: **Implemented** (Bluetooth)
+
+![suffer.online logo](implementations/suffer-online.png)
+
+[https://suffer.online/](https://suffer.online/)
 
 # Implementations
 
