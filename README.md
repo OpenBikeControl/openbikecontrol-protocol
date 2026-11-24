@@ -31,7 +31,7 @@ Read more in the announcement: [The Stages SB200 is the first hardware with Open
 ## Trainer apps
 These are the trainer apps that implement the OpenBikeControl protocol, or plan to, allowing users to control them using compatible BLE controllers or network-based input devices.
 
-- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth), VeloPopuli (Bluetooth), Vieta (mDNS, Bluetooth), DirtWatts (Bluetooth), WattLog.pro (Bluetooth), REZVIVO (Bluetooth), OpenRadlr (Bluetooth), zwoTrainer (Bluetooth), Incyclist (mDNS, Bluetooth), Tour du Pain (Bluetooth), Rampida (Bluetooth), Everycol (Bluetooth), PedalCraft (Bluetooth)
+- **Implemented:** MyWhoosh, TrainingPeaks Virtual, Strappo, icTrainer, Biketerra (Bluetooth), Ride Cave (Bluetooth), Velotoss (mDNS), Grimpa (Bluetooth), Auuki (Bluetooth), VoxVelo (mDNS, Bluetooth), VeloWorkout (Bluetooth), Pedalparty (Bluetooth), VeloPopuli (Bluetooth), Vieta (mDNS, Bluetooth), DirtWatts (Bluetooth), WattLog.pro (Bluetooth), REZVIVO (Bluetooth), OpenRadlr (Bluetooth), zwoTrainer (Bluetooth), Incyclist (mDNS, Bluetooth), Tour du Pain (Bluetooth), Rampida (Bluetooth), Everycol (Bluetooth), PedalCraft (Bluetooth), suffer.online (Bluetooth), Kardiacs, Sueur (mDNS, Bluetooth), TrainerKit, Pedal Mania, Warp (Bluetooth), hupser (Bluetooth), SaddleOut
 
 ### MyWhoosh
 
@@ -224,6 +224,70 @@ Status: **Implemented** (Bluetooth)
 ![PedalCraft logo](implementations/pedalcraft.png)
 
 [https://pedalcraft.online/](https://pedalcraft.online/)
+
+### suffer.online
+
+Status: **Implemented** (Bluetooth)
+
+![suffer.online logo](implementations/suffer-online.png)
+
+[https://suffer.online/](https://suffer.online/)
+
+### Kardiacs
+
+Status: **Implemented**
+
+![Kardiacs logo](implementations/kardiacs.png)
+
+[https://kardiacs.com/](https://kardiacs.com/)
+
+### Sueur
+
+Status: **Implemented** (mDNS, Bluetooth)
+
+![Sueur logo](implementations/sueur.png)
+
+[https://sueur.app/](https://sueur.app/)
+
+### TrainerKit
+
+Status: **Implemented**
+
+![TrainerKit logo](implementations/trainerkit.png)
+
+[https://trainerkitapp.com/](https://trainerkitapp.com/)
+
+### Pedal Mania
+
+Status: **Implemented**
+
+![Pedal Mania logo](implementations/pedal-mania.png)
+
+[https://pedalmania.cc/](https://pedalmania.cc/)
+
+### Warp
+
+Status: **Implemented** (Bluetooth)
+
+![Warp logo](implementations/warp.png)
+
+[https://ridewarp.cc/](https://ridewarp.cc/)
+
+### hupser
+
+Status: **Implemented** (Bluetooth)
+
+![hupser logo](implementations/hupser.png)
+
+[https://hupser.app/](https://hupser.app/)
+
+### SaddleOut
+
+Status: **Implemented**
+
+![SaddleOut logo](implementations/saddleout.png)
+
+[https://saddleout.com/](https://saddleout.com/)
 
 # Implementations
 
