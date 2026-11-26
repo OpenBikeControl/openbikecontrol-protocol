@@ -17,6 +17,26 @@ Python example implementations for trainer applications showing:
 
 See the [Python Examples README](python/README.md) for detailed usage instructions.
 
+### Swift Example
+
+**Location:** [`swift/`](swift/)
+
+A Swift Package for Apple platforms (iOS, macOS, tvOS, watchOS), extracted from a shipping trainer app:
+- **OpenBikeControl library**: The codec — UUIDs, button IDs, Button State parsing, gear decoding, App Information and Haptic Feedback messages. Foundation only.
+- **Trainer App** (`obc-trainer-app`): CoreBluetooth central that discovers, connects, declares itself, prints buttons and the reported gear, and sends haptic feedback (macOS command line)
+- **Mock Device** (`obc-mock-device`): Simulate a BLE device with a 2× drivetrain and keyboard-driven buttons (macOS)
+- **Unit Tests**: The codec against the spec's examples and against vectors from the Python reference implementation
+
+See the [Swift Example README](swift/README.md) for usage and integration notes.
+
+**Quick Start:**
+```bash
+cd swift
+swift test                    # codec tests
+swift run obc-mock-device     # terminal 1: fake device
+swift run obc-trainer-app     # terminal 2: trainer app
+```
+
 **Key Features:**
 - Cross-platform support (Linux, macOS, Windows)
 - Complete button mapping for all OpenBikeControl actions
@@ -41,7 +61,6 @@ We welcome example implementations in other languages and frameworks! If you've 
 
 **Suggested languages/frameworks:**
 - JavaScript/TypeScript (Node.js, Electron)
-- Swift (iOS, macOS)
 - Kotlin/Java (Android)
 - C++ (Qt, native apps)
 - C# (.NET, Unity)
